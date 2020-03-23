@@ -1,10 +1,12 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
-	"io/ioutil"
-
 	"github.com/BurntSushi/toml"
+	"io/ioutil"
+	"path"
+
 	"github.com/pkg/errors"
 )
 
@@ -168,13 +170,23 @@ func GetConfig(configPath *string) (*Config, error) {
 
 func readConfigFile(configPath *string) (*rawConfig, error) {
 	var rawCfg rawConfig
-	file, err := ioutil.ReadFile(*configPath)
+	dir, err := ioutil.ReadDir(*configPath)
 	if err != nil {
-		// err
 		return nil, errors.Wrap(err, "read config file")
 	}
-	// json.Unmarshal(file, &rawCfg)
-	if _, err := toml.Decode(string(file), &rawCfg); err != nil {
+	buffer := make([][]byte, 1024)
+	for _, f := range dir {
+		if !f.IsDir() {
+			realPath := path.Join(*configPath, f.Name())
+			fileByte, err := ioutil.ReadFile(realPath)
+			if err != nil {
+				return nil, errors.Wrap(err, "read config file")
+			}
+			buffer = append(buffer, fileByte)
+		}
+	}
+	confBody := bytes.Join(buffer, []byte{})
+	if _, err := toml.DecodeReader(bytes.NewReader(confBody), &rawCfg); err != nil {
 		return nil, errors.Wrap(err, "read config file")
 	}
 	return &rawCfg, nil
