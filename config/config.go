@@ -173,10 +173,10 @@ func readConfigFile(configPath *string) (*rawConfig, error) {
 	// read main config file.
 	mainFileByte, err := ioutil.ReadFile(*configPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "read config file")
+		return nil, errors.Wrap(err, "read main config file")
 	}
 	if _, err := toml.Decode(string(mainFileByte), &rawCfg); err != nil {
-		return nil, errors.Wrap(err, "read config file")
+		return nil, errors.Wrap(err, "decode main config file")
 	}
 	// if no sub config file
 	if rawCfg.Include == "" {
@@ -185,7 +185,7 @@ func readConfigFile(configPath *string) (*rawConfig, error) {
 	// read sub config files.
 	dir, err := ioutil.ReadDir(rawCfg.Include)
 	if err != nil {
-		return nil, errors.Wrap(err, "read config file")
+		return nil, errors.Wrap(err, "read sub config file directory")
 	}
 	confBuffer := bytes.NewBuffer(mainFileByte)
 	for _, f := range dir {
@@ -193,14 +193,14 @@ func readConfigFile(configPath *string) (*rawConfig, error) {
 			realPath := path.Join(rawCfg.Include, f.Name())
 			fileByte, err := ioutil.ReadFile(realPath)
 			if err != nil {
-				return nil, errors.Wrap(err, "read config file")
+				return nil, errors.Wrap(err, "read sub config file")
 			}
 			// merge config
 			confBuffer.WriteString("\n" + string(fileByte))
 		}
 	}
-	if _, err := toml.DecodeReader(bytes.NewReader(confBuffer.Bytes()), &rawCfg); err != nil {
-		return nil, errors.Wrap(err, "read config file")
+	if _, err := toml.Decode(confBuffer.String(), &rawCfg); err != nil {
+		return nil, errors.Wrap(err, "decode config file")
 	}
 	return &rawCfg, nil
 }
