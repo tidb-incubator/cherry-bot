@@ -187,8 +187,7 @@ func readConfigFile(configPath *string) (*rawConfig, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "read config file")
 	}
-	// merge config.
-	buffer := [][]byte{mainFileByte}
+	confBuffer := bytes.NewBuffer(mainFileByte)
 	for _, f := range dir {
 		if !f.IsDir() {
 			realPath := path.Join(rawCfg.Include, f.Name())
@@ -196,11 +195,11 @@ func readConfigFile(configPath *string) (*rawConfig, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "read config file")
 			}
-			buffer = append(buffer, fileByte)
+			// merge config
+			confBuffer.WriteString("\n" + string(fileByte))
 		}
 	}
-	confBody := bytes.Join(buffer, []byte{})
-	if _, err := toml.DecodeReader(bytes.NewReader(confBody), &rawCfg); err != nil {
+	if _, err := toml.DecodeReader(bytes.NewReader(confBuffer.Bytes()), &rawCfg); err != nil {
 		return nil, errors.Wrap(err, "read config file")
 	}
 	return &rawCfg, nil
