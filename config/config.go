@@ -147,6 +147,7 @@ type rawConfig struct {
 	Slack    *Slack
 	Repos    []*RepoConfig `toml:"repo"`
 	Database *Database
+	Include  string
 }
 
 // GetConfig read config file
@@ -167,17 +168,31 @@ func GetConfig(configPath *string) (*Config, error) {
 		Database: rawCfg.Database,
 	}, nil
 }
-
 func readConfigFile(configPath *string) (*rawConfig, error) {
 	var rawCfg rawConfig
-	dir, err := ioutil.ReadDir(*configPath)
+	// read main config file.
+	mainFileByte, err := ioutil.ReadFile(*configPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "read config file")
 	}
+	if _, err := toml.Decode(string(mainFileByte), &rawCfg); err != nil {
+		return nil, errors.Wrap(err, "read config file")
+	}
+	// if no sub config file
+	if rawCfg.Include == "" {
+		return &rawCfg, nil
+	}
+	// read sub config files.
+	dir, err := ioutil.ReadDir(rawCfg.Include)
+	if err != nil {
+		return nil, errors.Wrap(err, "read config file")
+	}
+	// merge config.
 	buffer := make([][]byte, 1024)
+	buffer = append(buffer, mainFileByte)
 	for _, f := range dir {
 		if !f.IsDir() {
-			realPath := path.Join(*configPath, f.Name())
+			realPath := path.Join(rawCfg.Include, f.Name())
 			fileByte, err := ioutil.ReadFile(realPath)
 			if err != nil {
 				return nil, errors.Wrap(err, "read config file")
