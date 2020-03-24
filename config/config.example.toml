@@ -1,4 +1,4 @@
-include = "../repositories"
+include = "./repositories"
 
 [database]
 address = "127.0.0.1"

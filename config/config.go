@@ -188,7 +188,7 @@ func readConfigFile(configPath *string) (*rawConfig, error) {
 		return nil, errors.Wrap(err, "read config file")
 	}
 	// merge config.
-	buffer := make([][]byte, 1024)
+	buffer := make([][]byte, 4)
 	buffer = append(buffer, mainFileByte)
 	for _, f := range dir {
 		if !f.IsDir() {

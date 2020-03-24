@@ -11,7 +11,7 @@ import (
 
 func GetTestConfig() (*Config, error) {
 	_, localFile, _, _ := runtime.Caller(0)
-	pathStr := path.Join(path.Dir(localFile), "../config.example.toml")
+	pathStr := path.Join(path.Dir(localFile), "config.example.toml")
 	cfg, err := GetConfig(&pathStr)
 	if err != nil {
 		return nil, errors.Wrap(err, "get test config")
