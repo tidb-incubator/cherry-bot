@@ -1,4 +1,4 @@
-package auto_update
+package autoupdate
 
 import (
 	"context"
@@ -132,8 +132,8 @@ func (au *autoUpdate) prepareUpdate(pr *github.PullRequest, target string) (*git
 		} else if len(updateScriptCmd) >= 2 {
 			updateScriptArgs = updateScriptCmd[1:]
 		}
-		if _, err := do(dir, updateScriptCmd[0], updateScriptArgs...); err != nil {
-			message = "make update script failed"
+		if updateMessage, err := do(dir, updateScriptCmd[0], updateScriptArgs...); err != nil {
+			message = fmt.Sprintf("make update script failed %s", updateMessage)
 			return errors.Wrap(err, "make update script failed")
 		}
 		if _, err := do(dir, "git", "add", "."); err != nil {

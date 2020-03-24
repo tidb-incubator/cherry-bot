@@ -93,6 +93,10 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 		b.Middleware.Approve.ProcessIssueCommentEvent(event)
 	}
 
+	if b.cfg.AutoUpdate {
+		b.Middleware.AutoUpdate.ProcessIssueCommentEvent(event)
+	}
+
 	b.Middleware.Assign.ProcessIssueCommentEvent(event)
 
 	b.Middleware.CommandRedeliver.ProcessIssueCommentEvent(event)
