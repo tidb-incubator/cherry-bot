@@ -1,0 +1,18 @@
+include = "./repositories"
+
+[database]
+address = "127.0.0.1"
+port = 3306
+username = "root"
+password = ""
+dbname = "cherry_picker"
+
+[slack]
+heartbeat = "admin@pingcap.com"
+token = ""
+mute = false
+hello = false
+
+[github]
+token = ""
+bot = "cherry-picker"

@@ -1,10 +1,12 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
-	"io/ioutil"
-
 	"github.com/BurntSushi/toml"
+	"io/ioutil"
+	"path"
+
 	"github.com/pkg/errors"
 )
 
@@ -145,6 +147,7 @@ type rawConfig struct {
 	Slack    *Slack
 	Repos    []*RepoConfig `toml:"repo"`
 	Database *Database
+	Include  string
 }
 
 // GetConfig read config file
@@ -165,17 +168,39 @@ func GetConfig(configPath *string) (*Config, error) {
 		Database: rawCfg.Database,
 	}, nil
 }
-
 func readConfigFile(configPath *string) (*rawConfig, error) {
 	var rawCfg rawConfig
-	file, err := ioutil.ReadFile(*configPath)
+	// read main config file.
+	mainFileByte, err := ioutil.ReadFile(*configPath)
 	if err != nil {
-		// err
-		return nil, errors.Wrap(err, "read config file")
+		return nil, errors.Wrap(err, "read main config file")
 	}
-	// json.Unmarshal(file, &rawCfg)
-	if _, err := toml.Decode(string(file), &rawCfg); err != nil {
-		return nil, errors.Wrap(err, "read config file")
+	if _, err := toml.Decode(string(mainFileByte), &rawCfg); err != nil {
+		return nil, errors.Wrap(err, "decode main config file")
+	}
+	// if no sub config file
+	if rawCfg.Include == "" {
+		return &rawCfg, nil
+	}
+	// read sub config files.
+	dir, err := ioutil.ReadDir(rawCfg.Include)
+	if err != nil {
+		return nil, errors.Wrap(err, "read sub config file directory")
+	}
+	confBuffer := bytes.NewBuffer(mainFileByte)
+	for _, f := range dir {
+		if !f.IsDir() {
+			realPath := path.Join(rawCfg.Include, f.Name())
+			fileByte, err := ioutil.ReadFile(realPath)
+			if err != nil {
+				return nil, errors.Wrap(err, "read sub config file")
+			}
+			// merge config
+			confBuffer.WriteString("\n" + string(fileByte))
+		}
+	}
+	if _, err := toml.Decode(confBuffer.String(), &rawCfg); err != nil {
+		return nil, errors.Wrap(err, "decode config file")
 	}
 	return &rawCfg, nil
 }

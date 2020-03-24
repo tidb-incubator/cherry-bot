@@ -1,26 +1,9 @@
-[database]
-address = "127.0.0.1"
-port = 3306
-username = "root"
-password = ""
-dbname = "cherry_picker"
-
-[slack]
-heartbeat = "admin@pingcap.com"
-token = ""
-mute = false
-hello = false
-
-[github]
-token = ""
-bot = "cherry-picker"
-
 [[repo]]
-owner = "owner"
-repo = "repo"
+owner = "owner_1"
+repo = "repo_1"
 interval = 300000
 fullupdate = 86400000
-webhook-secret = "secret"
+webhook-secret = "secret_1"
 
 # cherry pick config
 cherry-pick = false
@@ -48,7 +31,7 @@ prLimitOrgs = "pingcap,tikv"
 merge = true
 canMergeLabel = "can merge"
 
-watch-file-channel = "watch-file-channel"
+watch-file-channel = "watch-file-channel-1"
 [[repo.watch-file]]
 path = "/go.mod"
 branch = ["master", "release*"]

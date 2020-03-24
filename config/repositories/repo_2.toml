@@ -1,0 +1,40 @@
+[[repo]]
+owner = "owner"
+repo = "repo"
+interval = 300000
+fullupdate = 86400000
+webhook-secret = "secret"
+
+# cherry pick config
+cherry-pick = false
+dryrun = true
+cherry-pick-rule = "needs-cherry-pick-([0-9.]+)"
+cherry-pick-release = "release-[verssion]"
+cherry-type-label = "type/[version] cherry-pick"
+cherry-replace-label = "already-cherry-pick-[version]"
+ignore-label = ".*LGT.*"
+cherry-pick-channel = "cherry-picker-test"
+run-test-command = "/run-all-tests"
+
+# label check config
+labelCheck = true
+labelCheckChannel = "label-notice-test"
+defaultChecker = "admin@pingcap.com"
+
+prLimit = true
+maxPrOpened = 3
+prLimitMode = "whitelist"
+prLimitLabel = "S: AutoClose"
+contributorLabel = "T: Contributor ⭐️"
+prLimitOrgs = "pingcap,tikv"
+
+merge = true
+canMergeLabel = "can merge"
+
+watch-file-channel = "watch-file-channel"
+[[repo.watch-file]]
+path = "/go.mod"
+branch = ["master", "release*"]
+[[repo.watch-file]]
+path = "/go.sum"
+branch = ["master", "release*"]
