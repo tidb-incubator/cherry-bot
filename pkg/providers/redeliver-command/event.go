@@ -37,7 +37,8 @@ func (c *CommandRedeliver) ProcessIssueCommentEvent(event *github.IssueCommentEv
 	if !strings.Contains(comment, "/run") &&
 		!strings.Contains(comment, "/test") &&
 		!strings.Contains(comment, "/bench") &&
-		!strings.Contains(comment, "/release") {
+		!strings.Contains(comment, "/release") &&
+		!strings.Contains(comment, "/assign") {
 		comment = ""
 	}
 	if comment == "" {
@@ -46,11 +47,11 @@ func (c *CommandRedeliver) ProcessIssueCommentEvent(event *github.IssueCommentEv
 	githubComment := &github.IssueComment{
 		Body: &comment,
 	}
-	IssueInfo := fmt.Sprintf("%s/%s #%d", c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber())
+	issueInfo := fmt.Sprintf("%s/%s #%d", c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber())
 	if _, _, err := c.opr.Github.Issues.CreateComment(context.Background(),
 		c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber(), githubComment); err != nil {
-		log.Println("error occured when redeliver command in %s, %s", IssueInfo, err)
+		log.Printf("error occured when redeliver command in %s, %s\n", issueInfo, err)
 	} else {
-		log.Println("redeliver command success, pull %s", IssueInfo)
+		log.Printf("redeliver command success, pull %s\n", issueInfo)
 	}
 }
