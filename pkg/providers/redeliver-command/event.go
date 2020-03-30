@@ -37,8 +37,7 @@ func (c *CommandRedeliver) ProcessIssueCommentEvent(event *github.IssueCommentEv
 	if !strings.Contains(comment, "/run") &&
 		!strings.Contains(comment, "/test") &&
 		!strings.Contains(comment, "/bench") &&
-		!strings.Contains(comment, "/release") &&
-		!strings.Contains(comment, "/assign") {
+		!strings.Contains(comment, "/release") {
 		comment = ""
 	}
 	if comment == "" {
