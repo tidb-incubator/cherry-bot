@@ -6,6 +6,7 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/pkg/types"
 
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/approve"
+	"github.com/pingcap-incubator/cherry-bot/pkg/providers/assign"
 	autoUpdate "github.com/pingcap-incubator/cherry-bot/pkg/providers/auto-update"
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/cherry"
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/contributor"
@@ -41,6 +42,7 @@ type Middleware struct {
 	Approve          *approve.Approve
 	Contributor      *contributor.Contributor
 	FileWatcher      *fileWatcher.Watcher
+	Assign           *assign.Assign
 }
 
 type bot struct {
@@ -87,6 +89,7 @@ func InitBot(repo *config.RepoConfig, opr *operator.Operator) Bot {
 			Approve:          approve.Init(repo, opr),
 			Contributor:      contributor.Init(repo, opr),
 			FileWatcher:      fileWatcher.Init(repo, opr),
+			Assign:           assign.Init(repo, opr),
 		},
 	}
 }
