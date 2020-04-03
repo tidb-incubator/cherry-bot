@@ -3,12 +3,15 @@ package cherry
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"github.com/pingcap-incubator/cherry-bot/util"
 
 	"github.com/google/go-github/v29/github"
 	"github.com/pkg/errors"
 )
+
+const cherryPickTrigger = "/run-cherry-picker"
 
 func (cherry *cherry) ProcessPullRequest(pr *github.PullRequest) {
 	// status update
@@ -55,14 +58,15 @@ func (cherry *cherry) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 }
 
 func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
-	if *event.Comment.Body != "/run-cherry-picker" {
+	if strings.Trim(event.GetComment().GetBody(), " ") != cherryPickTrigger {
 		return
 	}
 	login := event.GetSender().GetLogin()
 
-	if cherry.opr.Member.IfMember(login) || *event.Issue.User.Login == *event.Comment.User.Login {
+	number := event.GetIssue().GetNumber()
+	if cherry.opr.Member.IfMember(login) || event.GetIssue().GetUser().GetLogin() == event.GetComment().GetUser().GetLogin() {
 		pr, _, err := cherry.opr.Github.PullRequests.Get(context.Background(),
-			cherry.owner, cherry.repo, *event.Issue.Number)
+			cherry.owner, cherry.repo, number)
 		if err != nil {
 			util.Error(errors.Wrap(err, "issue comment get PR"))
 			return
@@ -71,8 +75,8 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 			return
 		}
 		for _, label := range pr.Labels {
-			target, version, err := cherry.getTarget(*label.Name)
-			util.Println("label is", *label.Name)
+			target, version, err := cherry.getTarget(label.GetName())
+			util.Println("label is", label.GetName())
 			if err == nil {
 				util.Println("ready to cherry pick via command", target, version)
 				if err := cherry.cherryPick(pr, target, version, false); err != nil {
@@ -80,5 +84,7 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 				}
 			}
 		}
+	} else {
+		util.Println("%s/%s#%d %s don't have access to run %s", cherry.owner, cherry.repo, number, login, cherryPickTrigger)
 	}
 }

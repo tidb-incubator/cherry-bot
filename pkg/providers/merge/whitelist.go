@@ -76,7 +76,7 @@ func (m *merge) ifInWhiteList(username, base string) bool {
 	if err == nil {
 		isMember, _, er := m.opr.Github.Teams.IsTeamMember(context.Background(), team.GetID(), username)
 		if er == nil {
-			isMember
+			return isMember
 		}
 	}
 	return false
