@@ -58,12 +58,9 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 	if *event.Comment.Body != "/run-cherry-picker" {
 		return
 	}
-	isMember, _, err := cherry.opr.Github.Organizations.IsMember(context.Background(),
-		"pingcap", *event.Comment.User.Login)
-	if err != nil {
-		isMember = false
-	}
-	if isMember || *event.Issue.User.Login == *event.Comment.User.Login {
+	login := event.GetSender().GetLogin()
+
+	if cherry.opr.Member.IfMember(login) || *event.Issue.User.Login == *event.Comment.User.Login {
 		pr, _, err := cherry.opr.Github.PullRequests.Get(context.Background(),
 			cherry.owner, cherry.repo, *event.Issue.Number)
 		if err != nil {

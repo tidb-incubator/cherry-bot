@@ -39,27 +39,8 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 
 	if event.Comment.GetBody() == autoMergeCommand || event.Comment.GetBody() == autoMergeAlias {
 		// command only for org members
-		var (
-			isMember bool
-			err      error
-		)
-
-		isMember, _, err = m.opr.Github.Organizations.IsMember(context.Background(),
-			"pingcap", *event.Comment.User.Login)
-		if err != nil {
-			util.Error(err)
-			isMember = false
-		}
-		if !isMember {
-			isMember, _, err = m.opr.Github.Organizations.IsMember(context.Background(),
-				"tikv", *event.Comment.User.Login)
-			if err != nil {
-				util.Error(err)
-				isMember = false
-			}
-		}
-
-		if !isMember {
+		login := event.GetSender().GetLogin()
+		if !m.opr.Member.IfMember(login) {
 			return
 		}
 
@@ -69,7 +50,7 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 			util.Error(errors.Wrap(err, "issue comment get PR"))
 			return
 		}
-		login := event.GetSender().GetLogin()
+
 		if !m.ifInWhiteList(login, pr.GetBase().GetRef()) {
 			util.Error(m.addGithubComment(pr, fmt.Sprintf(noAccessComment, login)))
 			return

@@ -28,4 +28,6 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, cfg.Repos["owner-repo"].WatchFileChannel, "watch-file-channel", "read watch-file-channel")
 	assert.Equal(t, cfg.Repos["owner_1-repo_1"].WebhookSecret, "secret_1", "wrong repo secret")
 	assert.Equal(t, cfg.Repos["owner_1-repo_1"].WatchFileChannel, "watch-file-channel-1", "read watch-file-channel")
+	assert.Equal(t, cfg.Member.Orgs, []string{"pingcap"}, "read member orgs")
+	assert.Equal(t, cfg.Member.Users, []string{"sre-bot"}, "read member users")
 }
