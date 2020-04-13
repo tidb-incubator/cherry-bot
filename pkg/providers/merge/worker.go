@@ -26,6 +26,7 @@ func (m *merge) processPREvent(event *github.PullRequestEvent) {
 		PrID:      *pr.Number,
 		Owner:     m.owner,
 		Repo:      m.repo,
+		BaseRef:   event.GetPullRequest().GetBase().GetRef(),
 		Status:    false,
 		CreatedAt: time.Now(),
 	}
@@ -80,40 +81,28 @@ func (m *merge) startPolling() {
 	ticker := time.NewTicker(pollingInterval)
 	go func() {
 		for range ticker.C {
+			var wg sync.WaitGroup
+
 			jobs := m.getMergeJobs()
 			if len(jobs) == 0 {
 				continue
 			}
 
-			var job *AutoMerge
-			for _, model := range jobs {
-				if model.Started {
-					job = model
-				}
-			}
-			if job == nil {
-				job = jobs[0]
-				m.startJob(job)
-			}
+			classificationClassList := m.classifyPR(jobs)
 
-			var wg sync.WaitGroup
-
-			classificationClassList, prSort := m.classifyPR(jobs)
-			for _, sha := range prSort {
+			for _, job := range classificationClassList {
 				wg.Add(1)
 
-				go func(sha1 string) {
-					for _, pr := range classificationClassList[sha1] {
-						ifComplete := m.checkPR(pr)
-						if ifComplete {
-							pr.Status = true
-							if err := m.saveModel(pr); err != nil {
-								util.Error(errors.Wrap(err, "merge polling job"))
-							}
+				go func(job *AutoMerge) {
+					ifComplete := m.checkPR(job)
+					if ifComplete {
+						job.Status = true
+						if err := m.saveModel(job); err != nil {
+							util.Error(errors.Wrap(err, "merge polling job"))
 						}
 					}
 					wg.Done()
-				}(sha)
+				}(job)
 			}
 
 			wg.Wait()
@@ -121,18 +110,20 @@ func (m *merge) startPolling() {
 	}()
 }
 
-func (m *merge) classifyPR(jobs []*AutoMerge) (jobListOfPR map[string][]*AutoMerge, prSort []string) {
-	jobListOfPR = make(map[string][]*AutoMerge, 0)
+func (m *merge) classifyPR(jobs []*AutoMerge) (jobListOfPR map[string]*AutoMerge) {
+	jobListOfPR = make(map[string]*AutoMerge, 0)
 	for _, mergeJob := range jobs {
-		pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
-		if err != nil {
-			util.Error(errors.Wrap(err, "checking PR if can be merged"))
-			continue
+		baseRef := mergeJob.BaseRef
+		if _, ok := jobListOfPR[baseRef]; !ok && mergeJob.Started {
+			jobListOfPR[baseRef] = mergeJob
 		}
-		if _, ok := jobListOfPR[*pr.Base.SHA]; !ok {
-			prSort = append(prSort, *pr.Base.SHA)
+	}
+
+	for _, mergeJob := range jobs {
+		baseRef := mergeJob.BaseRef
+		if _, ok := jobListOfPR[baseRef]; !ok {
+			jobListOfPR[baseRef] = mergeJob
 		}
-		jobListOfPR[*pr.Base.SHA] = append(jobListOfPR[*pr.Base.SHA], mergeJob)
 	}
 	return
 }

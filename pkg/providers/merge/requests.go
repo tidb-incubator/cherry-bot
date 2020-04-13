@@ -27,6 +27,7 @@ type AutoMerge struct {
 	PrID      int       `gorm:"column:pull_number"`
 	Owner     string    `gorm:"column:owner"`
 	Repo      string    `gorm:"column:repo"`
+	BaseRef   string    `gorm:"column:base_ref"`
 	Started   bool      `gorm:"column:started"`
 	Status    bool      `gorm:"column:status"`
 	CreatedAt time.Time `gorm:"column:created_at"`
