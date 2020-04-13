@@ -3,6 +3,7 @@ package merge
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/pingcap-incubator/cherry-bot/util"
@@ -95,15 +96,45 @@ func (m *merge) startPolling() {
 				m.startJob(job)
 			}
 
-			ifComplete := m.checkPR(job)
-			if ifComplete {
-				job.Status = true
-				if err := m.saveModel(job); err != nil {
-					util.Error(errors.Wrap(err, "merge polling job"))
-				}
+			var wg sync.WaitGroup
+
+			classificationClassList, prSort := m.classifyPR(jobs)
+			for _, sha := range prSort {
+				wg.Add(1)
+
+				go func(sha1 string) {
+					for _, pr := range classificationClassList[sha1] {
+						ifComplete := m.checkPR(pr)
+						if ifComplete {
+							pr.Status = true
+							if err := m.saveModel(pr); err != nil {
+								util.Error(errors.Wrap(err, "merge polling job"))
+							}
+						}
+					}
+					wg.Done()
+				}(sha)
 			}
+
+			wg.Wait()
 		}
 	}()
+}
+
+func (m *merge) classifyPR(jobs []*AutoMerge) (jobListOfPR map[string][]*AutoMerge, prSort []string) {
+	jobListOfPR = make(map[string][]*AutoMerge, 0)
+	for _, mergeJob := range jobs {
+		pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
+		if err != nil {
+			util.Error(errors.Wrap(err, "checking PR if can be merged"))
+			continue
+		}
+		if _, ok := jobListOfPR[*pr.Base.SHA]; !ok {
+			prSort = append(prSort, *pr.Base.SHA)
+		}
+		jobListOfPR[*pr.Base.SHA] = append(jobListOfPR[*pr.Base.SHA], mergeJob)
+	}
+	return
 }
 
 func (m *merge) checkPR(mergeJob *AutoMerge) bool {
