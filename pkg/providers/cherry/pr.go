@@ -3,6 +3,9 @@ package cherry
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pingcap-incubator/cherry-bot/util"
@@ -12,6 +15,12 @@ import (
 )
 
 const day = 24 * time.Hour
+
+var tag2val = map[string]int{
+	"rc": 1,
+	"ga": 2,
+	"":   10, // no tag means stable
+}
 
 func (cherry *cherry) commitLabel(pr *github.PullRequest, label string) error {
 	model, err := cherry.getPullRequest(*pr.Number)
@@ -189,6 +198,12 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 		util.Error(cherry.addGithubLabel(resPr, pr, version))
 		util.Error(cherry.addGithubRequestReviews(resPr, cherry.getReviewers(pr)))
 		util.Error(cherry.replaceGithubLabel(pr, version))
+		if cherry.cfg.CherryPickMilestone {
+			util.Error(cherry.assignMilestone(resPr, version))
+		}
+		if cherry.cfg.CherryPickAssign {
+			util.Error(cherry.assignReviewer(pr, resPr))
+		}
 	}
 
 	updateResPr, _, err := cherry.opr.Github.PullRequests.Get(context.Background(),
@@ -200,4 +215,99 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	util.Error(cherry.prNotice(true, target, pr, updateResPr, "success", ""))
 
 	return nil
+}
+
+func (cherry *cherry) assignReviewer(oldPull *github.PullRequest, newPull *github.PullRequest) error {
+	assigner := oldPull.GetUser()
+	if !cherry.opr.Member.IfMember(assigner.GetLogin()) {
+		reviews, _, err := cherry.opr.Github.PullRequests.ListReviews(context.Background(), cherry.owner, cherry.repo, oldPull.GetNumber(), &github.ListOptions{PerPage: 100})
+		if err != nil {
+			return errors.Wrap(err, "assign reviewer, get reviews failed")
+		}
+		submitAt := time.Time{}
+		for _, review := range reviews {
+			if review.GetSubmittedAt().After(submitAt) {
+				submitAt = review.GetSubmittedAt()
+				assigner = review.GetUser()
+			}
+		}
+	}
+
+	newPull.Assignee = assigner
+	_, _, err := cherry.opr.Github.PullRequests.Edit(context.Background(), cherry.owner, cherry.repo, newPull.GetNumber(), newPull)
+	return errors.Wrap(err, "assign reviewer, update pull request")
+}
+
+func (cherry *cherry) assignMilestone(newPull *github.PullRequest, version string) error {
+	openedMilestones, err := cherry.getAllOpenedMilestones()
+	if err != nil {
+		return errors.Wrap(err, "assign milestone, get milestones")
+	}
+	matchedMilestone := findMatchMilestones(openedMilestones, version)
+	if matchedMilestone == nil {
+		return errors.New("assign milestone, milestone not found")
+	}
+	newPull.Milestone = matchedMilestone
+
+	_, _, err = cherry.opr.Github.PullRequests.Edit(context.Background(), cherry.owner, cherry.repo, newPull.GetNumber(), newPull)
+	return errors.Wrap(err, "assign milestone, update pull request")
+}
+
+func findMatchMilestones(milestones []*github.Milestone, version string) *github.Milestone {
+	r, err := regexp.Compile(fmt.Sprintf(`^v?%s\.(\d+)\-?(.*)$`, version))
+	if err != nil {
+
+		return nil
+	}
+
+	var (
+		m          *github.Milestone
+		subVersion = int(^uint(0) >> 1) // max int
+		versionTag string
+	)
+
+	for _, milestone := range milestones {
+		matches := r.FindStringSubmatch(strings.Trim(strings.ToLower(milestone.GetTitle()), " "))
+		if len(matches) != 3 {
+			continue
+		}
+		matchSubVersion, _ := strconv.Atoi(matches[1])
+		matchVersionTag := matches[2]
+		if matchSubVersion < subVersion {
+			subVersion = matchSubVersion
+			versionTag = matchVersionTag
+			m = milestone
+		}
+		if matchSubVersion == subVersion && compareVersionTag(matchVersionTag, versionTag) {
+			versionTag = matchVersionTag
+			m = milestone
+		}
+	}
+
+	return m
+}
+
+func compareVersionTag(tag1, tag2 string) bool {
+	if tag1 == tag2 {
+		return false
+	}
+	r := regexp.MustCompile(`^([a-z0-9]*)\.?(.*?)$`)
+	tag1Matches := r.FindStringSubmatch(tag1)
+	tag2Matches := r.FindStringSubmatch(tag2)
+
+	if len(tag1Matches) == 0 && len(tag2Matches) == 0 {
+		return false
+	}
+
+	if len(tag1Matches) != len(tag2Matches) {
+		return len(tag1Matches) > len(tag2Matches)
+	}
+
+	if tag2val[tag1Matches[1]] != tag2val[tag2Matches[1]] {
+		return tag2val[tag1Matches[1]] < tag2val[tag2Matches[1]]
+	}
+
+	tag1SubVersion, _ := strconv.Atoi(tag1Matches[2])
+	tag2SubVersion, _ := strconv.Atoi(tag1Matches[2])
+	return tag1SubVersion < tag2SubVersion
 }

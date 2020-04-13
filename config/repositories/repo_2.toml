@@ -1,6 +1,6 @@
 [[repo]]
-owner = "owner"
-repo = "repo"
+owner = "owner_2"
+repo = "repo_2"
 interval = 300000
 fullupdate = 86400000
 webhook-secret = "secret"
@@ -15,6 +15,8 @@ cherry-replace-label = "already-cherry-pick-[version]"
 ignore-label = ".*LGT.*"
 cherry-pick-channel = "cherry-picker-test"
 run-test-command = "/run-all-tests"
+cherry-pick-milestone = false
+cherry-pick-assign = false
 
 # label check config
 labelCheck = true
