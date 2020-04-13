@@ -16,3 +16,7 @@ hello = false
 [github]
 token = ""
 bot = "cherry-picker"
+
+[member]
+orgs = ["pingcap"]
+users = ["sre-bot"]

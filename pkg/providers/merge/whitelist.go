@@ -2,8 +2,9 @@ package merge
 
 import (
 	"context"
-	"github.com/pingcap-incubator/cherry-bot/util"
 	"time"
+
+	"github.com/pingcap-incubator/cherry-bot/util"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -70,6 +71,7 @@ func (m *merge) ifInWhiteList(username, base string) bool {
 			}
 		}
 	}
+	// FIXME: should not hard code
 	team, _, err := m.opr.Github.Teams.GetTeamBySlug(context.Background(), "pingcap", "owners")
 	if err == nil {
 		isMember, _, er := m.opr.Github.Teams.IsTeamMember(context.Background(), team.GetID(), username)

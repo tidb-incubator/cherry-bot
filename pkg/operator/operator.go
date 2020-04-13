@@ -29,7 +29,7 @@ func InitOperator(cfg *config.Config) *Operator {
 		util.Fatal(errors.Wrap(err, "init context"))
 	}
 	dbConnect := db.CreateDbConnect(cfg.Database)
-	m := member.New(githubClient)
+	m := member.New(githubClient, cfg.Member)
 
 	return &Operator{
 		Config: cfg,

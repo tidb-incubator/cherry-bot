@@ -1,4 +1,4 @@
-package auto_update
+package autoupdate
 
 import (
 	"sync"
@@ -12,6 +12,7 @@ import (
 // AutoUpdate defines methods of auto
 type AutoUpdate interface {
 	ProcessPullRequestEvent(event *github.PullRequestEvent)
+	ProcessIssueCommentEvent(event *github.IssueCommentEvent)
 }
 
 type autoUpdate struct {

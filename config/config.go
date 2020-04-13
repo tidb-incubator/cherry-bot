@@ -3,9 +3,10 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"path"
+
+	"github.com/BurntSushi/toml"
 
 	"github.com/pkg/errors"
 )
@@ -16,6 +17,7 @@ type Config struct {
 	Slack    *Slack
 	Repos    map[string]*RepoConfig
 	Database *Database
+	Member   Member `toml:"member"`
 }
 
 // Redeliver is struct of redeliver rule
@@ -48,7 +50,8 @@ type WatchFile struct {
 // RepoConfig is single repo config
 type RepoConfig struct {
 	// common config
-	GithubBotChannel string `toml:"github-bot-channel"`
+	GithubBotChannel string  `toml:"github-bot-channel"`
+	Member           *Member `toml:"member"`
 	// repo config
 	Owner          string `toml:"owner"`
 	Repo           string `toml:"repo"`
@@ -142,11 +145,18 @@ type Slack struct {
 	Hello     bool
 }
 
+// Member config
+type Member struct {
+	Orgs  []string `toml:"orgs"`
+	Users []string `toml:"users"`
+}
+
 type rawConfig struct {
 	Github   *Github
 	Slack    *Slack
 	Repos    []*RepoConfig `toml:"repo"`
 	Database *Database
+	Member   Member
 	Include  string
 }
 
@@ -166,6 +176,7 @@ func GetConfig(configPath *string) (*Config, error) {
 		Slack:    rawCfg.Slack,
 		Repos:    repos,
 		Database: rawCfg.Database,
+		Member:   rawCfg.Member,
 	}, nil
 }
 func readConfigFile(configPath *string) (*rawConfig, error) {

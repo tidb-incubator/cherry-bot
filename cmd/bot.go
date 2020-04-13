@@ -36,7 +36,7 @@ func main() {
 	}
 
 	defer ctl.Close()
-	ctl.StartBots()
+	ctl.StartBotPolling()
 
 	// api
 	app := iris.Default()

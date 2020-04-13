@@ -34,6 +34,11 @@ func Println(a ...interface{}) {
 	log.Println(a...)
 }
 
+// Printf wrap standard log library function
+func Printf(l string, a ...interface{}) {
+	log.Printf(l, a...)
+}
+
 // Fatal print error info and exit process
 func Fatal(err error) {
 	if err == nil {
