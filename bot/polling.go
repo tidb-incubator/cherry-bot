@@ -20,6 +20,10 @@ const (
 
 // StartPolling init the polling job of a repository
 func (b *bot) StartPolling() {
+	// remove polling here
+	// TODO: remove the ready state and re-design polling function
+	b.ready()
+	return
 	if !b.cfg.CherryPick && !b.cfg.LabelCheck {
 		return
 	}

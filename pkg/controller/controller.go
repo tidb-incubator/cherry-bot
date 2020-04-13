@@ -1,17 +1,18 @@
 package controller
 
 import (
+	"log"
+
 	"github.com/pingcap-incubator/cherry-bot/bot"
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-	"log"
 )
 
 // Controller is cherry picker controller interface
 type Controller interface {
 	GetRepo(key string) *config.RepoConfig
 	GetBot(key string) *bot.Bot
-	StartBots()
+	StartBotPolling()
 	Close()
 }
 
@@ -39,8 +40,8 @@ func initBots(opr *operator.Operator) map[string]*bot.Bot {
 	return bots
 }
 
-// StartBots run polling job
-func (ctl *controller) StartBots() {
+// StartBotPolling run polling job
+func (ctl *controller) StartBotPolling() {
 	for _, bot := range (*ctl).Bots {
 		go (*bot).StartPolling()
 	}

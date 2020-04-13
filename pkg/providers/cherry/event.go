@@ -61,9 +61,11 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 	if strings.Trim(event.GetComment().GetBody(), " ") != cherryPickTrigger {
 		return
 	}
-	login := event.GetSender().GetLogin()
 
-	number := event.GetIssue().GetNumber()
+	var (
+		login  = event.GetSender().GetLogin()
+		number = event.GetIssue().GetNumber()
+	)
 	if cherry.opr.Member.IfMember(login) || event.GetIssue().GetUser().GetLogin() == event.GetComment().GetUser().GetLogin() {
 		pr, _, err := cherry.opr.Github.PullRequests.Get(context.Background(),
 			cherry.owner, cherry.repo, number)
@@ -85,6 +87,6 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 			}
 		}
 	} else {
-		util.Println("%s/%s#%d %s don't have access to run %s", cherry.owner, cherry.repo, number, login, cherryPickTrigger)
+		util.Printf("%s/%s#%d %s don't have access to run %s", cherry.owner, cherry.repo, number, login, cherryPickTrigger)
 	}
 }

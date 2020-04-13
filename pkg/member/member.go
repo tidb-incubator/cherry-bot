@@ -33,6 +33,7 @@ func New(github *github.Client, member config.Member) *Member {
 	return &Member{
 		cache:  make(map[string]*user),
 		github: github,
+		member: member,
 	}
 }
 

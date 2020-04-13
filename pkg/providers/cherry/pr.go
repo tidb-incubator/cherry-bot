@@ -89,6 +89,7 @@ func (cherry *cherry) commitMerge(pr *github.PullRequest) error {
 
 func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version string, byLabel bool) error {
 	if !cherry.ready {
+		util.Printf("%s/%s#%d cherry pick not ready", cherry.owner, cherry.repo, pr.GetNumber())
 		return nil
 	}
 	// cherry pick from a branch to itself
@@ -106,6 +107,8 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	if byLabel && pr.MergedAt != nil && pr.MergedAt.Before(time.Now().Add(-2*day)) {
 		return nil
 	}
+
+	util.Printf("%s/%s#%d cherry pick locked", cherry.owner, cherry.repo, pr.GetNumber())
 	cherry.Lock()
 	defer cherry.Unlock()
 
