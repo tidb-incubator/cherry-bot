@@ -88,9 +88,9 @@ func (m *merge) startPolling() {
 				continue
 			}
 
-			classificationClassList := m.classifyPR(jobs)
+			classificationJobsList := m.classifyPR(jobs)
 
-			for _, job := range classificationClassList {
+			for _, job := range classificationJobsList {
 				wg.Add(1)
 
 				go func(job *AutoMerge) {

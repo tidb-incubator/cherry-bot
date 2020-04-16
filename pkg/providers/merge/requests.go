@@ -148,18 +148,17 @@ func (m *merge) addCanMerge(pull *github.PullRequest) error {
 }
 
 func (m *merge) queueComment(pull *github.PullRequest) error {
-	var queue []string
-	for _, job := range m.getMergeJobs() {
-		if job.PrID == pull.GetNumber() {
-			break
-		}
-		queue = append(queue, fmt.Sprintf("%d", job.PrID))
-	}
-	if len(queue) == 0 {
+	jobs := m.getMergeJobs()
+	if len(jobs) == 0 {
 		return nil
 	}
-	comment := fmt.Sprintf("Your auto merge job has been accepted, waiting for %s",
-		strings.Join(queue, ", "))
+	comment := "Your auto merge job has been accepted, waiting for:\n"
+
+	classificationJobsList := m.classifyPR(jobs)
+	for _, job := range classificationJobsList {
+		comment += fmt.Sprintf(" * %s \n", job.BaseRef)
+	}
+
 	return errors.Wrap(m.addGithubComment(pull, comment), "queue comment")
 }
 
