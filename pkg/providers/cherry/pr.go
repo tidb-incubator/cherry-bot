@@ -256,7 +256,6 @@ func (cherry *cherry) assignMilestone(newPull *github.PullRequest, version strin
 func findMatchMilestones(milestones []*github.Milestone, version string) *github.Milestone {
 	r, err := regexp.Compile(fmt.Sprintf(`^v?%s\.(\d+)\-?(.*)$`, version))
 	if err != nil {
-
 		return nil
 	}
 
