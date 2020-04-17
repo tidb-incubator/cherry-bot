@@ -246,10 +246,10 @@ func (cherry *cherry) assignMilestone(newPull *github.PullRequest, version strin
 	if matchedMilestone == nil {
 		return errors.New("assign milestone, milestone not found")
 	}
-	util.Println("milestone found", matchedMilestone.GetTitle())
-	newPull.Milestone = matchedMilestone
 
-	_, _, err = cherry.opr.Github.PullRequests.Edit(context.Background(), cherry.owner, cherry.repo, newPull.GetNumber(), newPull)
+	_, _, err = cherry.opr.Github.Issues.Edit(context.Background(), cherry.owner, cherry.repo, newPull.GetNumber(), &github.IssueRequest{
+		Milestone: matchedMilestone.Number,
+	})
 	return errors.Wrap(err, "assign milestone, update pull request")
 }
 
