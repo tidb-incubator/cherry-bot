@@ -27,6 +27,7 @@ type AutoMerge struct {
 	PrID      int       `gorm:"column:pull_number"`
 	Owner     string    `gorm:"column:owner"`
 	Repo      string    `gorm:"column:repo"`
+	BaseRef   string    `gorm:"column:base_ref"`
 	Started   bool      `gorm:"column:started"`
 	Status    bool      `gorm:"column:status"`
 	CreatedAt time.Time `gorm:"column:created_at"`
@@ -147,18 +148,27 @@ func (m *merge) addCanMerge(pull *github.PullRequest) error {
 }
 
 func (m *merge) queueComment(pull *github.PullRequest) error {
-	var queue []string
-	for _, job := range m.getMergeJobs() {
-		if job.PrID == pull.GetNumber() {
-			break
+	var (
+		baseRef     = pull.GetBase().GetRef()
+		jobs        = m.getMergeJobs()
+		waitingJobs []*AutoMerge
+	)
+
+	for _, job := range jobs {
+		if job.PrID != pull.GetNumber() && job.BaseRef == baseRef {
+			waitingJobs = append(waitingJobs, job)
 		}
-		queue = append(queue, fmt.Sprintf("%d", job.PrID))
 	}
-	if len(queue) == 0 {
+
+	if len(waitingJobs) == 0 {
 		return nil
 	}
-	comment := fmt.Sprintf("Your auto merge job has been accepted, waiting for %s",
-		strings.Join(queue, ", "))
+	comment := "Your auto merge job has been accepted, waiting for:\n"
+
+	for _, job := range waitingJobs {
+		comment += fmt.Sprintf("* %d \n", job.PrID)
+	}
+
 	return errors.Wrap(m.addGithubComment(pull, comment), "queue comment")
 }
 

@@ -60,6 +60,7 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 			PrID:      pr.GetNumber(),
 			Owner:     m.owner,
 			Repo:      m.repo,
+			BaseRef:   pr.GetBase().GetRef(),
 			Status:    false,
 			CreatedAt: time.Now(),
 		}

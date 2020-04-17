@@ -3,6 +3,7 @@ package merge
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/pingcap-incubator/cherry-bot/util"
@@ -25,6 +26,7 @@ func (m *merge) processPREvent(event *github.PullRequestEvent) {
 		PrID:      *pr.Number,
 		Owner:     m.owner,
 		Repo:      m.repo,
+		BaseRef:   event.GetPullRequest().GetBase().GetRef(),
 		Status:    false,
 		CreatedAt: time.Now(),
 	}
@@ -79,31 +81,55 @@ func (m *merge) startPolling() {
 	ticker := time.NewTicker(pollingInterval)
 	go func() {
 		for range ticker.C {
+			var wg sync.WaitGroup
+
 			jobs := m.getMergeJobs()
 			if len(jobs) == 0 {
 				continue
 			}
 
-			var job *AutoMerge
-			for _, model := range jobs {
-				if model.Started {
-					job = model
-				}
-			}
-			if job == nil {
-				job = jobs[0]
-				m.startJob(job)
+			classificationJobsList := m.classifyPR(jobs)
+
+			for _, job := range classificationJobsList {
+				wg.Add(1)
+
+				go func(job *AutoMerge) {
+					if !job.Started {
+						m.startJob(job)
+						job.Started = true
+					}
+					ifComplete := m.checkPR(job)
+					if ifComplete {
+						job.Status = true
+						if err := m.saveModel(job); err != nil {
+							util.Error(errors.Wrap(err, "merge polling job"))
+						}
+					}
+					wg.Done()
+				}(job)
 			}
 
-			ifComplete := m.checkPR(job)
-			if ifComplete {
-				job.Status = true
-				if err := m.saveModel(job); err != nil {
-					util.Error(errors.Wrap(err, "merge polling job"))
-				}
-			}
+			wg.Wait()
 		}
 	}()
+}
+
+func (m *merge) classifyPR(jobs []*AutoMerge) (jobListOfPR map[string]*AutoMerge) {
+	jobListOfPR = make(map[string]*AutoMerge, 0)
+	for _, mergeJob := range jobs {
+		baseRef := mergeJob.BaseRef
+		if _, ok := jobListOfPR[baseRef]; !ok && mergeJob.Started {
+			jobListOfPR[baseRef] = mergeJob
+		}
+	}
+
+	for _, mergeJob := range jobs {
+		baseRef := mergeJob.BaseRef
+		if _, ok := jobListOfPR[baseRef]; !ok {
+			jobListOfPR[baseRef] = mergeJob
+		}
+	}
+	return
 }
 
 func (m *merge) checkPR(mergeJob *AutoMerge) bool {

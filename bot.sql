@@ -73,6 +73,7 @@ CREATE TABLE `auto_merges` (
   `pull_number` int(11) DEFAULT NULL,
   `owner` varchar(1023) COLLATE utf8_bin DEFAULT NULL,
   `repo` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `base_ref` varchar(1023) COLLATE utf8_bin NOT NULL,
   `started` tinyint(1) NOT NULL,
   `status` tinyint(1) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
