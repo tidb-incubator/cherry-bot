@@ -94,6 +94,10 @@ func (m *merge) startPolling() {
 				wg.Add(1)
 
 				go func(job *AutoMerge) {
+					if !job.Started {
+						m.startJob(job)
+						job.Started = true
+					}
 					ifComplete := m.checkPR(job)
 					if ifComplete {
 						job.Status = true
