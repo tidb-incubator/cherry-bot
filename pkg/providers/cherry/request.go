@@ -641,6 +641,32 @@ func (cherry *cherry) getSlackByGithub(github string) string {
 	return ""
 }
 
+func (cherry *cherry) getAllOpenedMilestones() ([]*github.Milestone, error) {
+	var (
+		page    = 0
+		perpage = 100
+		batch   []*github.Milestone
+		all     []*github.Milestone
+		err     error
+	)
+
+	for page == 0 || len(batch) == perpage {
+		page++
+		batch, _, err = cherry.opr.Github.Issues.ListMilestones(context.Background(), cherry.owner, cherry.repo, &github.MilestoneListOptions{
+			State: "open",
+			ListOptions: github.ListOptions{
+				Page:    page,
+				PerPage: perpage,
+			},
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "fetch all milestones")
+		}
+		all = append(all, batch...)
+	}
+	return all, nil
+}
+
 func do(dir string, c string, args ...string) (string, error) {
 	cmd := exec.Command(c, args...)
 	cmd.Dir = dir

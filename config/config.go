@@ -60,16 +60,18 @@ type RepoConfig struct {
 	WebhookSecret  string `toml:"webhook-secret"`
 	RunTestCommand string `toml:"run-test-command"`
 	// cherry picker config
-	CherryPick        bool   `toml:"cherry-pick"`
-	Dryrun            bool   `toml:"dryrun"`
-	Rule              string `toml:"cherry-pick-rule"`
-	Release           string `toml:"cherry-pick-release"`
-	TypeLabel         string `toml:"cherry-type-label"`
-	ReplaceLabel      string `toml:"cherry-replace-label"`
-	IgnoreLabel       string `toml:"ignore-label"`
-	CherryPickChannel string `toml:"cherry-pick-channel"`
-	CherryConflict    bool   `toml:"cherry-pick-conflict"`
-	SquashMerge       bool   `toml:"cherry-pick-squash"`
+	CherryPick          bool   `toml:"cherry-pick"`
+	Dryrun              bool   `toml:"dryrun"`
+	Rule                string `toml:"cherry-pick-rule"`
+	Release             string `toml:"cherry-pick-release"`
+	TypeLabel           string `toml:"cherry-type-label"`
+	ReplaceLabel        string `toml:"cherry-replace-label"`
+	IgnoreLabel         string `toml:"ignore-label"`
+	CherryPickChannel   string `toml:"cherry-pick-channel"`
+	CherryConflict      bool   `toml:"cherry-pick-conflict"`
+	SquashMerge         bool   `toml:"cherry-pick-squash"`
+	CherryPickMilestone bool   `toml:"cherry-pick-milestone"`
+	CherryPickAssign    bool   `toml:"cherry-pick-assign"`
 	// label check config
 	LabelCheck          bool   `toml:"label-check"`
 	ShortCheckDuration  int    `toml:"short-check-duration"`
