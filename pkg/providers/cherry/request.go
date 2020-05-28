@@ -289,6 +289,7 @@ func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (
 		commit := fmt.Sprintf("%s (#%d)", *pr.Title, *pr.Number)
 		head := fmt.Sprintf("%s:%s", cherry.opr.Config.Github.Bot, newBranch)
 		body := fmt.Sprintf("cherry-pick #%d to %s\n\n---\n\n%s", pr.GetNumber(), target, pr.GetBody())
+		commitMessage := fmt.Sprintf("cherry pick #%d to %s", pr.GetNumber(), target)
 		maintainerCanModify := true
 		draft := false
 
@@ -323,11 +324,15 @@ func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (
 				message = "git add failed"
 				return errors.Wrap(err, message)
 			}
-			if out, err := do(dir, "git", "commit", "-s", "-m", fmt.Sprintf("cherry pick #%d to %s", pr.GetNumber(), target)); err != nil {
+			if out, err := do(dir, "git", "commit", "-s", "-m", commitMessage); err != nil {
 				if !strings.Contains(out, "nothing to commit, working directory clean") {
 					message = "git commit failed"
 					return errors.Wrap(err, message)
 				}
+			}
+			if _, err := do(dir, "git", "commit", "--amend", "-s", "-m", commitMessage); err != nil {
+				message = "git amend failed"
+				return errors.Wrap(err, message)
 			}
 		} else {
 			if _, err := do(dir, "curl", "-o", patchFile, "-sSL",

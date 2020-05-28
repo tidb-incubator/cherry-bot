@@ -182,10 +182,11 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 		return false
 	}
 	for _, check := range checks.CheckRuns {
-		if *check.Status != "completed" {
+		if check.GetStatus() != "completed" {
 			finish = false
 		} else {
-			if *check.Conclusion != "success" {
+			conclusion := check.GetConclusion()
+			if conclusion != "success" && conclusion != "neutral" {
 				success = false
 				util.Println("Tests failed in check-runs", checks)
 			}

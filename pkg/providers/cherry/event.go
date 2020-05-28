@@ -36,18 +36,19 @@ func (cherry *cherry) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 	var err error
 
 	switch *event.Action {
-	// case "labeled":
-	// 	{
-	// 		err = cherry.commitLabel(event.GetPullRequest(), *event.Label.Name)
-	// 	}
-	// case "unlabeled":
-	// 	{
-	// 		{
-	// 			err = cherry.removeLabel(event.GetPullRequest(), event.GetLabel().GetName())
-	// 		}
-	// 	}
+	case "labeled":
+		{
+			err = cherry.commitLabel(event.GetPullRequest(), *event.Label.Name)
+		}
+	case "unlabeled":
+		{
+			{
+				err = cherry.removeLabel(event.GetPullRequest(), event.GetLabel().GetName())
+			}
+		}
 	case "closed":
 		{
+			util.Printf("process cp closed event %s/%s#%d", cherry.owner, cherry.repo, event.GetPullRequest().GetNumber())
 			err = cherry.commitMerge(event.PullRequest)
 		}
 	}

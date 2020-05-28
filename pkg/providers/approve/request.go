@@ -17,6 +17,9 @@ type ApproveRecord struct {
 }
 
 func (a *Approve) canApprove(login string) (bool, error) {
+	if a.opr.Member.IfMember(login) {
+		return true, nil
+	}
 	model := &ApproveRecord{}
 	if err := a.opr.DB.Where("owner = ? AND repo = ? AND github = ?",
 		a.owner, a.repo, login).First(model).Error; err != nil {
