@@ -113,7 +113,8 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	// if pr.MergedAt != nil {
 	// 	util.Println("try creating PR, ID:", *pr.Number, ", merged at", *pr.MergedAt)
 	// }
-	if byLabel && pr.MergedAt != nil && pr.MergedAt.Before(time.Now().Add(-2*day)) {
+	// if byLabel && pr.MergedAt != nil && pr.MergedAt.Before(time.Now().Add(-2*day)) {
+	if byLabel && pr.MergedAt != nil {
 		return nil
 	}
 
