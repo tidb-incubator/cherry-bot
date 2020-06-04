@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/go-github/v29/github"
 	"github.com/jinzhu/gorm"
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
@@ -53,7 +52,7 @@ func (m *merge) RemoveWhiteList(username string) error {
 	return nil
 }
 
-func (m *merge) ifInWhiteList(username string, pr *github.PullRequest) bool {
+func (m *merge) ifInWhiteList(username string) bool {
 	if !m.cfg.ReleaseAccessControl {
 		return true
 	}

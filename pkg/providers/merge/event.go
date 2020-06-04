@@ -45,7 +45,7 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 			return true
 		}
 	}
-	havePermission := m.ifInWhiteList(username, pr)
+	havePermission := m.ifInWhiteList(username)
 	if !havePermission {
 		msg := fmt.Sprintf(noAccessComment, username)
 		util.Error(m.addGithubComment(pr, msg))
