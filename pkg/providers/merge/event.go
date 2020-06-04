@@ -24,7 +24,8 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 	if *event.Action == "labeled" && *event.Label.Name == m.cfg.CanMergeLabel {
 		pr := event.GetPullRequest()
 		login := event.GetSender().GetLogin()
-		if !m.ifInWhiteList(login, pr.GetBase().GetRef()) {
+
+		if !m.ifInWhiteList(login, pr) {
 			util.Error(m.addGithubComment(pr, fmt.Sprintf(noAccessComment, login)))
 			return
 		}
@@ -51,7 +52,7 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 			return
 		}
 
-		if !m.ifInWhiteList(login, pr.GetBase().GetRef()) {
+		if !m.ifInWhiteList(login, pr) {
 			util.Error(m.addGithubComment(pr, fmt.Sprintf(noAccessComment, login)))
 			return
 		}

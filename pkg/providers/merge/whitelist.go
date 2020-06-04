@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/pingcap-incubator/cherry-bot/util"
-
+	"github.com/google/go-github/v29/github"
 	"github.com/jinzhu/gorm"
+	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 )
 
@@ -53,13 +53,21 @@ func (m *merge) RemoveWhiteList(username string) error {
 	return nil
 }
 
-func (m *merge) ifInWhiteList(username, base string) bool {
+func (m *merge) ifInWhiteList(username string, pr *github.PullRequest) bool {
+	base := pr.GetBase().GetRef()
+	if base == "master" {
+		err := m.CanMergeToMaster(m.repo, pr.Labels, username)
+		util.Println("can merge to master,err", err)
+		if err != nil {
+			return false
+		} else {
+			return true
+		}
+	}
 	if !m.cfg.ReleaseAccessControl {
 		return true
 	}
-	if base == "master" {
-		return true
-	}
+
 	whitelist, err := m.GetWhiteList()
 	util.Println(username, whitelist)
 	if err != nil {

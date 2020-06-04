@@ -2,8 +2,9 @@ package merge
 
 import (
 	"context"
-	"github.com/pingcap-incubator/cherry-bot/util"
 	"time"
+
+	"github.com/pingcap-incubator/cherry-bot/util"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
