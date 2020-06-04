@@ -46,7 +46,7 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 		util.Println("get label list failed", err)
 		return errors.Wrap(err, "get whitelist")
 	}
-
+	util.Println("len", len(labelArgs), "value,", labelArgs)
 	if len(labelArgs) == 0 { // any committer can merge this PR
 		return nil
 	}
@@ -56,6 +56,7 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 		canMergeSigs[member.SigID] = true
 	}
 	for _, sigLabel := range sigLabels {
+		util.Println("the label", sigLabel)
 		if canMergeSigs[sigLabel.SigID] {
 			return nil
 		}
