@@ -54,16 +54,6 @@ func (m *merge) RemoveWhiteList(username string) error {
 }
 
 func (m *merge) ifInWhiteList(username string, pr *github.PullRequest) bool {
-	base := pr.GetBase().GetRef()
-	if base == "master" {
-		err := m.CanMergeToMaster(m.repo, pr.Labels, username)
-		util.Println("can merge to master,err", err)
-		if err != nil {
-			return false
-		} else {
-			return true
-		}
-	}
 	if !m.cfg.ReleaseAccessControl {
 		return true
 	}
