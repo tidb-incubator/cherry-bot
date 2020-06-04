@@ -59,7 +59,16 @@ func (cherry *cherry) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 }
 
 func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
-	if strings.Trim(event.GetComment().GetBody(), " ") != cherryPickTrigger {
+	cmd := ""
+	for _, line := range strings.Split(event.GetComment().GetBody(), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			cmd = line
+			break
+		}
+	}
+
+	if cmd != cherryPickTrigger {
 		return
 	}
 
