@@ -33,7 +33,7 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 	}
 	if len(sigMembers) == 0 {
 		util.Println("you are not a committer")
-		return errors.Wrap(nil, "You are not a committer")
+		return errors.New("You are not a committer")
 	}
 
 	// get the labels sig info
@@ -60,5 +60,5 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 			return nil
 		}
 	}
-	return errors.Wrap(nil, "You are not a committer for this part")
+	return errors.New("You are not a committer for this part")
 }
