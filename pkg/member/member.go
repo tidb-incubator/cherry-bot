@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 	"github.com/pingcap-incubator/cherry-bot/config"
 )
 

@@ -12,7 +12,7 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/pkg/types"
 	"github.com/pingcap-incubator/cherry-bot/util"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )
@@ -606,6 +606,9 @@ func (cherry *cherry) getReviewers(pr *github.PullRequest) github.ReviewersReque
 	if reviews, _, err := cherry.opr.Github.PullRequests.ListReviews(context.Background(),
 		cherry.owner, cherry.repo, pr.GetNumber(), nil); err == nil {
 		for _, review := range reviews {
+			if !ifReviewer(review.GetAuthorAssociation()) {
+				continue
+			}
 			username := review.GetUser().GetLogin()
 			if username != author {
 				if !checkExist(username, reviewers) {
@@ -686,4 +689,13 @@ func checkExist(item string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+func ifReviewer(association string) bool {
+	switch association {
+	case "COLLABORATOR", "MEMBER", "OWNER":
+		return true
+	default:
+		return false
+	}
 }

@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 	"github.com/pkg/errors"
 )
 

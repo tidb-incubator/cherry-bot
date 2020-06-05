@@ -1,7 +1,7 @@
 package merge
 
 import (
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 )
 
 func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {

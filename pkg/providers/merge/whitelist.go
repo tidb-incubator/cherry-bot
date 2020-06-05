@@ -1,7 +1,6 @@
 package merge
 
 import (
-	"context"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -69,12 +68,14 @@ func (m *merge) ifInWhiteList(username string) bool {
 		}
 	}
 	// FIXME: should not hard code
-	team, _, err := m.opr.Github.Teams.GetTeamBySlug(context.Background(), "pingcap", "owners")
-	if err == nil {
-		isMember, _, er := m.opr.Github.Teams.IsTeamMember(context.Background(), team.GetID(), username)
-		if er == nil {
-			return isMember
-		}
-	}
+	// the following code is outdated
+	// and should be removed
+	// team, _, err := m.opr.Github.Teams.GetTeamBySlug(context.Background(), "pingcap", "owners")
+	// if err == nil {
+	// 	isMember, _, er := m.opr.Github.Teams.IsTeamMember(context.Background(), team.GetID(), username)
+	// 	if er == nil {
+	// 		return isMember
+	// 	}
+	// }
 	return false
 }

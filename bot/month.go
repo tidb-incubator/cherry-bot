@@ -8,7 +8,7 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/pkg/types"
 	"github.com/pingcap-incubator/cherry-bot/util"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )

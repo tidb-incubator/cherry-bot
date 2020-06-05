@@ -6,7 +6,7 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v31/github"
 )
 
 // Cherry defines methods of cherry pick
