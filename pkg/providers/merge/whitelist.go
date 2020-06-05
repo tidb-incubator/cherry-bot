@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/pingcap-incubator/cherry-bot/util"
-
 	"github.com/jinzhu/gorm"
+	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 )
 
@@ -53,13 +52,11 @@ func (m *merge) RemoveWhiteList(username string) error {
 	return nil
 }
 
-func (m *merge) ifInWhiteList(username, base string) bool {
+func (m *merge) ifInWhiteList(username string) bool {
 	if !m.cfg.ReleaseAccessControl {
 		return true
 	}
-	if base == "master" {
-		return true
-	}
+
 	whitelist, err := m.GetWhiteList()
 	util.Println(username, whitelist)
 	if err != nil {

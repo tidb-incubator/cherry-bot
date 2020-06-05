@@ -24,12 +24,33 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 	if *event.Action == "labeled" && *event.Label.Name == m.cfg.CanMergeLabel {
 		pr := event.GetPullRequest()
 		login := event.GetSender().GetLogin()
-		if !m.ifInWhiteList(login, pr.GetBase().GetRef()) {
-			util.Error(m.addGithubComment(pr, fmt.Sprintf(noAccessComment, login)))
+
+		if !m.havePermission(login, pr) {
 			return
 		}
 		m.processPREvent(event)
 	}
+}
+
+func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
+	base := pr.GetBase().GetRef()
+	if base == "master" {
+		err := m.CanMergeToMaster(m.repo, pr.Labels, username)
+		if err != nil {
+			msg := fmt.Sprintf(noAccessComment, username)
+			msg = fmt.Sprintf("%s %s", msg, err)
+			util.Error(m.addGithubComment(pr, msg))
+			return false
+		} else {
+			return true
+		}
+	}
+	havePermission := m.ifInWhiteList(username)
+	if !havePermission {
+		msg := fmt.Sprintf(noAccessComment, username)
+		util.Error(m.addGithubComment(pr, msg))
+	}
+	return havePermission
 }
 
 func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
@@ -50,9 +71,7 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 			util.Error(errors.Wrap(err, "issue comment get PR"))
 			return
 		}
-
-		if !m.ifInWhiteList(login, pr.GetBase().GetRef()) {
-			util.Error(m.addGithubComment(pr, fmt.Sprintf(noAccessComment, login)))
+		if !m.havePermission(login, pr) {
 			return
 		}
 		util.Error(m.addCanMerge(pr))
