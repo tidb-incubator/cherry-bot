@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v32/github"
 )
 
 func (n *Notify) ProcessIssuesEvent(event *github.IssuesEvent) {
