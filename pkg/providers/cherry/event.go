@@ -7,7 +7,7 @@ import (
 
 	"github.com/pingcap-incubator/cherry-bot/util"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v32/github"
 	"github.com/pkg/errors"
 )
 
@@ -59,7 +59,16 @@ func (cherry *cherry) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 }
 
 func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
-	if strings.Trim(event.GetComment().GetBody(), " ") != cherryPickTrigger {
+	cmd := ""
+	for _, line := range strings.Split(event.GetComment().GetBody(), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			cmd = line
+			break
+		}
+	}
+
+	if cmd != cherryPickTrigger {
 		return
 	}
 

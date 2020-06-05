@@ -5,6 +5,7 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
 	"github.com/pingcap-incubator/cherry-bot/pkg/types"
 
+	addLabel "github.com/pingcap-incubator/cherry-bot/pkg/providers/add-label"
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/approve"
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/assign"
 	autoUpdate "github.com/pingcap-incubator/cherry-bot/pkg/providers/auto-update"
@@ -43,6 +44,7 @@ type Middleware struct {
 	Contributor      *contributor.Contributor
 	FileWatcher      *fileWatcher.Watcher
 	Assign           *assign.Assign
+	AddLabel         *addLabel.Label
 }
 
 type bot struct {
@@ -90,6 +92,7 @@ func InitBot(repo *config.RepoConfig, opr *operator.Operator) Bot {
 			Contributor:      contributor.Init(repo, opr),
 			FileWatcher:      fileWatcher.Init(repo, opr),
 			Assign:           assign.Init(repo, opr),
+			AddLabel:         addLabel.Init(repo, opr),
 		},
 	}
 }

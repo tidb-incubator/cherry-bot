@@ -10,7 +10,7 @@ import (
 
 	"github.com/pingcap-incubator/cherry-bot/util"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v32/github"
 	"github.com/pkg/errors"
 )
 
@@ -83,6 +83,7 @@ func (cherry *cherry) commitMerge(pr *github.PullRequest) error {
 			// }
 			for _, l := range model.Label {
 				target, version, err := cherry.getTarget(l)
+				fmt.Printf("cp %s/%s#%d to %s version %s\n", cherry.owner, cherry.repo, pr.GetNumber(), target, version)
 				if err != nil {
 					util.Error(errors.Wrap(err, "commit merge"))
 				} else if version != "" {
@@ -114,7 +115,7 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	// 	util.Println("try creating PR, ID:", *pr.Number, ", merged at", *pr.MergedAt)
 	// }
 	// if byLabel && pr.MergedAt != nil && pr.MergedAt.Before(time.Now().Add(-2*day)) {
-	if byLabel && pr.MergedAt != nil {
+	if byLabel && pr.MergedAt == nil {
 		return nil
 	}
 

@@ -3,7 +3,7 @@ package bot
 import (
 	"github.com/pingcap-incubator/cherry-bot/util"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v32/github"
 	"github.com/pkg/errors"
 )
 
@@ -96,6 +96,8 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 	if b.cfg.AutoUpdate {
 		b.Middleware.AutoUpdate.ProcessIssueCommentEvent(event)
 	}
+
+	b.Middleware.AddLabel.ProcessIssueCommentEvent(event)
 
 	b.Middleware.Assign.ProcessIssueCommentEvent(event)
 

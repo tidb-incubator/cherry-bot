@@ -1,7 +1,7 @@
 package pullstatus
 
 import (
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v32/github"
 )
 
 func (p *pullStatus) ProcessPullRequestEvent(event *github.PullRequestEvent) {

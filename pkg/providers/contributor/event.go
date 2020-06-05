@@ -3,7 +3,7 @@ package contributor
 import (
 	"github.com/pingcap-incubator/cherry-bot/util"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v32/github"
 	"github.com/pkg/errors"
 )
 
