@@ -32,6 +32,7 @@ prLimitOrgs = "pingcap,tikv"
 
 merge = true
 canMergeLabel = "can merge"
+merge-sig-control = true
 
 watch-file-channel = "watch-file-channel-1"
 [[repo.watch-file]]
