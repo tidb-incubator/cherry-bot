@@ -35,6 +35,9 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 	base := pr.GetBase().GetRef()
 	if base == "master" {
+		if !m.cfg.MergeSIGControl {
+			return true
+		}
 		err := m.CanMergeToMaster(m.repo, pr.Labels, username)
 		if err != nil {
 			msg := fmt.Sprintf(noAccessComment, username)

@@ -94,6 +94,7 @@ type RepoConfig struct {
 	CanMergeLabel        string `toml:"can-merge-label"`
 	ReleaseAccessControl bool   `toml:"release-access-control"`
 	SignedOffMessage     bool   `toml:"signed-off-message"`
+	MergeSIGControl      bool   `toml:"merge-sig-control"`
 	// issue redeliver
 	IssueRedeliver bool         `toml:"issue-redeliver"`
 	Redeliver      []*Redeliver `toml:"redeliver"`
