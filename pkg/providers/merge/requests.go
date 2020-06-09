@@ -33,6 +33,26 @@ type AutoMerge struct {
 	CreatedAt time.Time `gorm:"column:created_at"`
 }
 
+// ReleaseVersion for release records
+type ReleaseVersion struct {
+	ID      int        `gorm:"column:id"`
+	Owner   string     `gorm:"column:owner"`
+	Repo    string     `gorm:"column:repo"`
+	Branch  string     `gorm:"column:branch"`
+	Version string     `gorm:"column:version"`
+	Start   *time.Time `gorm:"column:start"`
+	End     *time.Time `gorm:"column:end"`
+}
+
+// ReleaseMember can merge PR to branches during release time
+type ReleaseMember struct {
+	ID     int    `gorm:"column:id"`
+	Owner  string `gorm:"column:owner"`
+	Repo   string `gorm:"column:repo"`
+	Branch string `gorm:"column:branch"`
+	User   string `gorm:"column:user"`
+}
+
 func (m *merge) saveModel(model interface{}) error {
 	ctx := context.Background()
 	return errors.Wrap(util.RetryOnError(ctx, maxRetryTime, func() error {
@@ -69,14 +89,69 @@ func (m *merge) updateBranch(pr *github.PullRequest) (bool, error) {
 	_, _, err = m.opr.Github.PullRequests.UpdateBranch(context.Background(),
 		m.owner, m.repo, *pr.Number, nil)
 	if err != nil {
-		// return true, errors.Wrap(err, "start merge job")
-		if _, ok := err.(*github.AcceptedError); ok {
-			// no need for update branch, continue test
-		} else {
+		// break update branch for errors besides `github.AcceptedError`
+		if _, ok := err.(*github.AcceptedError); !ok {
 			return true, errors.Wrap(err, "update branch")
 		}
 	}
 	return true, nil
+}
+
+func (m *merge) getReleaseVersions(base string) ([]*ReleaseVersion, error) {
+	var releaseVersions []*ReleaseVersion
+	if err := m.opr.DB.Where("owner = ? and repo = ? and branch = ?", m.owner, m.repo,
+		base).Find(&releaseVersions).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, errors.Wrap(err, "get release versions from DB")
+	} else if gorm.IsRecordNotFoundError(err) {
+		return nil, nil
+	}
+	return releaseVersions, nil
+}
+
+func (m *merge) getReleaseMembers(base string) ([]*ReleaseMember, error) {
+	var releaseMembers []*ReleaseMember
+	if err := m.opr.DB.Where("owner = ? and repo = ? and branch = ?", m.owner, m.repo,
+		base).Find(&releaseMembers).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, errors.Wrap(err, "get release members from DB")
+	} else if gorm.IsRecordNotFoundError(err) {
+		return nil, nil
+	}
+	return releaseMembers, nil
+}
+
+func (m *merge) canMergeReleaseVersion(base, user string) (bool, error) {
+	var (
+		errMsg = "can merge release version"
+		now    = time.Now()
+	)
+	releaseVersions, err := m.getReleaseVersions(base)
+	if err != nil {
+		return false, errors.Wrap(err, errMsg)
+	}
+	var releaseVersion *ReleaseVersion
+	for _, r := range releaseVersions {
+		if r.Start != nil && r.Start.Before(now) {
+			if r.End == nil || r.End.After(now) {
+				releaseVersion = r
+				break
+			}
+		}
+	}
+	if releaseVersion == nil {
+		return true, nil
+	}
+	// this branch's release version is in progress
+	// check out if the user has permission to merge it
+	members, err := m.getReleaseMembers(base)
+	if err != nil {
+		return false, errors.Wrap(err, errMsg)
+	}
+	for _, m := range members {
+		if m.User == user {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (m *merge) needUpdateBranch(pr *github.PullRequest) (bool, error) {
