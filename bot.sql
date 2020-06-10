@@ -346,6 +346,62 @@ LOCK TABLES `white_names` WRITE;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
+--
+-- Table structure for table `release_versions`
+--
+
+DROP TABLE IF EXISTS `release_versions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `release_versions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `owner` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `repo` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `branch` varchar(511) COLLATE utf8_bin NOT NULL,
+  `version` varchar(511) COLLATE utf8_bin NOT NULL,
+  `start` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `end` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `release_versions`
+--
+
+LOCK TABLES `release_versions` WRITE;
+/*!40000 ALTER TABLE `release_versions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `release_versions` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+--
+-- Table structure for table `release_members`
+--
+
+DROP TABLE IF EXISTS `release_members`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `release_members` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `owner` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `repo` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `branch` varchar(511) COLLATE utf8_bin NOT NULL,
+  `user` varchar(1023) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `release_members`
+--
+
+LOCK TABLES `release_members` WRITE;
+/*!40000 ALTER TABLE `release_members` DISABLE KEYS */;
+/*!40000 ALTER TABLE `release_members` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;

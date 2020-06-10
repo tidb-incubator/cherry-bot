@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	autoMergeCommand = "/run-auto-merge"
-	autoMergeAlias   = "/merge"
-	noAccessComment  = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
+	autoMergeCommand      = "/run-auto-merge"
+	autoMergeAlias        = "/merge"
+	noAccessComment       = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
+	versionReleaseComment = "The version releasement is in progress."
 )
 
 func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
@@ -35,6 +36,9 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 	base := pr.GetBase().GetRef()
 	if base == "master" {
+		if username == m.opr.Config.Github.Bot {
+			return true
+		}
 		if !m.cfg.MergeSIGControl {
 			return true
 		}
@@ -48,6 +52,18 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 			return true
 		}
 	}
+
+	canMergeRelease, err := m.canMergeReleaseVersion(base, username)
+	if err != nil {
+		util.Error(err)
+		return false
+	}
+	if !canMergeRelease {
+		msg := fmt.Sprintf(noAccessComment, username)
+		util.Error(m.addGithubComment(pr, msg+"\n"+versionReleaseComment))
+		return false
+	}
+
 	havePermission := m.ifInWhiteList(username)
 	if !havePermission {
 		msg := fmt.Sprintf(noAccessComment, username)
