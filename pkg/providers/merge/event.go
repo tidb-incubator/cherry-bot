@@ -36,6 +36,9 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 	base := pr.GetBase().GetRef()
 	if base == "master" {
+		if username == m.opr.Config.Github.Bot {
+			return true
+		}
 		if !m.cfg.MergeSIGControl {
 			return true
 		}
