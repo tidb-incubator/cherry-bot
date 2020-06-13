@@ -43,33 +43,33 @@ func (p *prLimit) processOpenedPR(openedPr *github.PullRequest) error {
 	if author == p.opr.Config.Github.Bot {
 		return nil
 	}
-	if p.cfg.PrLimitMode == "whitelist" {
-		// no limit for whitelist users
-		whitelist, err := p.GetWhiteList()
+	if p.cfg.PrLimitMode == "allowlist" {
+		// no limit for AllowList users
+		AllowList, err := p.GetAllowList()
 		if err != nil {
 			util.Error(errors.Wrap(err, "prlimit process opened PR"))
 			return nil
 		}
-		for _, name := range whitelist {
+		for _, name := range AllowList {
 			if author == name {
 				return nil
 			}
 		}
 	}
-	if p.cfg.PrLimitMode == "blacklist" {
-		// no limit for user not in blacklist
-		blacklist, err := p.GetBlackList()
+	if p.cfg.PrLimitMode == "blocklist" {
+		// no limit for user not in blocklist
+		blocklist, err := p.GetBlockList()
 		if err != nil {
 			util.Error(errors.Wrap(err, "prlimit process opened PR"))
 			return nil
 		}
-		inBlackList := false
-		for _, name := range blacklist {
+		inBlockList := false
+		for _, name := range blocklist {
 			if author == name {
-				inBlackList = true
+				inBlockList = true
 			}
 		}
-		if !inBlackList {
+		if !inBlockList {
 			return nil
 		}
 	}

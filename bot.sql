@@ -36,13 +36,13 @@ LOCK TABLES `approve_records` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `auto_merge_white_names`
+-- Table structure for table `auto_merge_allow_names`
 --
 
-DROP TABLE IF EXISTS `auto_merge_white_names`;
+DROP TABLE IF EXISTS `auto_merge_allow_names`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `auto_merge_white_names` (
+CREATE TABLE `auto_merge_allow_names` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `owner` varchar(1023) COLLATE utf8_bin NOT NULL,
   `repo` varchar(1023) COLLATE utf8_bin NOT NULL,
@@ -53,12 +53,12 @@ CREATE TABLE `auto_merge_white_names` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `auto_merge_white_names`
+-- Dumping data for table `auto_merge_allow_names`
 --
 
-LOCK TABLES `auto_merge_white_names` WRITE;
-/*!40000 ALTER TABLE `auto_merge_white_names` DISABLE KEYS */;
-/*!40000 ALTER TABLE `auto_merge_white_names` ENABLE KEYS */;
+LOCK TABLES `auto_merge_allow_names` WRITE;
+/*!40000 ALTER TABLE `auto_merge_allow_names` DISABLE KEYS */;
+/*!40000 ALTER TABLE `auto_merge_allow_names` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -91,13 +91,13 @@ LOCK TABLES `auto_merges` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `black_names`
+-- Table structure for table `block_names`
 --
 
-DROP TABLE IF EXISTS `black_names`;
+DROP TABLE IF EXISTS `block_names`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `black_names` (
+CREATE TABLE `block_names` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `owner` varchar(1023) COLLATE utf8_bin NOT NULL,
   `repo` varchar(1023) COLLATE utf8_bin NOT NULL,
@@ -108,12 +108,12 @@ CREATE TABLE `black_names` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `black_names`
+-- Dumping data for table `block_names`
 --
 
-LOCK TABLES `black_names` WRITE;
-/*!40000 ALTER TABLE `black_names` DISABLE KEYS */;
-/*!40000 ALTER TABLE `black_names` ENABLE KEYS */;
+LOCK TABLES `block_names` WRITE;
+/*!40000 ALTER TABLE `block_names` DISABLE KEYS */;
+/*!40000 ALTER TABLE `block_names` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -320,13 +320,13 @@ LOCK TABLES `slack_users` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `white_names`
+-- Table structure for table `allow_names`
 --
 
-DROP TABLE IF EXISTS `white_names`;
+DROP TABLE IF EXISTS `allow_names`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `white_names` (
+CREATE TABLE `allow_names` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `owner` varchar(1023) COLLATE utf8_bin NOT NULL,
   `repo` varchar(1023) COLLATE utf8_bin NOT NULL,
@@ -337,12 +337,12 @@ CREATE TABLE `white_names` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `white_names`
+-- Dumping data for table `allow_names`
 --
 
-LOCK TABLES `white_names` WRITE;
-/*!40000 ALTER TABLE `white_names` DISABLE KEYS */;
-/*!40000 ALTER TABLE `white_names` ENABLE KEYS */;
+LOCK TABLES `allow_names` WRITE;
+/*!40000 ALTER TABLE `allow_names` DISABLE KEYS */;
+/*!40000 ALTER TABLE `allow_names` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

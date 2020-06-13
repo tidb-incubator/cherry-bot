@@ -25,7 +25,7 @@ defaultChecker = "admin@pingcap.com"
 
 prLimit = true
 maxPrOpened = 3
-prLimitMode = "whitelist"
+prLimitMode = "allowlist"
 prLimitLabel = "S: AutoClose"
 contributorLabel = "T: Contributor ⭐️"
 prLimitOrgs = "pingcap,tikv"

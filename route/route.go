@@ -121,8 +121,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		return
 	})
 
-	// diaplay whitelist
-	app.Get("/prlimit/whitelist/{owner:string}/{repo:string}", func(ctx iris.Context) {
+	// diaplay AllowList
+	app.Get("/prlimit/AllowList/{owner:string}/{repo:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		key := owner + "-" + repo
@@ -137,9 +137,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		list, err := (*bot).GetMiddleware().Prlimit.GetWhiteList()
+		list, err := (*bot).GetMiddleware().Prlimit.GetAllowList()
 		if err != nil {
-			util.Event(errors.Wrap(err, "get whitename list"))
+			util.Event(errors.Wrap(err, "get allowname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -147,8 +147,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.JSON(list)
 	})
 
-	// add whitename
-	app.Post("/prlimit/whitelist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	// add allowname
+	app.Post("/prlimit/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -164,9 +164,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		err := (*bot).GetMiddleware().Prlimit.AddWhiteList(username)
+		err := (*bot).GetMiddleware().Prlimit.AddAllowList(username)
 		if err != nil {
-			util.Event(errors.Wrap(err, "get whitename list"))
+			util.Event(errors.Wrap(err, "get allowname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -174,8 +174,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.WriteString("ok")
 	})
 
-	// remove whitename
-	app.Delete("/prlimit/whitelist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	// remove allowname
+	app.Delete("/prlimit/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -191,9 +191,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		err := (*bot).GetMiddleware().Prlimit.RemoveWhiteList(username)
+		err := (*bot).GetMiddleware().Prlimit.RemoveAllowList(username)
 		if err != nil {
-			util.Event(errors.Wrap(err, "get whitename list"))
+			util.Event(errors.Wrap(err, "get allowname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -201,8 +201,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.WriteString("ok")
 	})
 
-	// diaplay blacklist
-	app.Get("/prlimit/blacklist/{owner:string}/{repo:string}", func(ctx iris.Context) {
+	// diaplay blocklist
+	app.Get("/prlimit/blocklist/{owner:string}/{repo:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		key := owner + "-" + repo
@@ -217,9 +217,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		list, err := (*bot).GetMiddleware().Prlimit.GetBlackList()
+		list, err := (*bot).GetMiddleware().Prlimit.GetBlockList()
 		if err != nil {
-			util.Event(errors.Wrap(err, "get blackname list"))
+			util.Event(errors.Wrap(err, "get blockname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -227,8 +227,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.JSON(list)
 	})
 
-	// add blacklist
-	app.Post("/prlimit/blacklist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	// add blocklist
+	app.Post("/prlimit/blocklist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -244,9 +244,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		err := (*bot).GetMiddleware().Prlimit.AddBlackList(username)
+		err := (*bot).GetMiddleware().Prlimit.AddBlockList(username)
 		if err != nil {
-			util.Event(errors.Wrap(err, "get blackname list"))
+			util.Event(errors.Wrap(err, "get blockname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -254,8 +254,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.WriteString("ok")
 	})
 
-	// remove blacklist
-	app.Delete("/prlimit/blacklist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	// remove blocklist
+	app.Delete("/prlimit/blocklist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -271,9 +271,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		err := (*bot).GetMiddleware().Prlimit.RemoveBlackList(username)
+		err := (*bot).GetMiddleware().Prlimit.RemoveBlockList(username)
 		if err != nil {
-			util.Event(errors.Wrap(err, "get blackname list"))
+			util.Event(errors.Wrap(err, "get blockname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -281,8 +281,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.WriteString("ok")
 	})
 
-	// diaplay whitelist
-	app.Get("/merge/whitelist/{owner:string}/{repo:string}", func(ctx iris.Context) {
+	// diaplay AllowList
+	app.Get("/merge/AllowList/{owner:string}/{repo:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		key := owner + "-" + repo
@@ -297,9 +297,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		list, err := (*bot).GetMiddleware().Merge.GetWhiteList()
+		list, err := (*bot).GetMiddleware().Merge.GetAllowList()
 		if err != nil {
-			util.Event(errors.Wrap(err, "get whitename list"))
+			util.Event(errors.Wrap(err, "get allowname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -307,8 +307,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.JSON(list)
 	})
 
-	// add whitename
-	app.Post("/merge/whitelist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	// add allowname
+	app.Post("/merge/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -324,9 +324,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		err := (*bot).GetMiddleware().Merge.AddWhiteList(username)
+		err := (*bot).GetMiddleware().Merge.AddAllowList(username)
 		if err != nil {
-			util.Event(errors.Wrap(err, "get whitename list"))
+			util.Event(errors.Wrap(err, "get allowname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return
@@ -334,8 +334,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.WriteString("ok")
 	})
 
-	// remove whitename
-	app.Delete("/merge/whitelist/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	// remove allowname
+	app.Delete("/merge/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -351,9 +351,9 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		bot := (*ctl).GetBot(key)
-		err := (*bot).GetMiddleware().Merge.RemoveWhiteList(username)
+		err := (*bot).GetMiddleware().Merge.RemoveAllowList(username)
 		if err != nil {
-			util.Event(errors.Wrap(err, "get whitename list"))
+			util.Event(errors.Wrap(err, "get allowname list"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString("database query error")
 			return

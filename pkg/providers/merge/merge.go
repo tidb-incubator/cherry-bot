@@ -12,9 +12,9 @@ type Merge interface {
 	Ready()
 	ProcessPullRequestEvent(event *github.PullRequestEvent)
 	ProcessIssueCommentEvent(event *github.IssueCommentEvent)
-	GetWhiteList() ([]string, error)
-	AddWhiteList(username string) error
-	RemoveWhiteList(username string) error
+	GetAllowList() ([]string, error)
+	AddAllowList(username string) error
+	RemoveAllowList(username string) error
 }
 
 type merge struct {

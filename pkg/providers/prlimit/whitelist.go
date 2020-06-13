@@ -7,8 +7,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// WhiteName define white name list database structure
-type WhiteName struct {
+// AllowName define allow name list database structure
+type AllowName struct {
 	ID        int       `gorm:"id"`
 	Owner     string    `gorm:"owner"`
 	Repo      string    `gorm:"repo"`
@@ -16,21 +16,21 @@ type WhiteName struct {
 	CreatedAt time.Time `gorm:"created_at"`
 }
 
-func (p *prLimit) GetWhiteList() ([]string, error) {
+func (p *prLimit) GetAllowList() ([]string, error) {
 	res := []string{p.opr.Config.Github.Bot}
-	var whiteNames []*WhiteName
+	var allowNames []*AllowName
 	if err := p.opr.DB.Where("owner = ? and repo = ?", p.owner,
-		p.repo).Order("created_at asc").Find(&whiteNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
-		return nil, errors.Wrap(err, "get whitelist")
+		p.repo).Order("created_at asc").Find(&allowNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, errors.Wrap(err, "get AllowList")
 	}
-	for _, w := range whiteNames {
+	for _, w := range allowNames {
 		res = append(res, (*w).Username)
 	}
 	return res, nil
 }
 
-func (p *prLimit) AddWhiteList(username string) error {
-	model := WhiteName{
+func (p *prLimit) AddAllowList(username string) error {
+	model := AllowName{
 		Owner:     p.owner,
 		Repo:      p.repo,
 		Username:  username,
@@ -38,14 +38,14 @@ func (p *prLimit) AddWhiteList(username string) error {
 	}
 
 	if err := p.opr.DB.Save(&model).Error; err != nil {
-		return errors.Wrap(err, "add white name")
+		return errors.Wrap(err, "add allow name")
 	}
 	return nil
 }
 
-func (p *prLimit) RemoveWhiteList(username string) error {
-	if err := p.opr.DB.Where("username = ?", username).Delete(WhiteName{}).Error; err != nil {
-		return errors.Wrap(err, "remove white name")
+func (p *prLimit) RemoveAllowList(username string) error {
+	if err := p.opr.DB.Where("username = ?", username).Delete(AllowName{}).Error; err != nil {
+		return errors.Wrap(err, "remove allow name")
 	}
 	return nil
 }

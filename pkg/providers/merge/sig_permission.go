@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AutoMergeWhiteName define white name for auto merge
+// AutoMergeAllowName define allow name for auto merge
 type SigMember struct {
 	Sig        string `gorm:"sig"`
 	GithubName string `gorm:"github"`
@@ -44,7 +44,7 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 	var sigLabels []*SigLabel
 	if err := m.opr.DB.Where("(label in (?) or label is null) and repo=?", labelArgs, repo).Find(&sigLabels).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		util.Println("get label list failed", err)
-		return errors.Wrap(err, "get whitelist")
+		return errors.Wrap(err, "get AllowList")
 	}
 	util.Println("len", len(sigLabels), "value,", sigLabels)
 	if len(sigLabels) == 0 { // any committer can merge this PR
