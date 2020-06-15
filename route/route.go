@@ -121,8 +121,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		return
 	})
 
-	// diaplay AllowList
-	app.Get("/prlimit/AllowList/{owner:string}/{repo:string}", func(ctx iris.Context) {
+	// diaplay allowList
+	app.Get("/prlimit/allowList/{owner:string}/{repo:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		key := owner + "-" + repo
@@ -148,7 +148,7 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 	})
 
 	// add allowname
-	app.Post("/prlimit/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	app.Post("/prlimit/allowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -175,7 +175,7 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 	})
 
 	// remove allowname
-	app.Delete("/prlimit/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	app.Delete("/prlimit/allowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -281,8 +281,8 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		ctx.WriteString("ok")
 	})
 
-	// diaplay AllowList
-	app.Get("/merge/AllowList/{owner:string}/{repo:string}", func(ctx iris.Context) {
+	// display allowList
+	app.Get("/merge/allowList/{owner:string}/{repo:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		key := owner + "-" + repo
@@ -308,7 +308,7 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 	})
 
 	// add allowname
-	app.Post("/merge/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	app.Post("/merge/allowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")
@@ -335,7 +335,7 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 	})
 
 	// remove allowname
-	app.Delete("/merge/AllowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
+	app.Delete("/merge/allowList/{owner:string}/{repo:string}/{username:string}", func(ctx iris.Context) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		username := ctx.Params().Get("username")

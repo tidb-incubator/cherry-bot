@@ -44,7 +44,7 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 	var sigLabels []*SigLabel
 	if err := m.opr.DB.Where("(label in (?) or label is null) and repo=?", labelArgs, repo).Find(&sigLabels).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		util.Println("get label list failed", err)
-		return errors.Wrap(err, "get AllowList")
+		return errors.Wrap(err, "get allowList")
 	}
 	util.Println("len", len(sigLabels), "value,", sigLabels)
 	if len(sigLabels) == 0 { // any committer can merge this PR

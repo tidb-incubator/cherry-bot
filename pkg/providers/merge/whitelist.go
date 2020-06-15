@@ -22,7 +22,7 @@ func (m *merge) GetAllowList() ([]string, error) {
 	var allowNames []*AutoMergeAllowName
 	if err := m.opr.DB.Where("owner = ? and repo = ?", m.owner,
 		m.repo).Order("created_at asc").Find(&allowNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
-		return nil, errors.Wrap(err, "get AllowList")
+		return nil, errors.Wrap(err, "get allowList")
 	}
 	for _, w := range allowNames {
 		res = append(res, (*w).Username)
@@ -56,12 +56,12 @@ func (m *merge) ifInAllowList(username string) bool {
 		return true
 	}
 
-	AllowList, err := m.GetAllowList()
-	util.Println(username, AllowList)
+	allowList, err := m.GetAllowList()
+	util.Println(username, allowList)
 	if err != nil {
 		util.Error(errors.Wrap(err, "if in allow list"))
 	} else {
-		for _, allowname := range AllowList {
+		for _, allowname := range allowList {
 			if username == allowname {
 				return true
 			}

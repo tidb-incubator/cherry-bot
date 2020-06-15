@@ -18,12 +18,12 @@ type BlockName struct {
 
 func (p *prLimit) GetBlockList() ([]string, error) {
 	res := []string{}
-	var BlockNames []*BlockName
+	var blockNames []*BlockName
 	if err := p.opr.DB.Where("owner = ? and repo = ?", p.owner,
-		p.repo).Order("created_at asc").Find(&BlockNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		p.repo).Order("created_at asc").Find(&blockNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "get blocklist")
 	}
-	for _, w := range BlockNames {
+	for _, w := range blockNames {
 		res = append(res, (*w).Username)
 	}
 	return res, nil
