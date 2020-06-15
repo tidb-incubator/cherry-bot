@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AutoMergeWhiteName define white name for auto merge
-type AutoMergeWhiteName struct {
+// AutoMergeAllowName define allow name for auto merge
+type AutoMergeAllowName struct {
 	ID        int       `gorm:"id"`
 	Owner     string    `gorm:"owner"`
 	Repo      string    `gorm:"repo"`
@@ -19,21 +19,21 @@ type AutoMergeWhiteName struct {
 	CreatedAt time.Time `gorm:"created_at"`
 }
 
-func (m *merge) GetWhiteList() ([]string, error) {
+func (m *merge) GetAllowList() ([]string, error) {
 	res := []string{m.opr.Config.Github.Bot}
-	var whiteNames []*AutoMergeWhiteName
+	var allowNames []*AutoMergeAllowName
 	if err := m.opr.DB.Where("owner = ? and repo = ?", m.owner,
-		m.repo).Order("created_at asc").Find(&whiteNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
-		return nil, errors.Wrap(err, "get whitelist")
+		m.repo).Order("created_at asc").Find(&allowNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, errors.Wrap(err, "get allowlist")
 	}
-	for _, w := range whiteNames {
+	for _, w := range allowNames {
 		res = append(res, (*w).Username)
 	}
 	return res, nil
 }
 
-func (m *merge) AddWhiteList(username string) error {
-	model := AutoMergeWhiteName{
+func (m *merge) AddAllowList(username string) error {
+	model := AutoMergeAllowName{
 		Owner:     m.owner,
 		Repo:      m.repo,
 		Username:  username,
@@ -41,32 +41,32 @@ func (m *merge) AddWhiteList(username string) error {
 	}
 
 	if err := m.opr.DB.Save(&model).Error; err != nil {
-		return errors.Wrap(err, "add white name")
+		return errors.Wrap(err, "add allow name")
 	}
 	return nil
 }
 
-func (m *merge) RemoveWhiteList(username string) error {
-	if err := m.opr.DB.Where("username = ?", username).Delete(AutoMergeWhiteName{}).Error; err != nil {
-		return errors.Wrap(err, "remove white name")
+func (m *merge) RemoveAllowList(username string) error {
+	if err := m.opr.DB.Where("username = ?", username).Delete(AutoMergeAllowName{}).Error; err != nil {
+		return errors.Wrap(err, "remove allow name")
 	}
 	return nil
 }
 
-func (m *merge) ifInWhiteList(username, base string) bool {
+func (m *merge) ifInAllowList(username, base string) bool {
 	if !m.cfg.ReleaseAccessControl {
 		return true
 	}
 	if base == "master" {
 		return true
 	}
-	whitelist, err := m.GetWhiteList()
-	util.Println(username, whitelist)
+	allowlist, err := m.GetAllowList()
+	util.Println(username, allowlist)
 	if err != nil {
-		util.Error(errors.Wrap(err, "if in white list"))
+		util.Error(errors.Wrap(err, "if in allow list"))
 	} else {
-		for _, whitename := range whitelist {
-			if username == whitename {
+		for _, allowname := range allowlist {
+			if username == allowname {
 				return true
 			}
 		}

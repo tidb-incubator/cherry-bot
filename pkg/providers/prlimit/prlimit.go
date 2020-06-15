@@ -11,12 +11,12 @@ import (
 type PrLimit interface {
 	Ready()
 	ProcessPullRequestEvent(event *github.PullRequestEvent)
-	GetWhiteList() ([]string, error)
-	AddWhiteList(username string) error
-	RemoveWhiteList(username string) error
-	GetBlackList() ([]string, error)
-	AddBlackList(username string) error
-	RemoveBlackList(username string) error
+	GetAllowList() ([]string, error)
+	AddAllowList(username string) error
+	RemoveAllowList(username string) error
+	GetBlockList() ([]string, error)
+	AddBlockList(username string) error
+	RemoveBlockList(username string) error
 }
 
 type prLimit struct {

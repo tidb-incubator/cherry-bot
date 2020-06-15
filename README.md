@@ -56,7 +56,7 @@ defaultChecker = "admin@pingcap.com"
 
 prLimit = true
 maxPrOpened = 3
-prLimitMode = "blacklist"
+prLimitMode = "blocklist"
 
 merge = true
 canMergeLabel = "can merge"
@@ -110,7 +110,7 @@ canMergeLabel = "can merge"
 | defaultChecker | PR submitted by contributors which don't have Slack account or not in `cherry_picker.slack_users` will be sent to default checker, using `,` to seperate several checkers. |
 | prLimit | pr limit flag, turn off will not have opened PR limit for one user |
 | maxPrOpened | max opened PR amount of one user |
-| prLimitMode | can be `whitelist` or `blacklist`. `whitelist` stands for that user out of this list will have PR count limit, `blacklist` stands for the opposite. Other values will apply PR count limit above all users |
+| prLimitMode | can be `allowlist` or `blocklist`. `allowlist` stands for that user out of this list will have PR count limit, `blocklist` stands for the opposite. Other values will apply PR count limit above all users |
 | prLimitLabel | bot will add a label for PRs bot closed |
 | contributorLabel | bot will specify if a PR is submit by contributor and add a label for it |
 | prLimitOrgs | this is for bot to specify whether a user is organization member, use "," to seperate orgs |
@@ -139,21 +139,21 @@ This API will fetch pull requests last month and send report to Slack channel, S
 curl http://localhost:8080/history/owner/repo?secret=secret
 ```
 
-* `[GET]` get whitelist
+* `[GET]` get allowlist
 
 ```sh
-curl http://localhost:8080/prlimit/whitelist/you06/cherry-pick-playground?secret=secret
+curl http://localhost:8080/prlimit/allowlist/you06/cherry-pick-playground?secret=secret
 ```
 
-* `[POST]` add a user to whitelist
+* `[POST]` add a user to allowlist
 
 ```sh
-curl -X POST http://localhost:8080/webhook/prlimit/whitelist/you06/cherry-pick-playground/you06?secret=secret
+curl -X POST http://localhost:8080/webhook/prlimit/allowlist/you06/cherry-pick-playground/you06?secret=secret
 ```
 
-* `[POST]` remove a user from whitelist
+* `[POST]` remove a user from allowlist
 
 ```sh
-curl -X DELETE http://localhost:8080/webhook/prlimit/whitelist/you06/cherry-pick-playground/you06?secret=secret
+curl -X DELETE http://localhost:8080/webhook/prlimit/allowlist/you06/cherry-pick-playground/you06?secret=secret
 ```
 
