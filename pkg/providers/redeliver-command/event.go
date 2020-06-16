@@ -10,21 +10,16 @@ import (
 	"github.com/google/go-github/v32/github"
 )
 
-const commentRegex = `@sre-bot \/((.|\n)*)`
-
-var (
-	commentPattern = regexp.MustCompile(commentRegex)
-)
-
 func (c *CommandRedeliver) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	log.Printf("redeliver command: bot process issue event %s/%s #%d\n", c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber())
 	// only PR author can trigger this comment
-	if event.GetComment().GetUser().GetLogin() == "sre-bot" {
+	if event.GetComment().GetUser().GetLogin() == c.opr.Config.Github.Bot {
 		return
 	}
 	if event.GetIssue().GetUser().GetLogin() != event.GetComment().GetUser().GetLogin() {
 		return
 	}
+	commentPattern := regexp.MustCompile(fmt.Sprintf(`@%s \/((.|\n)*)`, c.opr.Config.Github.Bot))
 	// match comment
 	m := commentPattern.FindStringSubmatch(event.GetComment().GetBody())
 	if len(m) != 3 {

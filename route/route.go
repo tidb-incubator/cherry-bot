@@ -2,6 +2,7 @@ package route
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -63,13 +64,13 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 			// invalid payload
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString(err.Error())
-			util.Error(errors.Wrap(err, "webhook post request"))
+			util.Error(errors.Wrap(err, fmt.Sprintf("%s webhook post request", key)))
 			return
 		}
 		event, err := github.ParseWebHook(github.WebHookType(r), payload)
 		if err != nil {
 			// event parse err
-			util.Error(errors.Wrap(err, "webhook post request"))
+			util.Error(errors.Wrap(err, fmt.Sprintf("%s webhook post request", key)))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString(err.Error())
 			return
