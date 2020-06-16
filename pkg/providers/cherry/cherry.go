@@ -2,6 +2,7 @@ package cherry
 
 import (
 	"sync"
+	"time"
 
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
@@ -20,32 +21,37 @@ type Cherry interface {
 
 type cherry struct {
 	sync.Mutex
-	owner       string
-	repo        string
-	ready       bool
-	rule        string
-	release     string
-	typeLabel   string
-	ignoreLabel string
-	dryrun      bool
-	opr         *operator.Operator
-	cfg         *config.RepoConfig
+	owner                   string
+	repo                    string
+	ready                   bool
+	rule                    string
+	release                 string
+	typeLabel               string
+	ignoreLabel             string
+	dryrun                  bool
+	forkedRepoCollaborators map[string]struct{}
+	collaboratorInvitation  map[string]time.Time
+	opr                     *operator.Operator
+	cfg                     *config.RepoConfig
 }
 
 // Init create cherry pick middleware instance
 func Init(repo *config.RepoConfig, opr *operator.Operator) Cherry {
 	c := cherry{
-		owner:       repo.Owner,
-		repo:        repo.Repo,
-		ready:       false,
-		rule:        repo.Rule,
-		release:     repo.Release,
-		typeLabel:   repo.TypeLabel,
-		ignoreLabel: repo.IgnoreLabel,
-		dryrun:      repo.Dryrun,
-		opr:         opr,
-		cfg:         repo,
+		owner:                   repo.Owner,
+		repo:                    repo.Repo,
+		ready:                   false,
+		rule:                    repo.Rule,
+		release:                 repo.Release,
+		typeLabel:               repo.TypeLabel,
+		ignoreLabel:             repo.IgnoreLabel,
+		dryrun:                  repo.Dryrun,
+		forkedRepoCollaborators: make(map[string]struct{}),
+		collaboratorInvitation:  make(map[string]time.Time),
+		opr:                     opr,
+		cfg:                     repo,
 	}
+	go c.runLoadCollaborators()
 	return &c
 }
 

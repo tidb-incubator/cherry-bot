@@ -14,6 +14,7 @@ import (
 const (
 	autoMergeCommand      = "/run-auto-merge"
 	autoMergeAlias        = "/merge"
+	unMergeCommand        = "/unmerge"
 	noAccessComment       = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
 	versionReleaseComment = "The version releasement is in progress."
 )
@@ -77,7 +78,8 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 		return
 	}
 
-	if event.Comment.GetBody() == autoMergeCommand || event.Comment.GetBody() == autoMergeAlias {
+	body := event.Comment.GetBody()
+	if body == autoMergeCommand || body == autoMergeAlias || body == unMergeCommand {
 		// command only for org members
 		login := event.GetSender().GetLogin()
 		if !m.provider.IfMember(login) {
@@ -91,6 +93,10 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 			return
 		}
 		if !m.havePermission(login, pr) {
+			return
+		}
+		if body == unMergeCommand {
+			util.Error(m.removeCanMerge(pr))
 			return
 		}
 		util.Error(m.addCanMerge(pr))

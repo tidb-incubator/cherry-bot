@@ -203,8 +203,16 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 		if cherry.cfg.CherryPickMilestone {
 			util.Error(cherry.assignMilestone(resPr, version))
 		}
+		var inviteUserName string
 		if cherry.cfg.CherryPickAssign {
-			util.Error(cherry.addAssignee(pr, resPr))
+			assignee, err := cherry.addAssignee(pr, resPr)
+			util.Error(err)
+			inviteUserName = assignee
+		} else {
+			inviteUserName = pr.GetUser().GetLogin()
+		}
+		if cherry.cfg.InviteCollaborator {
+			util.Error(cherry.inviteIfNotCollaborator(inviteUserName, resPr))
 		}
 	}
 
@@ -219,12 +227,12 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	return nil
 }
 
-func (cherry *cherry) addAssignee(oldPull *github.PullRequest, newPull *github.PullRequest) error {
+func (cherry *cherry) addAssignee(oldPull *github.PullRequest, newPull *github.PullRequest) (string, error) {
 	assignee := oldPull.GetUser()
 	if !cherry.opr.Member.IfMember(assignee.GetLogin()) {
 		reviews, _, err := cherry.opr.Github.PullRequests.ListReviews(context.Background(), cherry.owner, cherry.repo, oldPull.GetNumber(), &github.ListOptions{PerPage: 100})
 		if err != nil {
-			return errors.Wrap(err, "assign reviewer, get reviews failed")
+			return "", errors.Wrap(err, "assign reviewer, get reviews failed")
 		}
 		submitAt := time.Time{}
 		for _, review := range reviews {
@@ -236,7 +244,7 @@ func (cherry *cherry) addAssignee(oldPull *github.PullRequest, newPull *github.P
 	}
 
 	_, _, err := cherry.opr.Github.Issues.AddAssignees(context.Background(), cherry.owner, cherry.repo, newPull.GetNumber(), []string{assignee.GetLogin()})
-	return errors.Wrap(err, "assign reviewer, update pull request")
+	return assignee.GetLogin(), errors.Wrap(err, "assign reviewer, update pull request")
 }
 
 func (cherry *cherry) assignMilestone(newPull *github.PullRequest, version string) error {

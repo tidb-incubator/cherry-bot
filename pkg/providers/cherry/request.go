@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pingcap-incubator/cherry-bot/pkg/types"
 	"github.com/pingcap-incubator/cherry-bot/util"
@@ -18,8 +20,10 @@ import (
 )
 
 const (
-	maxRetryTime = 1
-	workDir      = "/tmp"
+	maxRetryTime                = 1
+	workDir                     = "/tmp"
+	LOAD_COLLABORATOR_DURATION  = 10 * time.Minute
+	PENDING_INVITATION_COOLDOWN = 10 * time.Minute
 )
 
 // PullRequest is pull request table structure
@@ -579,7 +583,7 @@ func (cherry *cherry) addGithubReadyComment(pr *github.PullRequest, success bool
 		Body: &commentBody,
 	}
 	_, _, err := cherry.opr.Github.Issues.CreateComment(context.Background(),
-		cherry.owner, cherry.repo, *pr.Number, comment)
+		cherry.owner, cherry.repo, pr.GetNumber(), comment)
 	return errors.Wrap(err, "add github test comment")
 }
 
@@ -658,7 +662,7 @@ func (cherry *cherry) getAllOpenedMilestones() ([]*github.Milestone, error) {
 		err     error
 	)
 
-	for page == 0 || len(batch) == perpage {
+	for len(all) == page*perpage {
 		page++
 		batch, _, err = cherry.opr.Github.Issues.ListMilestones(context.Background(), cherry.owner, cherry.repo, &github.MilestoneListOptions{
 			State: "open",
@@ -673,6 +677,89 @@ func (cherry *cherry) getAllOpenedMilestones() ([]*github.Milestone, error) {
 		all = append(all, batch...)
 	}
 	return all, nil
+}
+
+func (cherry *cherry) runLoadCollaborators() {
+	// do not waste quota for the repos don't invite collaborator
+	if !cherry.cfg.InviteCollaborator {
+		return
+	}
+	// reduce rate usage in the start up phase
+	// avoid abuse usage
+	time.Sleep(time.Duration((rand.Intn(10) + 5)) * time.Second)
+	if err := cherry.loadCollaborators(); err != nil {
+		util.Println(err)
+	}
+	// shuffle time offset between repos
+	time.Sleep(time.Duration(rand.Intn(10)) * time.Minute)
+	ticker := time.NewTicker(LOAD_COLLABORATOR_DURATION)
+	go func() {
+		for {
+			<-ticker.C
+			if err := cherry.loadCollaborators(); err != nil {
+				util.Println(err)
+			}
+		}
+	}()
+}
+
+func (cherry *cherry) loadCollaborators() error {
+	var (
+		page    = 0
+		perpage = 100
+		batch   []*github.User
+		all     []*github.User
+		err     error
+	)
+
+	for len(all) == page*perpage {
+		page++
+		batch, _, err = cherry.opr.Github.Repositories.ListCollaborators(context.Background(), cherry.opr.Config.Github.Bot, cherry.repo, &github.ListCollaboratorsOptions{
+			ListOptions: github.ListOptions{
+				Page:    page,
+				PerPage: perpage,
+			},
+		})
+		if err != nil {
+			return errors.Wrap(err, "fetch all collaborator")
+		}
+		all = append(all, batch...)
+	}
+	for _, user := range all {
+		cherry.forkedRepoCollaborators[user.GetLogin()] = struct{}{}
+	}
+	return nil
+}
+
+func (cherry *cherry) inviteIfNotCollaborator(username string, pull *github.PullRequest) error {
+	// already collaborator
+	if _, ok := cherry.forkedRepoCollaborators[username]; ok {
+		return nil
+	}
+	// pending invitation cooldown
+	// invite for a pending user will not do any harms
+	// but we should limit the notice for successful invite
+	// unless a PR cherry picked to 3 branches will leads to 3 comments, looks bad
+	if t, ok := cherry.collaboratorInvitation[username]; ok {
+		if time.Since(t) > PENDING_INVITATION_COOLDOWN {
+			// recalculate cooldown time
+			cherry.collaboratorInvitation[username] = time.Now()
+			return nil
+		}
+	}
+	invitation, _, err := cherry.opr.Github.Repositories.AddCollaborator(context.Background(),
+		cherry.opr.Config.Github.Bot, cherry.repo, username, nil)
+	if err != nil {
+		return errors.Wrap(err, "invite collaborator")
+	}
+	// mark successful invitation
+	cherry.collaboratorInvitation[username] = time.Now()
+	// notice user
+	comment := fmt.Sprintf("@%s please accept the invitation then you can push to the cherry-pick pull requests.\n%s",
+		username, invitation.GetHTMLURL())
+	_, _, err = cherry.opr.Github.Issues.CreateComment(context.Background(),
+		cherry.owner, cherry.repo, pull.GetNumber(), &github.IssueComment{Body: github.String(comment)})
+	return errors.Wrap(err, "invite collaborator")
 }
 
 func do(dir string, c string, args ...string) (string, error) {
