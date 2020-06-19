@@ -216,15 +216,15 @@ func (m *merge) addCanMerge(pull *github.PullRequest) error {
 func (m *merge) removeCanMerge(pull *github.PullRequest) error {
 	hasLabel := false
 	for _, label := range pull.Labels {
-		if label.GetName() == m.cfg.CanMergeLabel {
+		if label.GetName() == m.provider.CanMergeLabel {
 			hasLabel = true
 		}
 	}
 	if !hasLabel {
 		return nil
 	}
-	_, err := m.opr.Github.Issues.RemoveLabelForIssue(context.Background(),
-		m.owner, m.repo, pull.GetNumber(), m.cfg.CanMergeLabel)
+	_, err := m.provider.Opr.Github.Issues.RemoveLabelForIssue(context.Background(),
+		m.owner, m.repo, pull.GetNumber(), m.provider.CanMergeLabel)
 	return errors.Wrap(err, "add can merge label")
 }
 
