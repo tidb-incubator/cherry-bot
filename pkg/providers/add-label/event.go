@@ -81,7 +81,7 @@ func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error 
 	}
 
 	if len(illegal) > 0 {
-		comment := fmt.Sprintf("These  labels are not found %s.", strings.Join(illegal, ","))
+		comment := fmt.Sprintf("These labels are not found %s.", strings.Join(illegal, ","))
 		util.Println("errMsg", comment)
 		err = l.provider.CommentOnGithub(issueID, comment)
 	}
