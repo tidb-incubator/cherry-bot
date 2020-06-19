@@ -85,10 +85,7 @@ func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error 
 		util.Println("errMsg", comment)
 		err = l.provider.CommentOnGithub(issueID, comment)
 	}
-	if err != nil {
-		return errors.Wrap(err, "add labels")
-	}
-	return nil
+	return errors.Wrap(err, "add labels")
 }
 
 func (l *Label) processUnlabel(event *github.IssueCommentEvent, raw string) error {
