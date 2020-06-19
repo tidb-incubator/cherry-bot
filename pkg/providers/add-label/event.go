@@ -49,7 +49,7 @@ func (l *Label) checkLabels(labels []string) (legalLabels, illegalLabels []strin
 	}
 	repoLabel := map[string]bool{}
 	for _, l := range repoLabels {
-		repoLabel[strings.ToLower(*l.Name)] = true
+		repoLabel[strings.ToLower(l.GetName())] = true
 	}
 
 	for _, label := range labels {
