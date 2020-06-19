@@ -18,9 +18,9 @@ type AutoMergeAllowName struct {
 }
 
 func (m *merge) GetAllowList() ([]string, error) {
-	res := []string{m.opr.Config.Github.Bot}
+	res := []string{m.provider.Opr.Config.Github.Bot}
 	var allowNames []*AutoMergeAllowName
-	if err := m.opr.DB.Where("owner = ? and repo = ?", m.owner,
+	if err := m.provider.Opr.DB.Where("owner = ? and repo = ?", m.owner,
 		m.repo).Order("created_at asc").Find(&allowNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "get allowList")
 	}
@@ -38,21 +38,21 @@ func (m *merge) AddAllowList(username string) error {
 		CreatedAt: time.Now(),
 	}
 
-	if err := m.opr.DB.Save(&model).Error; err != nil {
+	if err := m.provider.Opr.DB.Save(&model).Error; err != nil {
 		return errors.Wrap(err, "add allow name")
 	}
 	return nil
 }
 
 func (m *merge) RemoveAllowList(username string) error {
-	if err := m.opr.DB.Where("username = ?", username).Delete(AutoMergeAllowName{}).Error; err != nil {
+	if err := m.provider.Opr.DB.Where("username = ?", username).Delete(AutoMergeAllowName{}).Error; err != nil {
 		return errors.Wrap(err, "remove allow name")
 	}
 	return nil
 }
 
 func (m *merge) ifInAllowList(username string) bool {
-	if !m.cfg.ReleaseAccessControl {
+	if !m.provider.ReleaseAccessControl {
 		return true
 	}
 
@@ -70,9 +70,9 @@ func (m *merge) ifInAllowList(username string) bool {
 	// FIXME: should not hard code
 	// the following code is outdated
 	// and should be removed
-	// team, _, err := m.opr.Github.Teams.GetTeamBySlug(context.Background(), "pingcap", "owners")
+	// team, _, err := m.provider.Opr.Github.Teams.GetTeamBySlug(context.Background(), "pingcap", "owners")
 	// if err == nil {
-	// 	isMember, _, er := m.opr.Github.Teams.IsTeamMember(context.Background(), team.GetID(), username)
+	// 	isMember, _, er := m.provider.Opr.Github.Teams.IsTeamMember(context.Background(), team.GetID(), username)
 	// 	if er == nil {
 	// 		return isMember
 	// 	}

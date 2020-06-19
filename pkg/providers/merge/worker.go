@@ -38,7 +38,7 @@ func (m *merge) processPREvent(event *github.PullRequestEvent) {
 }
 
 func (m *merge) startJob(mergeJob *AutoMerge) error {
-	pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
+	pr, _, err := m.provider.Opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
 	if err != nil {
 		return errors.Wrap(err, "start merge job")
 	}
@@ -64,7 +64,7 @@ func (m *merge) startJob(mergeJob *AutoMerge) error {
 	conmment := &github.IssueComment{
 		Body: &commentBody,
 	}
-	_, _, err = m.opr.Github.Issues.CreateComment(context.Background(),
+	_, _, err = m.provider.Opr.Github.Issues.CreateComment(context.Background(),
 		m.owner, m.repo, *pr.Number, conmment)
 	if err != nil {
 		return errors.Wrap(err, "start merge job")
@@ -133,7 +133,7 @@ func (m *merge) classifyPR(jobs []*AutoMerge) (jobListOfPR map[string]*AutoMerge
 }
 
 func (m *merge) checkPR(mergeJob *AutoMerge) bool {
-	pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
+	pr, _, err := m.provider.Opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
 	if err != nil {
 		util.Error(errors.Wrap(err, "checking PR if can be merged"))
 		return false
@@ -144,7 +144,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 	// check if still have "can merge" label
 	ifHasLabel := false
 	for _, l := range pr.Labels {
-		if *l.Name == m.cfg.CanMergeLabel {
+		if *l.Name == m.provider.CanMergeLabel {
 			ifHasLabel = true
 		}
 	}
@@ -161,7 +161,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 
 	success := true
 	finish := true
-	status, _, err := m.opr.Github.Repositories.GetCombinedStatus(context.Background(), m.owner, m.repo,
+	status, _, err := m.provider.Opr.Github.Repositories.GetCombinedStatus(context.Background(), m.owner, m.repo,
 		*pr.Head.SHA, nil)
 	if err != nil {
 		util.Error(errors.Wrap(err, "polling PR status"))
@@ -175,7 +175,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 		finish = false
 	}
 
-	checks, _, err := m.opr.Github.Checks.ListCheckRunsForRef(context.Background(), m.owner, m.repo,
+	checks, _, err := m.provider.Opr.Github.Checks.ListCheckRunsForRef(context.Background(), m.owner, m.repo,
 		*pr.Head.SHA, nil)
 	if err != nil {
 		util.Error(errors.Wrap(err, "polling PR status"))
@@ -201,7 +201,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 		util.Println("Tests test passed", status, checks)
 		// compose commit message
 		message := ""
-		if m.cfg.SignedOffMessage {
+		if m.provider.SignedOffMessage {
 			msg, err := m.getMergeMessage(pr.GetNumber())
 			if err != nil {
 				util.Error(errors.Wrap(err, "merging PR"))
@@ -214,7 +214,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 			CommitTitle: fmt.Sprintf("%s (#%d)", pr.GetTitle(), pr.GetNumber()),
 			MergeMethod: mergeMethod,
 		}
-		_, _, err := m.opr.Github.PullRequests.Merge(context.Background(), m.owner, m.repo,
+		_, _, err := m.provider.Opr.Github.PullRequests.Merge(context.Background(), m.owner, m.repo,
 			pr.GetNumber(), message, &opt)
 		if err != nil {
 			util.Error(errors.Wrap(err, "checking PR"))
@@ -230,7 +230,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 		finish = true
 		// send failure comment
 		comment := fmt.Sprintf("@%s merge failed.", *pr.User.Login)
-		if err := m.addGithubComment(pr, comment); err != nil {
+		if err := m.provider.CommentOnGithub(pr.GetNumber(), comment); err != nil {
 			util.Error(errors.Wrap(err, "checking PR"))
 		}
 		if err := m.failedMergeSlack(pr); err != nil {

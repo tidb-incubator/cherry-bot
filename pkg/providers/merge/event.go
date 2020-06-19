@@ -19,10 +19,10 @@ const (
 )
 
 func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
-	if event.GetSender().GetLogin() == m.opr.Config.Github.Bot {
+	if event.GetSender().GetLogin() == m.provider.Opr.Config.Github.Bot {
 		return
 	}
-	if *event.Action == "labeled" && *event.Label.Name == m.cfg.CanMergeLabel {
+	if *event.Action == "labeled" && *event.Label.Name == m.provider.CanMergeLabel {
 		pr := event.GetPullRequest()
 		login := event.GetSender().GetLogin()
 
@@ -36,17 +36,17 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 	base := pr.GetBase().GetRef()
 	if base == "master" {
-		if username == m.opr.Config.Github.Bot {
+		if username == m.provider.Opr.Config.Github.Bot {
 			return true
 		}
-		if !m.cfg.MergeSIGControl {
+		if !m.provider.MergeSIGControl {
 			return true
 		}
 		err := m.CanMergeToMaster(m.repo, pr.Labels, username)
 		if err != nil {
 			msg := fmt.Sprintf(noAccessComment, username)
 			msg = fmt.Sprintf("%s %s", msg, err)
-			util.Error(m.addGithubComment(pr, msg))
+			util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg))
 			return false
 		} else {
 			return true
@@ -60,14 +60,14 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 	}
 	if !canMergeRelease {
 		msg := fmt.Sprintf(noAccessComment, username)
-		util.Error(m.addGithubComment(pr, msg+"\n"+versionReleaseComment))
+		util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg+"\n"+versionReleaseComment))
 		return false
 	}
 
 	havePermission := m.ifInAllowList(username)
 	if !havePermission {
 		msg := fmt.Sprintf(noAccessComment, username)
-		util.Error(m.addGithubComment(pr, msg))
+		util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg))
 	}
 	return havePermission
 }
@@ -80,11 +80,11 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	if event.Comment.GetBody() == autoMergeCommand || event.Comment.GetBody() == autoMergeAlias {
 		// command only for org members
 		login := event.GetSender().GetLogin()
-		if !m.opr.Member.IfMember(login) {
+		if !m.provider.IfMember(login) {
 			return
 		}
 
-		pr, _, err := m.opr.Github.PullRequests.Get(context.Background(),
+		pr, _, err := m.provider.Opr.Github.PullRequests.Get(context.Background(),
 			m.owner, m.repo, event.Issue.GetNumber())
 		if err != nil {
 			util.Error(errors.Wrap(err, "issue comment get PR"))

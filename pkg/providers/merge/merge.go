@@ -1,10 +1,10 @@
 package merge
 
 import (
+	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-
-	"github.com/google/go-github/v32/github"
+	"github.com/pingcap-incubator/cherry-bot/pkg/providers"
 )
 
 // Merge defines methods of auto merge
@@ -18,23 +18,21 @@ type Merge interface {
 }
 
 type merge struct {
-	owner string
-	repo  string
-	ready bool
-	opr   *operator.Operator
-	cfg   *config.RepoConfig
-	list  []*github.PullRequest
+	owner    string
+	repo     string
+	ready    bool
+	provider *providers.Provider
+	list     []*github.PullRequest
 }
 
 // Init create PR limit middleware instance
 func Init(repo *config.RepoConfig, opr *operator.Operator) Merge {
 	m := merge{
-		owner: repo.Owner,
-		repo:  repo.Repo,
-		ready: false,
-		opr:   opr,
-		cfg:   repo,
-		list:  []*github.PullRequest{},
+		owner:    repo.Owner,
+		repo:     repo.Repo,
+		ready:    false,
+		provider: providers.Init(repo, opr),
+		list:     []*github.PullRequest{},
 	}
 	m.startPolling()
 	return &m
