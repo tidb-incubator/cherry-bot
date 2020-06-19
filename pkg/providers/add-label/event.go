@@ -77,7 +77,7 @@ func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error 
 		return err
 	}
 	if len(legal) > 0 {
-		_, _, err = l.provider.GithubClient().Issues.AddLabelsToIssue(context.Background(), l.owner, l.repo, issueID, labels)
+		_, _, err = l.provider.GithubClient().Issues.AddLabelsToIssue(context.Background(), l.owner, l.repo, issueID, legal)
 	}
 
 	if len(illegal) > 0 {
