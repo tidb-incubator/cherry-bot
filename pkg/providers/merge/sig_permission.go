@@ -35,7 +35,7 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 	util.Println("get list,repo", repo, "label", labels, "author", userName)
 	// first you should be a committer.
 	var sigMembers []*SigMember
-	if err := m.opr.DB.Where("github=? and level in('committer','leader','co-leader','maintainer','pmc')", userName).Find(&sigMembers).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+	if err := m.provider.Opr.DB.Where("github=? and level in('committer','leader','co-leader','maintainer','pmc')", userName).Find(&sigMembers).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		util.Println(err, "get member info failed")
 		return errors.Wrap(err, "get member info")
 	}
@@ -58,7 +58,7 @@ func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName s
 		labelArgs = append(labelArgs, *label.Name)
 	}
 	var sigLabels []*Sigs
-	if err := m.opr.DB.Where("(label in (?) or label is null) and repo=?", labelArgs, repo).Find(&sigLabels).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+	if err := m.provider.Opr.DB.Where("(label in (?) or label is null) and repo=?", labelArgs, repo).Find(&sigLabels).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		util.Println("get label list failed", err)
 		return errors.Wrap(err, "get allowList")
 	}

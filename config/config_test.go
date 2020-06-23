@@ -33,7 +33,9 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, cfg.Repos["owner_1-repo_1"].CherryPickAssign, true, "repo assign pull field")
 	assert.Equal(t, cfg.Repos["owner_2-repo_2"].CherryPickAssign, false, "repo assign pull field")
 	assert.Equal(t, cfg.Repos["owner_1-repo_1"].MergeSIGControl, true, "merge sig control field")
-	assert.Equal(t, cfg.Repos["owner_2-repo_2"].MergeSIGControl, false, "merge sig control field")
+	assert.Equal(t, cfg.Repos["owner_2-repo_2"].MergeSIGControl, false, "merge sig control field, default value")
+	assert.Equal(t, cfg.Repos["owner_1-repo_1"].InviteCollaborator, true, "invite collaborator")
+	assert.Equal(t, cfg.Repos["owner_2-repo_2"].InviteCollaborator, false, "invite collaborator, default value")
 	assert.Equal(t, cfg.Member.Orgs, []string{"pingcap"}, "read member orgs")
 	assert.Equal(t, cfg.Member.Users, []string{"sre-bot"}, "read member users")
 }

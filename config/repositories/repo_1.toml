@@ -17,6 +17,7 @@ cherry-pick-channel = "cherry-picker-test"
 run-test-command = "/run-all-tests"
 cherry-pick-milestone = true
 cherry-pick-assign = true
+invite-collaborator = true
 
 # label check config
 labelCheck = true

@@ -1,0 +1,13 @@
+sudo: false
+dist: xenial
+
+language: go
+go:
+  - 1.13.3
+
+jobs:
+  include:
+    - name: "cherry bot"
+      stage: build
+      script:
+        - make

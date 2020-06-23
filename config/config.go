@@ -81,6 +81,7 @@ type RepoConfig struct {
 	ChiefChecker        string `toml:"chief-checker"`
 	LabelCheckChannel   string `toml:"label-check-channel"`
 	DefaultChecker      string `toml:"default-checker"`
+	InviteCollaborator  bool   `toml:"invite-collaborator"`
 	// TODO: remove it
 	// pr limit config
 	PrLimit          bool
