@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	labelPattern   = regexp.MustCompile(`\/label ([a-zA-Z0-9\/_\- ,]*)`)
-	unlabelPattern = regexp.MustCompile(`\/unlabel ([a-zA-Z0-9\/_\- ,]*)`)
+	labelPattern   = regexp.MustCompile(`\/label ([a-zA-Z0-9\/_\- ,.]*)`)
+	unlabelPattern = regexp.MustCompile(`\/unlabel ([a-zA-Z0-9\/_\- ,.]*)`)
 )
 
 func (l *Label) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
@@ -40,7 +40,7 @@ func (l *Label) processComment(event *github.IssueCommentEvent, comment string) 
 }
 
 func (l *Label) checkLabels(labels []string) (legalLabels, illegalLabels []string, err error) {
-	repoLabels, _, e := l.provider.ListLabelsOnGithub()
+	repoLabels, e := l.provider.ListLabelsOnGithub()
 	legalLabels = []string{}
 	illegalLabels = []string{}
 	if e != nil {
@@ -81,7 +81,11 @@ func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error 
 	}
 
 	if len(illegal) > 0 {
-		comment := fmt.Sprintf("These labels are not found %s.", strings.Join(illegal, ","))
+		var quotationIllegal []string
+		for _, l := range illegal {
+			quotationIllegal = append(quotationIllegal, "`"+l+"`")
+		}
+		comment := fmt.Sprintf("These labels are not found %s.", strings.Join(quotationIllegal, ", "))
 		util.Println("errMsg", comment)
 		err = l.provider.CommentOnGithub(issueID, comment)
 	}
