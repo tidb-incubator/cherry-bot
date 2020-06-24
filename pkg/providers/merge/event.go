@@ -54,7 +54,7 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 		}
 	}
 
-	canMergeRelease, err := m.canMergeReleaseVersion(base, username)
+	canMergeRelease, inRelease, err := m.canMergeReleaseVersion(base, username)
 	if err != nil {
 		util.Error(err)
 		return false
@@ -65,12 +65,15 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 		return false
 	}
 
-	havePermission := m.ifInAllowList(username)
-	if !havePermission {
-		msg := fmt.Sprintf(noAccessComment, username)
-		util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg))
+	if !inRelease {
+		havePermission := m.ifInAllowList(username)
+		if !havePermission {
+			msg := fmt.Sprintf(noAccessComment, username)
+			util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg))
+		}
+		return havePermission
 	}
-	return havePermission
+	return true
 }
 
 func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
