@@ -1,4 +1,4 @@
-package provider
+package operator
 
 import (
 	"fmt"
@@ -44,9 +44,9 @@ func LabelsToStrArr(labels []*github.Label) []string {
 	return labelsArr
 }
 
-func (p *Provider) ListSIGByLabel(repo string, labels []*github.Label) (sigs []*Sig, err error) {
+func (o *Operator) ListSIGByLabel(repo string, labels []*github.Label) (sigs []*Sig, err error) {
 	lablesArr := LabelsToStrArr(labels)
-	err = p.Opr.DB.Where("(label in (?) or label is null) and repo=?", lablesArr, repo).Find(&sigs).Error
+	err = o.DB.Where("(label in (?) or label is null) and repo=?", lablesArr, repo).Find(&sigs).Error
 	if err != nil && !gorm.IsRecordNotFoundError(err) {
 		util.Println("get sig list failed", err)
 		err = errors.Wrap(err, "get siglist")
@@ -55,16 +55,16 @@ func (p *Provider) ListSIGByLabel(repo string, labels []*github.Label) (sigs []*
 	return
 }
 
-func (p *Provider) GetRolesInSigByGithubID(githubID string) (members []*SigMember, err error) {
-	if err = p.Opr.DB.Where("github=?", githubID).Find(&members).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+func (o *Operator) GetRolesInSigByGithubID(githubID string) (members []*SigMember, err error) {
+	if err = o.DB.Where("github=?", githubID).Find(&members).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		util.Println("get roles in sig failed", err)
 		err = errors.Wrap(err, "get roles in sig")
 	}
 	return
 }
 
-func (p *Provider) HasPermissionToPRWithLables(repo string, labels []*github.Label, githubID string, roles []string) error {
-	sigLabels, err := p.ListSIGByLabel(repo, labels)
+func (o *Operator) HasPermissionToPRWithLables(repo string, labels []*github.Label, githubID string, roles []string) error {
+	sigLabels, err := o.ListSIGByLabel(repo, labels)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (p *Provider) HasPermissionToPRWithLables(repo string, labels []*github.Lab
 		legallRoles[role] = true
 	}
 	// check members.
-	members, err := p.GetRolesInSigByGithubID(githubID)
+	members, err := o.GetRolesInSigByGithubID(githubID)
 	if err != nil {
 		return err
 	}
