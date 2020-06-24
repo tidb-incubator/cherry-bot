@@ -9,5 +9,5 @@ import (
 
 func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName string) error {
 	canMergeRoles := []string{operator.ROLE_COMMITTER, operator.ROLE_COLEADER, operator.ROLE_LEADER}
-	return m.provider.Opr.HasPermissionToPRWithLables(repo, labels, userName, canMergeRoles)
+	return m.opr.HasPermissionToPRWithLables(repo, labels, userName, canMergeRoles)
 }

@@ -20,10 +20,10 @@ const (
 )
 
 func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
-	if event.GetSender().GetLogin() == m.provider.Opr.Config.Github.Bot {
+	if event.GetSender().GetLogin() == m.opr.Config.Github.Bot {
 		return
 	}
-	if *event.Action == "labeled" && *event.Label.Name == m.provider.CanMergeLabel {
+	if *event.Action == "labeled" && *event.Label.Name == m.cfg.CanMergeLabel {
 		pr := event.GetPullRequest()
 		login := event.GetSender().GetLogin()
 
@@ -37,17 +37,17 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 	base := pr.GetBase().GetRef()
 	if base == "master" {
-		if username == m.provider.Opr.Config.Github.Bot {
+		if username == m.opr.Config.Github.Bot {
 			return true
 		}
-		if !m.provider.MergeSIGControl {
+		if !m.cfg.MergeSIGControl {
 			return true
 		}
 		err := m.CanMergeToMaster(m.repo, pr.Labels, username)
 		if err != nil {
 			msg := fmt.Sprintf(noAccessComment, username)
 			msg = fmt.Sprintf("%s %s", msg, err)
-			util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg))
+			util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg))
 			return false
 		} else {
 			return true
@@ -61,7 +61,7 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 	}
 	if !canMergeRelease {
 		msg := fmt.Sprintf(noAccessComment, username)
-		util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg+"\n"+versionReleaseComment))
+		util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg+"\n"+versionReleaseComment))
 		return false
 	}
 
@@ -69,7 +69,7 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 		havePermission := m.ifInAllowList(username)
 		if !havePermission {
 			msg := fmt.Sprintf(noAccessComment, username)
-			util.Error(m.provider.CommentOnGithub(pr.GetNumber(), msg))
+			util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg))
 		}
 		return havePermission
 	}
@@ -85,11 +85,11 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	if body == autoMergeCommand || body == autoMergeAlias || body == unMergeCommand {
 		// command only for org members
 		login := event.GetSender().GetLogin()
-		if !m.provider.IfMember(login) {
+		if !m.opr.Member.IfMember(login) {
 			return
 		}
 
-		pr, _, err := m.provider.Opr.Github.PullRequests.Get(context.Background(),
+		pr, _, err := m.opr.Github.PullRequests.Get(context.Background(),
 			m.owner, m.repo, event.Issue.GetNumber())
 		if err != nil {
 			util.Error(errors.Wrap(err, "issue comment get PR"))
