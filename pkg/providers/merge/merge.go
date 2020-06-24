@@ -4,7 +4,7 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-	"github.com/pingcap-incubator/cherry-bot/pkg/providers"
+	providers "github.com/pingcap-incubator/cherry-bot/pkg/providers/provider"
 )
 
 // Merge defines methods of auto merge

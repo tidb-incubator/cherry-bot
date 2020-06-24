@@ -3,7 +3,7 @@ package label
 import (
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-	"github.com/pingcap-incubator/cherry-bot/pkg/providers"
+	providers "github.com/pingcap-incubator/cherry-bot/pkg/providers/provider"
 )
 
 type Label struct {

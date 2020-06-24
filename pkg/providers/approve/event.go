@@ -1,12 +1,16 @@
 package approve
 
 import (
+	"strings"
+
 	"github.com/pingcap-incubator/cherry-bot/util"
 
 	"github.com/google/go-github/v32/github"
 )
 
 const (
+	lgtmMsg              = "lgtm"
+	lgtmCommand          = "/lgtm"
 	approveCommand       = "/approve"
 	approveCancelCommand = "/approve cancel"
 )
@@ -15,8 +19,9 @@ func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	if event.GetAction() != "created" {
 		return
 	}
-	switch event.Comment.GetBody() {
-	case approveCommand:
+
+	switch strings.ToLower(event.Comment.GetBody()) {
+	case approveCommand, lgtmCommand, lgtmMsg:
 		a.createApprove(event)
 	case approveCancelCommand:
 		a.cancelApprove(event)

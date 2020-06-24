@@ -6,18 +6,21 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Joker/jade v1.0.0 // indirect
 	github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398 // indirect
+	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/aymerick/raymond v2.0.2+incompatible // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20200518135938-dfb43dbdc22a // indirect
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect
+	github.com/go-kit/kit v0.8.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/go-github/v32 v32.0.0
 	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
+	github.com/influxdata/influxdb v1.8.0 // indirect
 	github.com/iris-contrib/blackfriday v2.0.0+incompatible // indirect
 	github.com/iris-contrib/formBinder v5.0.0+incompatible // indirect
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible // indirect
@@ -40,8 +43,7 @@ require (
 	github.com/ryanuber/columnize v2.1.0+incompatible // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.1.0 // indirect
@@ -51,8 +53,8 @@ require (
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2 // indirect
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200523222454-059865788121 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
