@@ -68,6 +68,7 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 			return
 		}
 		event, err := github.ParseWebHook(github.WebHookType(r), payload)
+		//log.Debug("event", event)
 		if err != nil {
 			// event parse err
 			util.Error(errors.Wrap(err, fmt.Sprintf("%s webhook post request", key)))

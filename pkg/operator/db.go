@@ -36,6 +36,11 @@ const (
 	ROLE_REVIEWER    = "reviewer"
 )
 
+var (
+	MERGE_ROLES  = []string{ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
+	REVIEW_ROLES = []string{ROLE_REVIEWER, ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
+)
+
 func LabelsToStrArr(labels []*github.Label) []string {
 	labelsArr := make([]string, len(labels))
 	for _, label := range labels {
@@ -47,11 +52,11 @@ func LabelsToStrArr(labels []*github.Label) []string {
 func (o *Operator) ListSIGByLabel(repo string, labels []*github.Label) (sigs []*Sig, err error) {
 	lablesArr := LabelsToStrArr(labels)
 	err = o.DB.Where("(label in (?) or label is null) and repo=?", lablesArr, repo).Find(&sigs).Error
-	if err != nil && !gorm.IsRecordNotFoundError(err) {
-		util.Println("get sig list failed", err)
-		err = errors.Wrap(err, "get siglist")
-		return
+	if err == nil || gorm.IsRecordNotFoundError(err) {
+		return sigs, nil
 	}
+	util.Println("get sig list failed", err)
+	err = errors.Wrap(err, "get siglist")
 	return
 }
 
@@ -63,7 +68,7 @@ func (o *Operator) GetRolesInSigByGithubID(githubID string) (members []*SigMembe
 	return
 }
 
-func (o *Operator) HasPermissionToPRWithLables(repo string, labels []*github.Label, githubID string, roles []string) error {
+func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*github.Label, githubID string, roles []string) error {
 	sigLabels, err := o.ListSIGByLabel(repo, labels)
 	if err != nil {
 		return err
