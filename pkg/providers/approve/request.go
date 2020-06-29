@@ -47,20 +47,21 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 	if err != nil {
 		return err
 	}
-	txn.Table("lgtm_records").Save(&record)
-	//if txn.Error != nil {// TODO
-	txn.Table("lgtm_records").Update(&record)
-	//}
-	return txn.Error
+	err = txn.Save(&record).Error
+	if err != nil {
+		log.Warn(err)
+		return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?", record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
+	}
+	return err
 }
+
 func (a *Approve) LGTMRecordExist(record *LgtmRecord, txn *gorm.DB) (bool, error) {
 	records := []LgtmRecord{}
 	terr := txn.Where("score>0 and repo=? and owner=? and pull_number=? and github=?", record.Repo, record.Owner, record.PullNumber, record.Github).Find(&records).Error
+	log.Error(len(records), terr)
 	if terr == nil || gorm.IsRecordNotFoundError(terr) {
-		//log.Error(len(records), terr)
 		return len(records) > 0, nil
 	}
-	//log.Error(len(records), terr)
 	//error caused by db
 	return false, terr
 }
@@ -116,7 +117,7 @@ func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
 		txn.Commit()
 		if txn.Error != nil {
 			err = errors.New("something is wrong,please try again later")
-			log.Error("insert lgtm recod failed with err", txn.Error)
+			log.Error("cancel lgtm recod failed with err", txn.Error)
 		}
 	}()
 	exist, _ := a.LGTMRecordExist(&record, txn)
@@ -124,6 +125,6 @@ func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
 		err = errors.New("You never give a LGTM to this PR")
 		return err
 	}
-	txn.Table("lgtm_records").Update(&record)
-	return txn.Error
+
+	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?", record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
 }

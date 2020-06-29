@@ -125,6 +125,9 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 
 func (a *Approve) cancelApprove(senderID string, pullNumber int, labels []*github.Label) {
 	comment := fmt.Sprintf("@%s,cancel success.", senderID)
+	defer func() {
+		log.Info(senderID, pullNumber, comment)
+	}()
 	if err := a.removeLGTMRecord(senderID, pullNumber); err != nil {
 		util.Error(err)
 		comment = fmt.Sprintf("Sorry @%s,cancel failed. %s", senderID, err)
