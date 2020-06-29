@@ -7,6 +7,7 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/util"
 
 	"github.com/google/go-github/v32/github"
+	"github.com/ngaut/log"
 )
 
 const (
@@ -63,14 +64,16 @@ func (a *Approve) distinguishCommontBody(body string) (approve bool, cancel bool
 			break
 		}
 	}
-	if approve == false {
+	if !approve {
 		return
 	}
 	body = strings.TrimSpace(body)
 	if len(body) == 0 {
 		return
-	} else if strings.EqualFold(body, cancelCommand) {
-		approve = false
+	}
+
+	approve = false
+	if strings.EqualFold(body, cancelCommand) {
 		cancel = true
 	}
 	return
@@ -99,6 +102,7 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 
 	comment := fmt.Sprintf("@%s,Thanks for you review.", senderID)
 	defer func() {
+		log.Info(a.owner, a.repo, pullNumber, comment)
 		if err := a.opr.CommentOnGithub(a.owner, a.repo, pullNumber, comment); err != nil {
 			util.Error(err)
 		}
