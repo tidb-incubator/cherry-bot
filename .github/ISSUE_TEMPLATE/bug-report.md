@@ -1,3 +1,11 @@
+---
+name: "\U0001F41B Bug Report"
+about: As a User, I want to report a Bug.
+labels: type/bug
+---
+
+## Bug Report
+
 - [ ] I have searched the [issues](https://github.com/pingcap-incubator/cherry-bot/issues) of this repository and believe that this is not a duplicate.
 
 ### Related link
