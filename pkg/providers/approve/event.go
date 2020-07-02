@@ -113,7 +113,11 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 		comment = fmt.Sprintf("%s you are the author.", msg)
 		return
 	}
-	err := a.addLGTMRecord(senderID, pullNumber, labels)
+	already_exist, err := a.addLGTMRecord(senderID, pullNumber, labels)
+	if already_exist {
+		comment = ""
+		return
+	}
 	if err != nil {
 		msg := fmt.Sprintf(noAccessComment, senderID)
 		comment = fmt.Sprintf("%s %s", msg, err)
