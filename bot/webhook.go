@@ -16,9 +16,16 @@ func (b *bot) Webhook(event interface{}) {
 	case *github.IssuesEvent:
 		b.processIssuesEvent(event)
 	case *github.PullRequestReviewEvent:
-		b.processPullRequestReviewEvent(event)
+		{
+			b.processPullRequestReviewEvent(event)
+			//event.GetReview().Body = "LGTM"
+			//event.GetReview().GetState() = "approved" | commented|changes_requested
+		}
 	case *github.PullRequestReviewCommentEvent:
-		b.processPullRequestReviewCommentEvent(event)
+		{
+			//log.Info("processPullRequestReviewCommentEvent", event.GetAction, event)
+			b.processPullRequestReviewCommentEvent(event)
+		}
 	}
 }
 
@@ -107,6 +114,9 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 func (b *bot) processPullRequestReviewEvent(event *github.PullRequestReviewEvent) {
 	if b.cfg.StatusControl {
 		b.Middleware.PullStatus.ProcessPullRequestReviewEvent(event)
+	}
+	if b.cfg.PullApprove {
+		b.Middleware.Approve.ProcessPullRequestReviewEvent(event)
 	}
 }
 

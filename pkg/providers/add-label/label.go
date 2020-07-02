@@ -3,25 +3,26 @@ package label
 import (
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-	"github.com/pingcap-incubator/cherry-bot/pkg/providers"
 )
 
 type Label struct {
-	owner    string
-	repo     string
-	ready    bool
-	approve  bool
-	provider *providers.Provider
+	owner   string
+	repo    string
+	ready   bool
+	approve bool
+	opr     *operator.Operator
+	cfg     *config.RepoConfig
 }
 
 // Init create cherry pick middleware instance
 func Init(repo *config.RepoConfig, opr *operator.Operator) *Label {
 	n := Label{
-		owner:    repo.Owner,
-		repo:     repo.Repo,
-		ready:    false,
-		approve:  repo.PullApprove,
-		provider: providers.Init(repo, opr),
+		owner:   repo.Owner,
+		repo:    repo.Repo,
+		ready:   false,
+		approve: repo.PullApprove,
+		cfg:     repo,
+		opr:     opr,
 	}
 	return &n
 }

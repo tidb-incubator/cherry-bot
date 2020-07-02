@@ -40,7 +40,7 @@ func (l *Label) processComment(event *github.IssueCommentEvent, comment string) 
 }
 
 func (l *Label) checkLabels(labels []string) (legalLabels, illegalLabels []string, err error) {
-	repoLabels, e := l.provider.ListLabelsOnGithub()
+	repoLabels, e := l.opr.ListLabelsOnGithub(l.owner, l.repo)
 	legalLabels = []string{}
 	illegalLabels = []string{}
 	if e != nil {
@@ -63,7 +63,7 @@ func (l *Label) checkLabels(labels []string) (legalLabels, illegalLabels []strin
 }
 
 func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error {
-	if !l.provider.IfMember(event.GetSender().GetLogin()) {
+	if !l.opr.Member.IfMember(event.GetSender().GetLogin()) {
 		return nil
 	}
 	issueID := event.GetIssue().GetNumber()
@@ -77,7 +77,7 @@ func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error 
 		return err
 	}
 	if len(legal) > 0 {
-		_, _, err = l.provider.GithubClient().Issues.AddLabelsToIssue(context.Background(), l.owner, l.repo, issueID, legal)
+		_, _, err = l.opr.Github.Issues.AddLabelsToIssue(context.Background(), l.owner, l.repo, issueID, legal)
 	}
 
 	if len(illegal) > 0 {
@@ -87,13 +87,13 @@ func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error 
 		}
 		comment := fmt.Sprintf("These labels are not found %s.", strings.Join(quotationIllegal, ", "))
 		util.Println("errMsg", comment)
-		err = l.provider.CommentOnGithub(issueID, comment)
+		err = l.opr.CommentOnGithub(l.owner, l.repo, issueID, comment)
 	}
 	return errors.Wrap(err, "add labels")
 }
 
 func (l *Label) processUnlabel(event *github.IssueCommentEvent, raw string) error {
-	if !l.provider.IfMember(event.GetSender().GetLogin()) {
+	if !l.opr.Member.IfMember(event.GetSender().GetLogin()) {
 		return nil
 	}
 	issueID := event.GetIssue().GetNumber()
@@ -104,7 +104,7 @@ func (l *Label) processUnlabel(event *github.IssueCommentEvent, raw string) erro
 	for _, label := range labels {
 		ll := strings.TrimSpace(label)
 		g.Go(func() error {
-			_, err := l.provider.GithubClient().Issues.RemoveLabelForIssue(context.Background(), l.owner, l.repo,
+			_, err := l.opr.Github.Issues.RemoveLabelForIssue(context.Background(), l.owner, l.repo,
 				issueID, ll)
 			return errors.Wrap(err, "remove labels")
 		})

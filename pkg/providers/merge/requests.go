@@ -56,13 +56,13 @@ type ReleaseMember struct {
 func (m *merge) saveModel(model interface{}) error {
 	ctx := context.Background()
 	return errors.Wrap(util.RetryOnError(ctx, maxRetryTime, func() error {
-		return m.provider.Opr.DB.Save(model).Error
+		return m.opr.DB.Save(model).Error
 	}), "save auto merge model")
 }
 
 func (m *merge) getMergeJobs() []*AutoMerge {
 	var mergeJobs []*AutoMerge
-	if err := m.provider.Opr.DB.Where("owner = ? and repo = ? and status = ?", m.owner, m.repo,
+	if err := m.opr.DB.Where("owner = ? and repo = ? and status = ?", m.owner, m.repo,
 		false).Order("created_at asc").Find(&mergeJobs).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		util.Error(errors.Wrap(err, "get merge job from DB"))
 	}
@@ -77,7 +77,7 @@ func (m *merge) updateBranch(pr *github.PullRequest) (bool, error) {
 	if !needUpdate {
 		return false, nil
 	}
-	_, _, err = m.provider.Opr.Github.PullRequests.UpdateBranch(context.Background(),
+	_, _, err = m.opr.Github.PullRequests.UpdateBranch(context.Background(),
 		m.owner, m.repo, *pr.Number, nil)
 	if err != nil {
 		// break update branch for errors besides `github.AcceptedError`
@@ -90,7 +90,7 @@ func (m *merge) updateBranch(pr *github.PullRequest) (bool, error) {
 
 func (m *merge) getReleaseVersions(base string) ([]*ReleaseVersion, error) {
 	var releaseVersions []*ReleaseVersion
-	if err := m.provider.Opr.DB.Where("owner = ? and repo = ? and branch = ?", m.owner, m.repo,
+	if err := m.opr.DB.Where("owner = ? and repo = ? and branch = ?", m.owner, m.repo,
 		base).Find(&releaseVersions).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "get release versions from DB")
 	} else if gorm.IsRecordNotFoundError(err) {
@@ -101,7 +101,7 @@ func (m *merge) getReleaseVersions(base string) ([]*ReleaseVersion, error) {
 
 func (m *merge) getReleaseMembers(base string) ([]*ReleaseMember, error) {
 	var releaseMembers []*ReleaseMember
-	if err := m.provider.Opr.DB.Where("owner = ? and repo = ? and branch = ?", m.owner, m.repo,
+	if err := m.opr.DB.Where("owner = ? and repo = ? and branch = ?", m.owner, m.repo,
 		base).Find(&releaseMembers).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "get release members from DB")
 	} else if gorm.IsRecordNotFoundError(err) {
@@ -146,13 +146,13 @@ func (m *merge) canMergeReleaseVersion(base, user string) (bool, bool, error) {
 }
 
 func (m *merge) needUpdateBranch(pr *github.PullRequest) (bool, error) {
-	baseCommits, _, err := m.provider.Opr.Github.Repositories.ListCommits(context.Background(), m.owner, m.repo, &github.CommitsListOptions{
+	baseCommits, _, err := m.opr.Github.Repositories.ListCommits(context.Background(), m.owner, m.repo, &github.CommitsListOptions{
 		SHA: pr.Base.GetRef(),
 	})
 	if err != nil {
 		return false, errors.Wrap(err, "if need update branch")
 	}
-	headCommits, _, err := m.provider.Opr.Github.Repositories.ListCommits(context.Background(), m.owner, m.repo, &github.CommitsListOptions{
+	headCommits, _, err := m.opr.Github.Repositories.ListCommits(context.Background(), m.owner, m.repo, &github.CommitsListOptions{
 		SHA: pr.Head.GetSHA(),
 	})
 	if err != nil {
@@ -202,13 +202,13 @@ func (m *merge) getMergeMessage(ID int) (string, error) {
 func (m *merge) addCanMerge(pull *github.PullRequest) error {
 	var labels []string
 	for _, label := range pull.Labels {
-		if label.GetName() == m.provider.CanMergeLabel {
+		if label.GetName() == m.cfg.CanMergeLabel {
 			return nil
 		}
 		labels = append(labels, label.GetName())
 	}
-	labels = append(labels, m.provider.CanMergeLabel)
-	_, _, err := m.provider.Opr.Github.Issues.AddLabelsToIssue(context.Background(),
+	labels = append(labels, m.cfg.CanMergeLabel)
+	_, _, err := m.opr.Github.Issues.AddLabelsToIssue(context.Background(),
 		m.owner, m.repo, pull.GetNumber(), labels)
 	return errors.Wrap(err, "add can merge label")
 }
@@ -216,15 +216,15 @@ func (m *merge) addCanMerge(pull *github.PullRequest) error {
 func (m *merge) removeCanMerge(pull *github.PullRequest) error {
 	hasLabel := false
 	for _, label := range pull.Labels {
-		if label.GetName() == m.provider.CanMergeLabel {
+		if label.GetName() == m.cfg.CanMergeLabel {
 			hasLabel = true
 		}
 	}
 	if !hasLabel {
 		return nil
 	}
-	_, err := m.provider.Opr.Github.Issues.RemoveLabelForIssue(context.Background(),
-		m.owner, m.repo, pull.GetNumber(), m.provider.CanMergeLabel)
+	_, err := m.opr.Github.Issues.RemoveLabelForIssue(context.Background(),
+		m.owner, m.repo, pull.GetNumber(), m.cfg.CanMergeLabel)
 	return errors.Wrap(err, "add can merge label")
 }
 
@@ -250,13 +250,13 @@ func (m *merge) queueComment(pull *github.PullRequest) error {
 		comment += fmt.Sprintf("* %d \n", job.PrID)
 	}
 
-	return errors.Wrap(m.provider.CommentOnGithub(pull.GetNumber(), comment), "queue comment")
+	return errors.Wrap(m.opr.CommentOnGithub(m.owner, m.repo, pull.GetNumber(), comment), "queue comment")
 }
 
 func (m *merge) failedMergeSlack(pr *github.PullRequest) error {
 	msg := fmt.Sprintf("❌ Auto merge #%d failed.\nhttps://github.com/%s/%s/pull/%d",
 		*pr.Number, m.owner, m.repo, *pr.Number)
-	if err := m.provider.Opr.Slack.SendMessageWithPr(m.provider.GithubBotChannel, msg, pr, "failed"); err != nil {
+	if err := m.opr.Slack.SendMessageWithPr(m.cfg.GithubBotChannel, msg, pr, "failed"); err != nil {
 		return errors.Wrap(err, "failed merge report")
 	}
 	return nil
@@ -265,7 +265,7 @@ func (m *merge) failedMergeSlack(pr *github.PullRequest) error {
 func (m *merge) successMergeSlack(pr *github.PullRequest) error {
 	msg := fmt.Sprintf("✅ Auto merge #%d success.\nhttps://github.com/%s/%s/pull/%d",
 		*pr.Number, m.owner, m.repo, *pr.Number)
-	if err := m.provider.Opr.Slack.SendMessageWithPr(m.provider.GithubBotChannel, msg, pr, "merged"); err != nil {
+	if err := m.opr.Slack.SendMessageWithPr(m.cfg.GithubBotChannel, msg, pr, "merged"); err != nil {
 		return errors.Wrap(err, "failed merge report")
 	}
 	return nil
