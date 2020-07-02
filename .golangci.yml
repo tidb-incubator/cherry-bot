@@ -1,5 +1,3 @@
-linters-settings:
-
 linters:
   disable-all: true
   enable:
@@ -31,3 +29,5 @@ linters:
     - unparam
     - varcheck
     - whitespace
+
+# FIXME: we should enable errcheck.
