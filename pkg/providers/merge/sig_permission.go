@@ -1,7 +1,6 @@
 package merge
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/google/go-github/v32/github"
@@ -22,7 +21,7 @@ func (m *merge) CanMergeToMaster(pullNumber int, labels []*github.Label, userNam
 		return nil
 	}
 	if lgtmNum < 2 {
-		return errors.New(fmt.Sprintf("The number of `LGTM` for this PR is %v while it need 2", lgtmNum))
+		return fmt.Errorf("The number of `LGTM` for this PR is %v while it needs 2 at least", lgtmNum)
 	}
 	return nil
 }

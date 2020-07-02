@@ -100,7 +100,7 @@ func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 
 func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, labels []*github.Label) {
 
-	comment := fmt.Sprintf("@%s,Thanks for you review.", senderID)
+	comment := fmt.Sprintf("@%s,Thanks for your review.", senderID)
 	defer func() {
 		log.Info(a.owner, a.repo, pullNumber, comment)
 		if err := a.opr.CommentOnGithub(a.owner, a.repo, pullNumber, comment); err != nil {
