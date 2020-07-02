@@ -136,10 +136,13 @@ func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
 		return err
 	}
 
-	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?", record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
+	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=? and github=?", record.Repo, record.Owner, record.PullNumber, record.Github).Update("score", record.Score).Error
 }
 
 func (a *Approve) sendApprove(pullNumber int) error {
+	if a.getApproveFromBot(pullNumber) > 0 {
+		return nil
+	}
 	var (
 		body  string = "LGTM"
 		event string = "APPROVE"
@@ -152,30 +155,31 @@ func (a *Approve) sendApprove(pullNumber int) error {
 	return errors.Wrap(err, "send approve")
 }
 
-func (a *Approve) dismissApprove(pullNumber int) error {
+func (a *Approve) getApproveFromBot(pullNumber int) int64 {
 	reviews, _, err := a.opr.Github.PullRequests.ListReviews(context.Background(), a.owner, a.repo, pullNumber, &github.ListOptions{
 		PerPage: 100,
 	})
 	if err != nil {
-		return errors.Wrap(err, "dismiss approve")
+		log.Error(errors.Wrap(err, "dismiss approve"))
+		return 0
 	}
 
-	var (
-		reviewID       int64
-		dismissMessage = "approve cancel command"
-	)
 	for _, review := range reviews {
 		if review.GetState() == "APPROVED" && review.GetUser().GetLogin() == a.opr.Config.Github.Bot {
-			reviewID = review.GetID()
+			return review.GetID()
 		}
 	}
-
+	return 0
+}
+func (a *Approve) dismissApprove(pullNumber int) error {
+	dismissMessage := "approve cancel command"
+	reviewID := a.getApproveFromBot(pullNumber)
 	if reviewID == 0 {
 		return nil
 		//return a.addGithubComment(pullNumber, "bot approve review not found")
 	}
 
-	_, _, err = a.opr.Github.PullRequests.DismissReview(context.Background(), a.owner, a.repo, pullNumber, reviewID,
+	_, _, err := a.opr.Github.PullRequests.DismissReview(context.Background(), a.owner, a.repo, pullNumber, reviewID,
 		&github.PullRequestReviewDismissalRequest{
 			Message: &dismissMessage,
 		})
