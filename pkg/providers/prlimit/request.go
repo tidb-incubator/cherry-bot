@@ -40,7 +40,7 @@ func (p *prLimit) commentPr(openedPr *github.PullRequest, openedPrSlice []*githu
 		prLinkSlice = append(prLinkSlice, fmt.Sprintf("https://github.com/%s/%s/pull/%d",
 			p.owner, p.repo, *pr.Number))
 	}
-	commentBody += strings.Join(prLinkSlice[:], " , ")
+	commentBody += strings.Join(prLinkSlice, " , ")
 
 	comment := &github.IssueComment{
 		Body: &commentBody,

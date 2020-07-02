@@ -56,7 +56,7 @@ func (m *Member) IfMember(login string) bool {
 
 func (m *Member) cacheIfMember(login string) (bool, bool) {
 	if user, ok := m.cache[login]; ok {
-		if time.Now().Sub(user.lastUpdate) < cacheTime {
+		if time.Since(user.lastUpdate) < cacheTime {
 			return user.member, true
 		}
 	}

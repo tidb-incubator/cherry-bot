@@ -55,6 +55,6 @@ func Init(repo *config.RepoConfig, opr *operator.Operator) Cherry {
 	return &c
 }
 
-func (c *cherry) Ready() {
-	c.ready = true
+func (cherry *cherry) Ready() {
+	cherry.ready = true
 }

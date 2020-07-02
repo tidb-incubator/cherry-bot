@@ -17,11 +17,13 @@ type job struct {
 }
 
 func (w *Watcher) composeJobs() error {
-	branches, _, err := w.opr.Github.Repositories.ListBranches(context.Background(), w.repo.Owner, w.repo.Repo, &github.BranchListOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
-	})
+	branches, _, err := w.opr.Github.Repositories.ListBranches(context.Background(),
+		w.repo.Owner, w.repo.Repo,
+		&github.BranchListOptions{
+			ListOptions: github.ListOptions{
+				PerPage: 100,
+			},
+		})
 	if err != nil {
 		return errors.Wrap(err, "compose jobs from config, get branch")
 	}

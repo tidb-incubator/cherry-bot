@@ -69,10 +69,12 @@ func (w *Watcher) checkOnce() {
 }
 
 func (w *Watcher) getLastUpdate(path, branch string) (time.Time, string, error) {
-	commits, _, err := w.opr.Github.Repositories.ListCommits(context.Background(), w.repo.Owner, w.repo.Repo, &github.CommitsListOptions{
-		SHA:  branch,
-		Path: path,
-	})
+	commits, _, err := w.opr.Github.Repositories.ListCommits(context.Background(),
+		w.repo.Owner, w.repo.Repo,
+		&github.CommitsListOptions{
+			SHA:  branch,
+			Path: path,
+		})
 
 	if err != nil {
 		return time.Time{}, "", errors.Wrap(err, "list commits")
@@ -91,7 +93,8 @@ func (w *Watcher) checkFile(path, branch string) error {
 	}
 	if lastUpdate.After(w.checkPoints[path][branch].time) &&
 		sha != w.checkPoints[path][branch].sha {
-		util.Println("before notice", w.repo.Owner, w.repo.Repo, w.checkPoints[path][branch].time, w.checkPoints[path][branch].sha, lastUpdate, sha)
+		util.Println("before notice", w.repo.Owner, w.repo.Repo, w.checkPoints[path][branch].time,
+			w.checkPoints[path][branch].sha, lastUpdate, sha)
 		err := w.noticeUpdate(path, branch, w.checkPoints[path][branch].sha, sha)
 		if err == nil {
 			w.Lock()

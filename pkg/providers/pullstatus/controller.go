@@ -1,11 +1,11 @@
 package pullstatus
 
 import (
-	"github.com/pingcap-incubator/cherry-bot/util"
 	"strings"
 	"time"
 
 	"github.com/google/go-github/v32/github"
+	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 )
 
@@ -83,7 +83,7 @@ func (p *pullStatus) processReviewSubmitted(pull *github.PullRequest) {
 	})
 }
 
-func (p *pullStatus) processIssueComment(sender *github.User, comment *github.IssueComment, issue *github.Issue) {
+func (p *pullStatus) processIssueComment(comment *github.IssueComment, issue *github.Issue) {
 	if comment.GetUser().GetLogin() == p.opr.Config.Github.Bot {
 		return
 	}
@@ -126,8 +126,8 @@ func (p *pullStatus) matchDuration(duration time.Duration, label string, cb func
 	}
 }
 
-func (p *pullStatus) checkStatus(check *PullStatusControl) {
-	duration := time.Now().Sub(check.LastUpdate)
+func (p *pullStatus) checkStatus(check *Control) {
+	duration := time.Since(check.LastUpdate)
 	p.matchDuration(duration, check.Label, func(events []string, duration int) {
 		if model, err := p.getPullStatusCheck(check.PullID, check.Label, duration, check.LastUpdate); err != nil {
 			util.Error(errors.Wrap(err, "pull status check status"))
@@ -151,7 +151,7 @@ func (p *pullStatus) checkStatus(check *PullStatusControl) {
 	})
 }
 
-func (p *pullStatus) checkEvent(check *PullStatusControl, event string) error {
+func (p *pullStatus) checkEvent(check *Control, event string) error {
 	pull, er := p.getPullRequest(check.PullID)
 	if er != nil {
 		return errors.Wrap(er, "check event")

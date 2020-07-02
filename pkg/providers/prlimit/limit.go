@@ -140,7 +140,7 @@ func (p *prLimit) fetchBatch(startID int, ch *chan []*github.PullRequest) {
 		State: "open",
 		Sort:  "created",
 		ListOptions: github.ListOptions{
-			Page:    1 + int(startID/perPage),
+			Page:    1 + startID/perPage,
 			PerPage: perPage,
 		},
 	}

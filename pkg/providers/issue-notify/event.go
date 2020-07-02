@@ -29,7 +29,8 @@ func (n *Notify) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 
 func buildIssueMsg(event *github.IssuesEvent) (preText, text string) {
 	issue := event.Issue
-	preText = fmt.Sprintf("New Issue <%s|%s> by user: <%s|%s>", issue.GetHTMLURL(), issue.GetTitle(), issue.GetUser().GetHTMLURL(), issue.GetUser().GetLogin())
+	preText = fmt.Sprintf("New Issue <%s|%s> by user: <%s|%s>",
+		issue.GetHTMLURL(), issue.GetTitle(), issue.GetUser().GetHTMLURL(), issue.GetUser().GetLogin())
 	text = issue.GetBody()
 	return
 }
@@ -37,7 +38,8 @@ func buildIssueMsg(event *github.IssuesEvent) (preText, text string) {
 func buildIssueCommentMsg(event *github.IssueCommentEvent) (preText, text string) {
 	issue := event.Issue
 	comment := event.Comment
-	preText = fmt.Sprintf("New comment for <%s|%s> by user: <%s|%s>", comment.GetHTMLURL(), issue.GetTitle(), comment.GetUser().GetHTMLURL(), comment.GetUser().GetLogin())
+	preText = fmt.Sprintf("New comment for <%s|%s> by user: <%s|%s>",
+		comment.GetHTMLURL(), issue.GetTitle(), comment.GetUser().GetHTMLURL(), comment.GetUser().GetLogin())
 	text = comment.GetBody()
 	return
 }

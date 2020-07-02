@@ -3,6 +3,7 @@ package pullstatus
 import (
 	"context"
 	"fmt"
+
 	"github.com/google/go-github/v32/github"
 	"github.com/pkg/errors"
 )
@@ -37,9 +38,9 @@ func (p *pullStatus) noticePingReviewer(pull *github.PullRequest) error {
 	}
 	comment := ""
 	for _, reviewer := range reviewers {
-		comment = comment + fmt.Sprintf("@%s, ", reviewer)
+		comment += fmt.Sprintf("@%s, ", reviewer)
 	}
-	comment = comment + "PTAL."
+	comment += "PTAL."
 	return errors.Wrap(p.addComment(pull, comment), "notice ping author")
 }
 

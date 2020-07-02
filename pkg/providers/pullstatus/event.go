@@ -29,11 +29,8 @@ func (p *pullStatus) ProcessPullRequestReviewEvent(event *github.PullRequestRevi
 	if event.GetSender().GetLogin() == p.opr.Config.Github.Bot {
 		return
 	}
-	switch event.GetAction() {
-	case "submitted":
-		{
-			p.processReviewSubmitted(event.GetPullRequest())
-		}
+	if event.GetAction() == "submitted" {
+		p.processReviewSubmitted(event.GetPullRequest())
 	}
 }
 
@@ -47,10 +44,7 @@ func (p *pullStatus) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	if event.GetSender().GetLogin() == p.opr.Config.Github.Bot {
 		return
 	}
-	switch event.GetAction() {
-	case "created":
-		{
-			p.processIssueComment(event.GetSender(), event.GetComment(), event.GetIssue())
-		}
+	if event.GetAction() == "created" {
+		p.processIssueComment(event.GetComment(), event.GetIssue())
 	}
 }

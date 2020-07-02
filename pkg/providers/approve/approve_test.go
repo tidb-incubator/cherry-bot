@@ -19,7 +19,7 @@ func initDB() (Approve, LgtmRecord) {
 		Password: "",
 		Dbname:   "test",
 	}
-	dbConnect := db.CreateDbConnect(&dbCfg)
+	dbConnect := db.CreateDBConnect(&dbCfg)
 	op := operator.Operator{
 		DB: dbConnect,
 	}
@@ -42,14 +42,13 @@ func initDB() (Approve, LgtmRecord) {
 func TestOrm(t *testing.T) {
 	app, record := initDB()
 	fmt.Println(app.LGTMRecordExist(&record, app.opr.DB.Begin()))
-
 }
 
 //go test -run TestOrmUpdate
 func TestOrmUpdate(t *testing.T) {
 	app, record := initDB()
 	fmt.Println(app.getLGTMNum(record.PullNumber))
-	err := app.addLGTMRecord(record.Github, record.PullNumber, []*github.Label{})
+	_, err := app.addLGTMRecord(record.Github, record.PullNumber, []*github.Label{})
 	fmt.Println(err)
 	// err = app.removeLGTMRecord(record.Github, record.PullNumber)
 	// fmt.Println(err)

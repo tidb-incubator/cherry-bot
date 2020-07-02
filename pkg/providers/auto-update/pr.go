@@ -53,21 +53,22 @@ func (au *autoUpdate) Update(pr *github.PullRequest, target string) error {
 
 	newPr, prepareMessage, err := au.prepareUpdate(pr, target)
 	if err != nil {
-		util.Error(au.prNotice(false, target, pr, nil, "fail", prepareMessage))
+		util.Error(au.prNotice(false, pr, nil, prepareMessage))
 		return errors.Wrap(err, "commit update")
 	}
 	resPr, _, err := au.submitUpdate(newPr)
 
 	success := false
-	if newPr == nil && err == nil {
+	if newPr != nil || err != nil {
+		if err != nil {
+			// pr create failed
+			util.Error(au.prNotice(false, pr, nil, "submit PR failed"))
+			return errors.Wrap(err, "commit update")
+		}
+		success = true
+	} else {
 		// pr already exist
 		return nil
-	} else if err != nil {
-		// pr create failed
-		util.Error(au.prNotice(false, target, pr, nil, "fail", "submit PR failed"))
-		return errors.Wrap(err, "commit update")
-	} else {
-		success = true
 	}
 
 	if success {
@@ -80,7 +81,7 @@ func (au *autoUpdate) Update(pr *github.PullRequest, target string) error {
 		updateResPr = resPr
 		util.Error(err)
 	}
-	util.Error(au.prNotice(true, target, pr, updateResPr, "success", ""))
+	util.Error(au.prNotice(true, pr, updateResPr, ""))
 
 	return nil
 }
@@ -107,7 +108,8 @@ func (au *autoUpdate) prepareUpdate(pr *github.PullRequest, target string) (*git
 		newBranch := fmt.Sprintf("%s-%s", target, (*pr.MergeCommitSHA)[0:12])
 		commit := fmt.Sprintf("%s: %s", au.watchedRepo, *pr.Title)
 		head := fmt.Sprintf("%s:%s", au.opr.Config.Github.Bot, newBranch)
-		body := fmt.Sprintf("update %s to include %s/%s#%d for %s", au.watchedRepo, au.owner, au.watchedRepo, pr.GetNumber(), target)
+		body := fmt.Sprintf("update %s to include %s/%s#%d for %s",
+			au.watchedRepo, au.owner, au.watchedRepo, pr.GetNumber(), target)
 		maintainerCanModify := true
 		draft := false
 
@@ -200,7 +202,7 @@ func (au *autoUpdate) submitUpdate(newPr *github.NewPullRequest) (*github.PullRe
 }
 
 // use /merge command instead of adding label
-func (au *autoUpdate) addCanMergeLabel(res *github.PullRequest, from *github.PullRequest) error {
+func (au *autoUpdate) addCanMergeLabel(res *github.PullRequest) error {
 	_, _, err := au.opr.Github.Issues.AddLabelsToIssue(context.Background(),
 		au.owner, au.updateRepo, *res.Number, []string{""})
 	if err != nil {
@@ -209,8 +211,8 @@ func (au *autoUpdate) addCanMergeLabel(res *github.PullRequest, from *github.Pul
 	return nil
 }
 
-func (au *autoUpdate) prNotice(success bool, target string,
-	pr *github.PullRequest, newPr *github.PullRequest, stat string, message string) error {
+func (au *autoUpdate) prNotice(success bool,
+	pr *github.PullRequest, newPr *github.PullRequest, message string) error {
 	if pr == nil || pr.User == nil {
 		return errors.Wrap(errors.New("nil pull request"), "send pr notice")
 	}

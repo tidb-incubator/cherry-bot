@@ -146,15 +146,19 @@ func (m *merge) canMergeReleaseVersion(base, user string) (bool, bool, error) {
 }
 
 func (m *merge) needUpdateBranch(pr *github.PullRequest) (bool, error) {
-	baseCommits, _, err := m.opr.Github.Repositories.ListCommits(context.Background(), m.owner, m.repo, &github.CommitsListOptions{
-		SHA: pr.Base.GetRef(),
-	})
+	baseCommits, _, err := m.opr.Github.Repositories.ListCommits(context.Background(),
+		m.owner, m.repo,
+		&github.CommitsListOptions{
+			SHA: pr.Base.GetRef(),
+		})
 	if err != nil {
 		return false, errors.Wrap(err, "if need update branch")
 	}
-	headCommits, _, err := m.opr.Github.Repositories.ListCommits(context.Background(), m.owner, m.repo, &github.CommitsListOptions{
-		SHA: pr.Head.GetSHA(),
-	})
+	headCommits, _, err := m.opr.Github.Repositories.ListCommits(context.Background(),
+		m.owner, m.repo,
+		&github.CommitsListOptions{
+			SHA: pr.Head.GetSHA(),
+		})
 	if err != nil {
 		return false, errors.Wrap(err, "if need update branch")
 	}
@@ -167,12 +171,12 @@ func (m *merge) needUpdateBranch(pr *github.PullRequest) (bool, error) {
 	return true, nil
 }
 
-func (m *merge) getMergeMessage(ID int) (string, error) {
-	url := fmt.Sprintf("https://github.com/%s/%s/pull/%d.patch", m.owner, m.repo, ID)
-	res, err := http.Get(url)
+func (m *merge) getMergeMessage(id int) (string, error) {
+	res, err := http.Get(fmt.Sprintf("https://github.com/%s/%s/pull/%d.patch", m.owner, m.repo, id))
 	if err != nil {
 		return "", errors.Wrap(err, "ger merge message")
 	}
+	defer res.Body.Close()
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return "", errors.Wrap(err, "ger merge message")

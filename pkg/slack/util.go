@@ -53,11 +53,12 @@ func (b *bot) GetUserByEmail(email string) (string, error) {
 func (b *bot) makePrAttachment(pr *github.PullRequest, stat string) *slack.Attachment {
 	authorLink := fmt.Sprintf("https://github.com/%s", pr.GetUser().GetLogin())
 	color := "#f1f8ff"
-	if stat == "success" {
+	switch stat {
+	case "success":
 		color = "#3ca553"
-	} else if stat == "failed" {
+	case "failed":
 		color = "#e53b00"
-	} else if stat == "merged" {
+	case "merged":
 		color = "#6f42c1"
 	}
 	labels := []string{}
@@ -65,12 +66,12 @@ func (b *bot) makePrAttachment(pr *github.PullRequest, stat string) *slack.Attac
 		labels = append(labels, label.GetName())
 	}
 	fields := []slack.AttachmentField{
-		slack.AttachmentField{
+		{
 			Title: "Labels",
 			Value: strings.Join(labels, ", "),
 			Short: true,
 		},
-		slack.AttachmentField{
+		{
 			Title: "Comments",
 			Value: strconv.Itoa(pr.GetComments()),
 			Short: true,
@@ -101,12 +102,12 @@ func (b *bot) makeIssueAttachment(issue *github.Issue) *slack.Attachment {
 		labels = append(labels, label.GetName())
 	}
 	fields := []slack.AttachmentField{
-		slack.AttachmentField{
+		{
 			Title: "Labels",
 			Value: strings.Join(labels, ", "),
 			Short: true,
 		},
-		slack.AttachmentField{
+		{
 			Title: "Comments",
 			Value: strconv.Itoa(issue.GetComments()),
 			Short: true,

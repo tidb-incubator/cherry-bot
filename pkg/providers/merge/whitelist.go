@@ -25,7 +25,7 @@ func (m *merge) GetAllowList() ([]string, error) {
 		return nil, errors.Wrap(err, "get allowList")
 	}
 	for _, w := range allowNames {
-		res = append(res, (*w).Username)
+		res = append(res, w.Username)
 	}
 	return res, nil
 }

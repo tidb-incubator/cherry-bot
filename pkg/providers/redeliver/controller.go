@@ -98,19 +98,17 @@ func (r *redeliver) checkFollow(issue *github.Issue, comment *github.IssueCommen
 			redeliverModel, er := r.getRedeliver(v.GetNumber(), rule.Channel)
 			if err != nil {
 				err = errors.Wrap(er, "check follow")
-			} else {
-				if redeliverModel.ID != 0 {
-					for _, sentChannel := range sentChannels {
-						if sentChannel == rule.Channel {
-							return
-						}
+			} else if redeliverModel.ID != 0 {
+				for _, sentChannel := range sentChannels {
+					if sentChannel == rule.Channel {
+						return
 					}
-					msg := fmt.Sprintf("Comment in followed issue detected")
-					if er := r.sendCommentNotice(rule.Channel, msg, v, comment); er != nil {
-						err = errors.Wrap(er, "check comment")
-					} else {
-						sentChannels = append(sentChannels, rule.Channel)
-					}
+				}
+				msg := "Comment in followed issue detected"
+				if er := r.sendCommentNotice(rule.Channel, msg, v, comment); er != nil {
+					err = errors.Wrap(er, "check comment")
+				} else {
+					sentChannels = append(sentChannels, rule.Channel)
 				}
 			}
 		}

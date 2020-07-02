@@ -16,8 +16,8 @@ type DB struct {
 	*gorm.DB
 }
 
-// CreateDbConnect create database connect to TiDB or MySQL
-func CreateDbConnect(config *config.Database) *DB {
+// CreateDBConnect create database connect to TiDB or MySQL
+func CreateDBConnect(config *config.Database) *DB {
 	connect := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		config.Username, config.Password, config.Address, config.Port, config.Dbname)
 	db, err := gorm.Open("mysql", connect)

@@ -12,8 +12,5 @@ func auth(ctl *controller.Controller, key string, secret string) bool {
 		return false
 	}
 	util.Event("secret", secret, "webhook secret", r.WebhookSecret)
-	if secret != r.WebhookSecret {
-		return false
-	}
-	return true
+	return secret == r.WebhookSecret
 }

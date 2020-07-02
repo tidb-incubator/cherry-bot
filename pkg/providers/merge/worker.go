@@ -16,7 +16,6 @@ const (
 	pollingInterval = 30 * time.Second
 	waitForStatus   = 120 * time.Second
 	testCommentBody = "/run-all-tests"
-	mergeMessage    = "Ready to merge!"
 	mergeMethod     = "squash"
 )
 
@@ -38,7 +37,7 @@ func (m *merge) processPREvent(event *github.PullRequestEvent) {
 }
 
 func (m *merge) startJob(mergeJob *AutoMerge) error {
-	pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
+	pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, mergeJob.PrID)
 	if err != nil {
 		return errors.Wrap(err, "start merge job")
 	}
@@ -52,9 +51,9 @@ func (m *merge) startJob(mergeJob *AutoMerge) error {
 			// no need for update branch, continue test
 			// FIXME: for some cases, we should stop the test
 			// like "422 head repository does not exist" which may caused by head repository deleted
-		} else {
-			return errors.Wrap(err, "start merge job")
+			return nil
 		}
+		return errors.Wrap(err, "start merge job")
 	}
 	if needUpdate {
 		time.Sleep(waitForStatus)
@@ -115,7 +114,7 @@ func (m *merge) startPolling() {
 }
 
 func (m *merge) classifyPR(jobs []*AutoMerge) (jobListOfPR map[string]*AutoMerge) {
-	jobListOfPR = make(map[string]*AutoMerge, 0)
+	jobListOfPR = make(map[string]*AutoMerge)
 	for _, mergeJob := range jobs {
 		baseRef := mergeJob.BaseRef
 		if _, ok := jobListOfPR[baseRef]; !ok && mergeJob.Started {
@@ -133,7 +132,7 @@ func (m *merge) classifyPR(jobs []*AutoMerge) (jobListOfPR map[string]*AutoMerge
 }
 
 func (m *merge) checkPR(mergeJob *AutoMerge) bool {
-	pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, (*mergeJob).PrID)
+	pr, _, err := m.opr.Github.PullRequests.Get(context.Background(), m.owner, m.repo, mergeJob.PrID)
 	if err != nil {
 		util.Error(errors.Wrap(err, "checking PR if can be merged"))
 		return false
@@ -221,10 +220,8 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 			if err := m.failedMergeSlack(pr); err != nil {
 				util.Error(errors.Wrap(err, "checking PR"))
 			}
-		} else {
-			if err := m.successMergeSlack(pr); err != nil {
-				util.Error(errors.Wrap(err, "checking PR"))
-			}
+		} else if err := m.successMergeSlack(pr); err != nil {
+			util.Error(errors.Wrap(err, "checking PR"))
 		}
 	} else if !success {
 		finish = true

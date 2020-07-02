@@ -10,8 +10,9 @@ import (
 	"github.com/google/go-github/v32/github"
 )
 
-func (c *CommandRedeliver) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
-	log.Printf("redeliver command: bot process issue event %s/%s #%d\n", c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber())
+func (c *Redeliver) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
+	log.Printf("redeliver command: bot process issue event %s/%s #%d\n",
+		c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber())
 	// only PR author can trigger this comment
 	if event.GetComment().GetUser().GetLogin() == c.opr.Config.Github.Bot {
 		return
@@ -44,7 +45,7 @@ func (c *CommandRedeliver) ProcessIssueCommentEvent(event *github.IssueCommentEv
 	issueInfo := fmt.Sprintf("%s/%s #%d", c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber())
 	if _, _, err := c.opr.Github.Issues.CreateComment(context.Background(),
 		c.repo.Owner, c.repo.Repo, event.GetIssue().GetNumber(), githubComment); err != nil {
-		log.Printf("error occured when redeliver command in %s, %s\n", issueInfo, err)
+		log.Printf("error occurred when redeliver command in %s, %s\n", issueInfo, err)
 	} else {
 		log.Printf("redeliver command success, pull %s\n", issueInfo)
 	}

@@ -34,14 +34,21 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 	app.Post("/webhook", func(ctx iris.Context) {
 		r := ctx.Request()
 		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			// body parse error
+			util.Error(errors.Wrap(err, "get request body failed"))
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.WriteString(err.Error())
+			return
+		}
 
 		// restore body for iris ReadJSON use
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 		hookBody := HookBody{}
 		if err := ctx.ReadJSON(&hookBody); err != nil {
 			// body parse error
-			util.Error(errors.Wrap(err, "webhook post request"))
-			ctx.StatusCode(iris.StatusInternalServerError)
+			util.Error(errors.Wrap(err, "parse request body failed"))
+			ctx.StatusCode(iris.StatusBadRequest)
 			ctx.WriteString(err.Error())
 			return
 		}
@@ -120,7 +127,6 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 
 		ctx.JSON(res)
-		return
 	})
 
 	// diaplay allowlist

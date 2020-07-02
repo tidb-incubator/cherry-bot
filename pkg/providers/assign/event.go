@@ -2,10 +2,11 @@ package assign
 
 import (
 	"context"
+	"strings"
+
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 const (

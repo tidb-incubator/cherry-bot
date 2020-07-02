@@ -16,8 +16,8 @@ const (
 	oneWeek      = -7 * 24 * time.Hour
 )
 
-// LabelCheck is label check table structure
-type LabelCheck struct {
+// Check is label check table structure
+type Check struct {
 	ID         int       `gorm:"column:id"`
 	PrID       int       `gorm:"column:pull_number"`
 	Owner      string    `gorm:"column:owner"`
@@ -36,8 +36,8 @@ type SlackUser struct {
 	Slack  string `gorm:"slack"`
 }
 
-func (l *label) getLabelCheck(number int) (*LabelCheck, error) {
-	model := &LabelCheck{}
+func (l *label) getLabelCheck(number int) (*Check, error) {
+	model := &Check{}
 	if err := l.opr.DB.Where("pull_number = ? AND owner = ? AND repo = ?",
 		number, l.owner, l.repo).First(model).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "query label failed")
@@ -45,9 +45,9 @@ func (l *label) getLabelCheck(number int) (*LabelCheck, error) {
 	return model, nil
 }
 
-func (l *label) getRestoreCheck() ([]*LabelCheck, error) {
+func (l *label) getRestoreCheck() ([]*Check, error) {
 	lastWeek := time.Now().Add(oneWeek)
-	var models []*LabelCheck
+	var models []*Check
 	if err := l.opr.DB.Where("owner = ? AND repo = ? AND has_label = ? AND send_notice = ? AND created_at > ?",
 		l.owner, l.repo, false, false, lastWeek).Find(&models).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return models, errors.Wrap(err, "query restore checks failed")
@@ -101,7 +101,7 @@ func (l *label) saveLabelCheck(issue *github.Issue, label bool, success bool) er
 	if err != nil {
 		return errors.Wrap(err, "save label check")
 	}
-	model := LabelCheck{
+	model := Check{
 		ID:         old.ID,
 		PrID:       issue.GetNumber(),
 		Owner:      l.owner,

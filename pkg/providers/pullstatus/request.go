@@ -16,8 +16,8 @@ const (
 	maxRetryTime = 3
 )
 
-// PullStatusControl is pull status control table structure
-type PullStatusControl struct {
+// Control is pull status control table structure
+type Control struct {
 	ID         int       `gorm:"column:id"`
 	PullID     int       `gorm:"column:pull_number"`
 	Owner      string    `gorm:"column:owner"`
@@ -28,8 +28,8 @@ type PullStatusControl struct {
 	CreatedAt  time.Time `gorm:"column:created_at"`
 }
 
-// PullStatusCheck is pull status check table structure
-type PullStatusCheck struct {
+// Check is pull status check table structure
+type Check struct {
 	ID        int       `gorm:"column:id"`
 	PullID    int       `gorm:"column:pull_number"`
 	Owner     string    `gorm:"column:owner"`
@@ -49,8 +49,8 @@ type SlackUser struct {
 }
 
 // database request
-func (p *pullStatus) getPullStatusControl(pullNumber int, label string) (*PullStatusControl, error) {
-	model := &PullStatusControl{}
+func (p *pullStatus) getPullStatusControl(pullNumber int, label string) (*Control, error) {
+	model := &Control{}
 	if err := p.opr.DB.Where("owner = ? AND repo = ? AND pull_number = ? AND label = ?",
 		p.owner, p.repo, pullNumber, label).First(model).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "query pull status control failed")
@@ -58,8 +58,8 @@ func (p *pullStatus) getPullStatusControl(pullNumber int, label string) (*PullSt
 	return model, nil
 }
 
-func (p *pullStatus) getPullStatusControls() ([]*PullStatusControl, error) {
-	var models []*PullStatusControl
+func (p *pullStatus) getPullStatusControls() ([]*Control, error) {
+	var models []*Control
 	if err := p.opr.DB.Where("owner = ? AND repo = ? AND status = ?",
 		p.owner, p.repo, false).Find(&models).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return models, errors.Wrap(err, "query pull status controls failed")
@@ -68,7 +68,7 @@ func (p *pullStatus) getPullStatusControls() ([]*PullStatusControl, error) {
 }
 
 func (p *pullStatus) createPullStatusControl(pullNumber int, label string) error {
-	model := &PullStatusControl{
+	model := &Control{
 		PullID:     pullNumber,
 		Owner:      p.owner,
 		Repo:       p.repo,
@@ -98,7 +98,7 @@ func (p *pullStatus) updatePull(pullNumber int, label string) error {
 }
 
 func (p *pullStatus) closePull(pull *github.PullRequest) error {
-	model := &PullStatusControl{}
+	model := &Control{}
 	if err := p.opr.DB.Model(model).Where("owner = ? AND repo = ? AND pull_number = ?",
 		p.owner, p.repo, pull.GetNumber()).Update("status", true).Error; err != nil {
 		return errors.Wrap(err, "close pull")
@@ -107,7 +107,7 @@ func (p *pullStatus) closePull(pull *github.PullRequest) error {
 }
 
 func (p *pullStatus) openPull(pull *github.PullRequest) error {
-	model := &PullStatusControl{}
+	model := &Control{}
 	if err := p.opr.DB.Model(model).Where("owner = ? AND repo = ? AND pull_number = ?",
 		p.owner, p.repo, pull.GetNumber()).Update("status", false).Error; err != nil {
 		return errors.Wrap(err, "open pull")
@@ -115,17 +115,20 @@ func (p *pullStatus) openPull(pull *github.PullRequest) error {
 	return nil
 }
 
-func (p *pullStatus) getPullStatusCheck(pullNumber int, label string, duration int, updatedAt time.Time) (*PullStatusCheck, error) {
-	model := &PullStatusCheck{}
-	if err := p.opr.DB.Where("owner = ? AND repo = ? AND pull_number = ? AND label = ? AND updated_at = ? AND duration = ?",
-		p.owner, p.repo, pullNumber, label, updatedAt, duration).First(model).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+func (p *pullStatus) getPullStatusCheck(pullNumber int,
+	label string, duration int, updatedAt time.Time) (*Check, error) {
+	model := &Check{}
+	if err := p.opr.DB.Where(
+		"owner = ? AND repo = ? AND pull_number = ? AND label = ? AND updated_at = ? AND duration = ?",
+		p.owner, p.repo, pullNumber,
+		label, updatedAt, duration).First(model).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "query pull status check failed")
 	}
 	return model, nil
 }
 
 func (p *pullStatus) createPullStatusCheck(pullNumber int, label string, duration int, updatedAt time.Time) error {
-	model := &PullStatusCheck{
+	model := &Check{
 		PullID:    pullNumber,
 		Owner:     p.owner,
 		Repo:      p.repo,

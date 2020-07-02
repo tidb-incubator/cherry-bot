@@ -8,5 +8,5 @@ import (
 // AutoMergeAllowName define allow name for auto merge
 
 func (m *merge) CanMergeToMaster(repo string, labels []*github.Label, userName string) error {
-	return m.opr.HasPermissionToPRWithLables(m.owner, m.repo, labels, userName, operator.MERGE_ROLES)
+	return m.opr.HasPermissionToPRWithLables(m.owner, m.repo, labels, userName, operator.MergeRoles)
 }

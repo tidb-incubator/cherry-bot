@@ -69,7 +69,7 @@ func (b *bot) MonthlyCheck() (*map[string]*[]string, error) {
 	if b.cfg.CherryPick {
 		var msg string
 		if len(*res["cherry"]) > 0 {
-			msg = strings.Join((*res["cherry"])[:], "\n\n")
+			msg = strings.Join(*res["cherry"], "\n\n")
 		} else {
 			msg = good
 		}
@@ -78,7 +78,7 @@ func (b *bot) MonthlyCheck() (*map[string]*[]string, error) {
 	if b.cfg.LabelCheck {
 		var msg string
 		if len(*res["label"]) > 0 {
-			msg = strings.Join((*res["label"])[:], "\n\n")
+			msg = strings.Join(*res["label"], "\n\n")
 		} else {
 			msg = good
 		}

@@ -1,15 +1,13 @@
+linters-settings:
+
 linters:
   disable-all: true
   enable:
     - bodyclose
     - deadcode
     - depguard
-    - dogsled
     - dupl
-    - errcheck
-    - funlen
     - gochecknoinits
-    - goconst
     - gocritic
     - gocyclo
     - gofmt
@@ -23,13 +21,11 @@ linters:
     - interfacer
     - lll
     - misspell
-    - nakedret
     - nolintlint
     - rowserrcheck
     - scopelint
     - staticcheck
     - structcheck
-    - stylecheck
     - typecheck
     - unconvert
     - unparam

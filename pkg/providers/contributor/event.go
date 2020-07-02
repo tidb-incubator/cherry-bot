@@ -54,10 +54,9 @@ func (c *Contributor) authorType(pull *github.PullRequest) (authorType, error) {
 		}
 		if isReviewer {
 			return reviewer, nil
-		} else {
-			// is a member and is not a reviewer -> employee
-			return employee, nil
 		}
+		// is a member and is not a reviewer -> employee
+		return employee, nil
 	}
 	return contributor, nil
 }

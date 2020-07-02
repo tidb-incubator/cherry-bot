@@ -42,22 +42,22 @@ func initBots(opr *operator.Operator) map[string]*bot.Bot {
 
 // StartBotPolling run polling job
 func (ctl *controller) StartBotPolling() {
-	for _, bot := range (*ctl).Bots {
+	for _, bot := range ctl.Bots {
 		go (*bot).StartPolling()
 	}
 }
 
 // Close turn off db connect
 func (ctl *controller) Close() {
-	(*ctl.Operator).DB.Close()
+	ctl.Operator.DB.Close()
 }
 
 // GetRepo return config of specific repo
 func (ctl *controller) GetRepo(key string) *config.RepoConfig {
-	return (*ctl.Operator).Config.Repos[key]
+	return ctl.Operator.Config.Repos[key]
 }
 
 // GetBot return Bot instance of specific repo
 func (ctl *controller) GetBot(key string) *bot.Bot {
-	return (*ctl).Bots[key]
+	return ctl.Bots[key]
 }

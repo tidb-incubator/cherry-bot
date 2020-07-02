@@ -21,7 +21,8 @@ func (d *DB) CreatePullRequestModel(repo *types.Repo, pull *github.PullRequest) 
 }
 
 // PatchPullRequestModel update pull request model
-func (d *DB) PatchPullRequestModel(model *types.PullRequest, repo *types.Repo, pull *github.PullRequest) *types.PullRequest {
+func (d *DB) PatchPullRequestModel(model *types.PullRequest,
+	repo *types.Repo, pull *github.PullRequest) *types.PullRequest {
 	model.PullNumber = pull.GetNumber()
 	model.Owner = repo.GetOwner()
 	model.Repo = repo.GetRepo()

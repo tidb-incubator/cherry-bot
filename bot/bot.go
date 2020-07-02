@@ -38,7 +38,7 @@ type Middleware struct {
 	IssueRedeliver   issueRedeliver.Redeliver
 	PullStatus       pullstatus.PullStatus
 	AutoUpdate       autoUpdate.AutoUpdate
-	CommandRedeliver *command.CommandRedeliver
+	CommandRedeliver *command.Redeliver
 	Notify           *notify.Notify
 	Approve          *approve.Approve
 	Contributor      *contributor.Contributor

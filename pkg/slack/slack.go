@@ -20,7 +20,8 @@ const (
 type Bot interface {
 	GetAPI() *slack.Client
 	SendMessage(channel string, msg string) error
-	NewPR(channel string, owner string, repo string, target string, pr *github.PullRequest, newPr *github.PullRequest, stat string) error
+	NewPR(channel string, owner string, repo string, target string, pr *github.PullRequest,
+		newPr *github.PullRequest, stat string) error
 	FailPR(channel string, owner string, repo string, target string, pr *github.PullRequest, message string) error
 	Report(channel string, title string, content string) error
 	NoticeLabel(channel string, owner string, repo string, number int, author string) error
@@ -72,7 +73,7 @@ func (b *bot) SendMessage(channel string, msg string) error {
 	if b.config.Mute {
 		return nil
 	}
-	if _, _, err := (*b).api.PostMessage(channel,
+	if _, _, err := b.api.PostMessage(channel,
 		slack.MsgOptionText(msg, true)); err != nil {
 		return errors.Wrap(err, "send slack message to "+channel)
 	}
@@ -84,7 +85,7 @@ func (b *bot) SendMessageWithPr(channel string, msg string, pr *github.PullReque
 		return nil
 	}
 	attachment := b.makePrAttachment(pr, stat)
-	if _, _, err := (*b).api.PostMessage(channel,
+	if _, _, err := b.api.PostMessage(channel,
 		slack.MsgOptionText(msg, true), slack.MsgOptionAttachments(*attachment)); err != nil {
 		return errors.Wrap(err, "send slack message with pr to "+channel)
 	}
@@ -96,19 +97,20 @@ func (b *bot) SendMessageWithIssue(channel string, msg string, issue *github.Iss
 		return nil
 	}
 	attachment := b.makeIssueAttachment(issue)
-	if _, _, err := (*b).api.PostMessage(channel,
+	if _, _, err := b.api.PostMessage(channel,
 		slack.MsgOptionText(msg, true), slack.MsgOptionAttachments(*attachment)); err != nil {
 		return errors.Wrap(err, "send slack message with issue to "+channel)
 	}
 	return nil
 }
 
-func (b *bot) SendMessageWithIssueComment(channel string, msg string, issue *github.Issue, issueComment *github.IssueComment) error {
+func (b *bot) SendMessageWithIssueComment(channel string, msg string, issue *github.Issue,
+	issueComment *github.IssueComment) error {
 	if b.config.Mute {
 		return nil
 	}
 	attachment := b.makeIssueCommentAttachment(issue, issueComment)
-	if _, _, err := (*b).api.PostMessage(channel,
+	if _, _, err := b.api.PostMessage(channel,
 		slack.MsgOptionText(msg, true), slack.MsgOptionAttachments(*attachment)); err != nil {
 		return errors.Wrap(err, "send slack message with issue comment to "+channel)
 	}
@@ -154,7 +156,7 @@ func (b *bot) Report(channel string, title string, content string) error {
 
 func (b *bot) NoticeLabel(channel string, owner string, repo string, number int, author string) error {
 	uri := fmt.Sprintf("https://github.com/%s/%s/pull/%d", owner, repo, number)
-	msg := fmt.Sprintf("🕵🏼 Unlabeled issue detected\n👩🏼‍💻 Author: %s\n%s", author, uri)
+	msg := fmt.Sprintf("🕵 Unlabeled issue detected\n👩🏼‍💻 Author: %s\n%s", author, uri)
 	if err := (*b).SendMessage(channel, msg); err != nil {
 		return errors.Wrap(err, "send label notice")
 	}

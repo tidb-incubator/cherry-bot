@@ -27,6 +27,6 @@ func Init(repo *config.RepoConfig, opr *operator.Operator) *Label {
 	return &n
 }
 
-func (c *Label) Ready() {
-	c.ready = true
+func (l *Label) Ready() {
+	l.ready = true
 }

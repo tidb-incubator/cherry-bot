@@ -18,11 +18,8 @@ const (
 func (au *autoUpdate) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 	var err error
 
-	switch *event.Action {
-	case "closed":
-		{
-			err = au.CommitUpdate(event.PullRequest)
-		}
+	if *event.Action == "closed" {
+		err = au.CommitUpdate(event.PullRequest)
 	}
 
 	if err != nil {

@@ -31,9 +31,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: dev build
-
-dev: check test
+all: check build
 
 check: fmt staticcheck
 
@@ -48,7 +46,7 @@ test:
 	$(GOTEST) ./...
 
 staticcheck: tools/bin/golangci-lint
-	tools/bin/golangci-lint run -v --deadline=3m $$($(PACKAGE_DIRECTORIES))
+	tools/bin/golangci-lint run  $$($(PACKAGE_DIRECTORIES))
 
 tools/bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b ./tools/bin v1.27.0

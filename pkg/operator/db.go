@@ -23,22 +23,22 @@ type Sig struct {
 	Repo       string `gorm:"repo"`
 	Label      string `gorm:"label"`
 	ProjectURL string `gorm:"project_url"`
-	SigUrl     string `gorm:"sig_url"`
+	SigURL     string `gorm:"sig_url"`
 	Channel    string `gorm:"channel"`
 }
 
 const (
-	ROLE_PMC         = "pmc"
-	ROLE_MAMINTAINER = "maintainer"
-	ROLE_LEADER      = "leader"
-	ROLE_COLEADER    = "co-leader"
-	ROLE_COMMITTER   = "committer"
-	ROLE_REVIEWER    = "reviewer"
+	RolePmc        = "pmc"
+	RoleMaintainer = "maintainer"
+	RoleLeader     = "leader"
+	RoleCoLeader   = "co-leader"
+	RoleCommitter  = "committer"
+	RoleReviewer   = "reviewer"
 )
 
 var (
-	MERGE_ROLES  = []string{ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
-	REVIEW_ROLES = []string{ROLE_REVIEWER, ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
+	MergeRoles  = []string{RoleCommitter, RoleCoLeader, RoleLeader}
+	ReviewRoles = []string{RoleReviewer, RoleCommitter, RoleCoLeader, RoleLeader}
 )
 
 func LabelsToStrArr(labels []*github.Label) []string {
@@ -68,7 +68,8 @@ func (o *Operator) GetRolesInSigByGithubID(githubID string) (members []*SigMembe
 	return
 }
 
-func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*github.Label, githubID string, roles []string) error {
+func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*github.Label,
+	githubID string, roles []string) error {
 	sigLabels, err := o.ListSIGByLabel(repo, labels)
 	if err != nil {
 		return err
@@ -85,10 +86,10 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 	}
 	canEditSigs := map[int]bool{}
 	for _, member := range members {
-		if member.Level == ROLE_MAMINTAINER || member.Level == ROLE_PMC {
+		if member.Level == RoleMaintainer || member.Level == RolePmc {
 			return nil // the PMC or maintainer can do anything
 		}
-		if legallRoles[member.Level] == true {
+		if legallRoles[member.Level] {
 			canEditSigs[member.SigID] = true
 		}
 	}
@@ -96,29 +97,29 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 	if len(sigLabels) == 0 {
 		if len(canEditSigs) == 0 {
 			return errors.New(fmt.Sprintf("You are not a %s.", strings.Join(roles, " or ")))
-		} else {
-			// when a pr doesn't belong to any sig, anyone in roles have pessimisstion to this pr now.
-			return nil
 		}
+		// when a pr doesn't belong to any sig, anyone in roles have pessimisstion to this pr now.
+		return nil
 	}
 	// check if there is one of current pr's sigs that can be editted by the user
 	for _, sig := range sigLabels {
-		if canEditSigs[sig.SigID] == true {
+		if canEditSigs[sig.SigID] {
 			return nil
 		}
 	}
 
 	// prepare error messages
-	sig_infos := []string{}
+	sigInfos := []string{}
 	visitedSIGs := map[int]bool{}
 	for _, sig := range sigLabels {
 		if visitedSIGs[sig.SigID] {
 			continue
 		}
 		visitedSIGs[sig.SigID] = true
-		sig_infos = append(sig_infos, fmt.Sprintf("[%s](%s)([slack](%s))", sig.SigName, sig.SigUrl, sig.Channel))
+		sigInfos = append(sigInfos, fmt.Sprintf("[%s](%s)([slack](%s))", sig.SigName, sig.SigURL, sig.Channel))
 	}
 
-	errMsg := fmt.Sprintf("You are not a %s for the related sigs:%s.", strings.Join(roles, " or "), strings.Join(sig_infos, ","))
+	errMsg := fmt.Sprintf("You are not a %s for the related sigs:%s.",
+		strings.Join(roles, " or "), strings.Join(sigInfos, ","))
 	return errors.New(errMsg)
 }

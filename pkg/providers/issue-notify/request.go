@@ -22,7 +22,8 @@ func (n *Notify) sendMsg(preText, text string) error {
 	var err error
 	if n.notifyID != "" {
 		notify := "@" + n.notifyID
-		_, _, err = n.opr.Slack.GetAPI().PostMessage(n.channel, slack.MsgOptionText(notify, true), slack.MsgOptionAttachments(attachment))
+		_, _, err = n.opr.Slack.GetAPI().PostMessage(n.channel, slack.MsgOptionText(notify, true),
+			slack.MsgOptionAttachments(attachment))
 	} else {
 		_, _, err = n.opr.Slack.GetAPI().PostMessage(n.channel, slack.MsgOptionAttachments(attachment))
 	}

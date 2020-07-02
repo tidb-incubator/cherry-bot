@@ -20,10 +20,10 @@ import (
 )
 
 const (
-	maxRetryTime                = 1
-	workDir                     = "/tmp"
-	LOAD_COLLABORATOR_DURATION  = 10 * time.Minute
-	PENDING_INVITATION_COOLDOWN = 10 * time.Minute
+	maxRetryTime              = 1
+	workDir                   = "/tmp"
+	LoadCollaboratorDuration  = 10 * time.Minute
+	PendingInvitationCooldown = 10 * time.Minute
 )
 
 // PullRequest is pull request table structure
@@ -39,7 +39,7 @@ const (
 // }
 
 // CherryPr is cherry pick table structure
-type CherryPr struct {
+type Pr struct {
 	ID           int    `gorm:"column:id"`
 	PrID         int    `gorm:"column:pull_number"`
 	FromPr       int    `gorm:"column:from_pull_number"`
@@ -119,7 +119,7 @@ func (cherry *cherry) createPullRequest(pull *github.PullRequest) error {
 }
 
 func (cherry *cherry) createCherryPick(pr *github.PullRequest) error {
-	r, _ := regexp.Compile(`\(#([0-9]+)\)$`)
+	r := regexp.MustCompile(`\(#([0-9]+)\)$`)
 	m := r.FindStringSubmatch(*pr.Title)
 
 	if len(m) < 2 {
@@ -191,7 +191,7 @@ func hasLabel(label string, labels string) (bool, error) {
 	return hasLabel, nil
 }
 
-func (cherry *cherry) addLabel(model *types.PullRequest, label string) error {
+func (cherry *cherry) addLabel(model *types.PullRequest, label string) {
 	// existLabel, err := parseLabel(model.Label.String())
 	// if err != nil {
 	// 	return errors.Wrap(err, "add PR label")
@@ -207,7 +207,6 @@ func (cherry *cherry) addLabel(model *types.PullRequest, label string) error {
 	// }
 	// return nil
 	model.Label.AddLabel(label)
-	return nil
 }
 
 func (cherry *cherry) removeLabel(pr *github.PullRequest, label string) error {
@@ -251,8 +250,8 @@ func (cherry *cherry) getPullRequest(prNumber int) (*types.PullRequest, error) {
 	}, prNumber)
 }
 
-func (cherry *cherry) getCherryPick(from int, base string) (*CherryPr, error) {
-	model := &CherryPr{}
+func (cherry *cherry) getCherryPick(from int, base string) (*Pr, error) {
+	model := &Pr{}
 	if err := cherry.opr.DB.Where("owner = ? AND repo = ? AND from_pull_number = ? AND base = ?",
 		cherry.owner, cherry.repo, from, base).First(model).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
 		return nil, errors.Wrap(err, "query cherry pick failed")
@@ -268,7 +267,7 @@ func (cherry *cherry) saveModel(model interface{}) error {
 		switch model.(type) {
 		case *types.PullRequest:
 			return errors.Wrap(err, "save pull request into database failed")
-		case *CherryPr:
+		case *Pr:
 			return errors.Wrap(err, "save cherry pick into database failed")
 		}
 	}
@@ -353,8 +352,8 @@ func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (
 
 				var conflictErrs []string
 				var sha1Errs []string
-				rConflict, _ := regexp.Compile(`Merge conflict in (.*)$`)
-				rSha1, _ := regexp.Compile(`sha1 information is lacking or useless \((.*)\).*$`)
+				rConflict := regexp.MustCompile(`Merge conflict in (.*)$`)
+				rSha1 := regexp.MustCompile(`sha1 information is lacking or useless \((.*)\).*$`)
 				for _, line := range lines {
 					mConflict := rConflict.FindStringSubmatch(line)
 					if len(mConflict) >= 2 {
@@ -520,7 +519,7 @@ func (cherry *cherry) replaceGithubLabel(pr *github.PullRequest, version string)
 }
 
 func (cherry *cherry) prNotice(success bool, target string,
-	pr *github.PullRequest, newPr *github.PullRequest, stat string, message string) error {
+	pr *github.PullRequest, newPr *github.PullRequest, message string) error {
 	if pr == nil || pr.User == nil {
 		return errors.Wrap(errors.New("nil pull request"), "send pr notice")
 	}
@@ -664,13 +663,14 @@ func (cherry *cherry) getAllOpenedMilestones() ([]*github.Milestone, error) {
 
 	for len(all) == page*perpage {
 		page++
-		batch, _, err = cherry.opr.Github.Issues.ListMilestones(context.Background(), cherry.owner, cherry.repo, &github.MilestoneListOptions{
-			State: "open",
-			ListOptions: github.ListOptions{
-				Page:    page,
-				PerPage: perpage,
-			},
-		})
+		batch, _, err = cherry.opr.Github.Issues.ListMilestones(context.Background(),
+			cherry.owner, cherry.repo, &github.MilestoneListOptions{
+				State: "open",
+				ListOptions: github.ListOptions{
+					Page:    page,
+					PerPage: perpage,
+				},
+			})
 		if err != nil {
 			return nil, errors.Wrap(err, "fetch all milestones")
 		}
@@ -692,7 +692,7 @@ func (cherry *cherry) runLoadCollaborators() {
 	}
 	// shuffle time offset between repos
 	time.Sleep(time.Duration(rand.Intn(10)) * time.Minute)
-	ticker := time.NewTicker(LOAD_COLLABORATOR_DURATION)
+	ticker := time.NewTicker(LoadCollaboratorDuration)
 	go func() {
 		for {
 			<-ticker.C
@@ -714,12 +714,14 @@ func (cherry *cherry) loadCollaborators() error {
 
 	for len(all) == page*perpage {
 		page++
-		batch, _, err = cherry.opr.Github.Repositories.ListCollaborators(context.Background(), cherry.opr.Config.Github.Bot, cherry.repo, &github.ListCollaboratorsOptions{
-			ListOptions: github.ListOptions{
-				Page:    page,
-				PerPage: perpage,
-			},
-		})
+		batch, _, err = cherry.opr.Github.Repositories.ListCollaborators(context.Background(),
+			cherry.opr.Config.Github.Bot, cherry.repo,
+			&github.ListCollaboratorsOptions{
+				ListOptions: github.ListOptions{
+					Page:    page,
+					PerPage: perpage,
+				},
+			})
 		if err != nil {
 			return errors.Wrap(err, "fetch all collaborator")
 		}
@@ -741,7 +743,7 @@ func (cherry *cherry) inviteIfNotCollaborator(username string, pull *github.Pull
 	// but we should limit the notice for successful invite
 	// unless a PR cherry picked to 3 branches will leads to 3 comments, looks bad
 	if t, ok := cherry.collaboratorInvitation[username]; ok {
-		if time.Since(t) > PENDING_INVITATION_COOLDOWN {
+		if time.Since(t) > PendingInvitationCooldown {
 			// recalculate cooldown time
 			cherry.collaboratorInvitation[username] = time.Now()
 			return nil

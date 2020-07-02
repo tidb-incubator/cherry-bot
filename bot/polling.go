@@ -23,37 +23,36 @@ func (b *bot) StartPolling() {
 	// remove polling here
 	// TODO: remove the ready state and re-design polling function
 	b.ready()
-	return
-	if !b.cfg.CherryPick && !b.cfg.LabelCheck {
-		return
-	}
-	b.fetchDuration(30 * 24 * time.Hour)
-	b.ready()
-	util.Println(b.owner, "/", b.repo, "ready")
-	// b.fetchDuration(7 * 24 * time.Hour)
-
-	duration := time.Duration(b.interval) * time.Millisecond
-	fullupdateInterval := time.Duration(b.fullupdateInterval) * time.Millisecond
-	nextFetch := time.Now().Add(duration)
-	nextFullupdate := time.Now().Add(fullupdateInterval)
-
-	tick := time.Tick(time.Second)
-
-	go func() {
-		for {
-			select {
-			case t := <-tick:
-				if t.After(nextFetch) {
-					nextFetch = nextFetch.Add(duration)
-					b.fetchLatest()
-				}
-				if t.After(nextFullupdate) {
-					nextFullupdate = nextFullupdate.Add(fullupdateInterval)
-					b.fetchDuration(7 * 24 * time.Hour)
-				}
-			}
-		}
-	}()
+	//if !b.cfg.CherryPick && !b.cfg.LabelCheck {
+	//	return
+	//}
+	//b.fetchDuration(30 * 24 * time.Hour)
+	//b.ready()
+	//util.Println(b.owner, "/", b.repo, "ready")
+	//// b.fetchDuration(7 * 24 * time.Hour)
+	//
+	//duration := time.Duration(b.interval) * time.Millisecond
+	//fullupdateInterval := time.Duration(b.fullupdateInterval) * time.Millisecond
+	//nextFetch := time.Now().Add(duration)
+	//nextFullupdate := time.Now().Add(fullupdateInterval)
+	//
+	//tick := time.Tick(time.Second)
+	//
+	//go func() {
+	//	for {
+	//		select {
+	//		case t := <-tick:
+	//			if t.After(nextFetch) {
+	//				nextFetch = nextFetch.Add(duration)
+	//				b.fetchLatest()
+	//			}
+	//			if t.After(nextFullupdate) {
+	//				nextFullupdate = nextFullupdate.Add(fullupdateInterval)
+	//				b.fetchDuration(7 * 24 * time.Hour)
+	//			}
+	//		}
+	//	}
+	//}()
 }
 
 func (b *bot) fetchLatest() {
@@ -102,7 +101,7 @@ func (b *bot) fetchBatch(startID int, ch *chan []*github.PullRequest) {
 		State: "all",
 		Sort:  "created",
 		ListOptions: github.ListOptions{
-			Page:    1 + int(startID/perPage),
+			Page:    1 + startID/perPage,
 			PerPage: perPage,
 		},
 	}
@@ -112,7 +111,7 @@ func (b *bot) fetchBatch(startID int, ch *chan []*github.PullRequest) {
 		if err != nil {
 			return err
 		}
-		(*ch) <- prList
+		*ch <- prList
 		if len(prList) < perPage {
 			close(*ch)
 		} else {

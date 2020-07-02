@@ -76,7 +76,8 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 		login  = event.GetSender().GetLogin()
 		number = event.GetIssue().GetNumber()
 	)
-	if cherry.opr.Member.IfMember(login) || event.GetIssue().GetUser().GetLogin() == event.GetComment().GetUser().GetLogin() {
+	if cherry.opr.Member.IfMember(login) ||
+		event.GetIssue().GetUser().GetLogin() == event.GetComment().GetUser().GetLogin() {
 		pr, _, err := cherry.opr.Github.PullRequests.Get(context.Background(),
 			cherry.owner, cherry.repo, number)
 		if err != nil {

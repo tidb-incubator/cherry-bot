@@ -49,9 +49,8 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 			msg = fmt.Sprintf("%s %s", msg, err)
 			util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg))
 			return false
-		} else {
-			return true
 		}
+		return true
 	}
 
 	canMergeRelease, inRelease, err := m.canMergeReleaseVersion(base, username)

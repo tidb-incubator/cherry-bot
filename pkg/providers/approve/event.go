@@ -99,7 +99,6 @@ func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 }
 
 func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, labels []*github.Label) {
-
 	comment := fmt.Sprintf("@%s,Thanks for you review.", senderID)
 	defer func() {
 		log.Info(a.owner, a.repo, pullNumber, comment)
@@ -113,8 +112,8 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 		comment = fmt.Sprintf("%s you are the author.", msg)
 		return
 	}
-	already_exist, err := a.addLGTMRecord(senderID, pullNumber, labels)
-	if already_exist {
+	alreadyExist, err := a.addLGTMRecord(senderID, pullNumber, labels)
+	if alreadyExist {
 		comment = ""
 		return
 	}

@@ -21,8 +21,8 @@ type LgtmRecord struct {
 	Score      int    `gorm:"column:score"`
 }
 
-func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.Label) (already_exist bool, err error) {
-	already_exist = false
+func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.Label) (alreadyExist bool, err error) {
+	alreadyExist = false
 	record := LgtmRecord{
 		Owner:      a.owner,
 		Repo:       a.repo,
@@ -34,24 +34,25 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 	defer func() {
 		txn.Commit()
 		if txn.Error != nil {
-			log.Error("insert lgtm recod failed with err", txn.Error)
-			err = errors.New("something is wrong,please try again later.")
+			log.Error("insert lgtm record failed with err", txn.Error)
+			err = errors.New("something is wrong,please try again later")
 		}
 	}()
 
-	already_exist, _ = a.LGTMRecordExist(&record, txn)
-	if already_exist {
+	alreadyExist, _ = a.LGTMRecordExist(&record, txn)
+	if alreadyExist {
 		//err = errors.New("You already give a LGTM to this PR")
 		return
 	}
-	err = a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, login, operator.REVIEW_ROLES)
+	err = a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, login, operator.ReviewRoles)
 	if err != nil {
 		return
 	}
 	err = txn.Save(&record).Error
 	if err != nil {
 		log.Warn(err)
-		err = txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?", record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
+		err = txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?",
+			record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
 		return
 	}
 	return
@@ -59,7 +60,8 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 
 func (a *Approve) LGTMRecordExist(record *LgtmRecord, txn *gorm.DB) (bool, error) {
 	records := []LgtmRecord{}
-	terr := txn.Where("score>0 and repo=? and owner=? and pull_number=? and github=?", record.Repo, record.Owner, record.PullNumber, record.Github).Find(&records).Error
+	terr := txn.Where("score>0 and repo=? and owner=? and pull_number=? and github=?",
+		record.Repo, record.Owner, record.PullNumber, record.Github).Find(&records).Error
 	log.Error(len(records), terr)
 	if terr == nil || gorm.IsRecordNotFoundError(terr) {
 		return len(records) > 0, nil
@@ -70,7 +72,8 @@ func (a *Approve) LGTMRecordExist(record *LgtmRecord, txn *gorm.DB) (bool, error
 }
 
 func (a *Approve) getLGTMNum(pullNumber int) (num int, err error) {
-	a.opr.DB.Model(&LgtmRecord{}).Where("score>0 and repo=? and owner=? and pull_number=?", a.owner, a.repo, pullNumber).Count(&num)
+	a.opr.DB.Model(&LgtmRecord{}).Where("score>0 and repo=? and owner=? and pull_number=?",
+		a.owner, a.repo, pullNumber).Count(&num)
 	return num, a.opr.DB.Error
 }
 
@@ -129,5 +132,6 @@ func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
 		return err
 	}
 
-	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?", record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
+	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?",
+		record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
 }

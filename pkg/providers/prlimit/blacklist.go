@@ -24,7 +24,7 @@ func (p *prLimit) GetBlockList() ([]string, error) {
 		return nil, errors.Wrap(err, "get blocklist")
 	}
 	for _, w := range blockNames {
-		res = append(res, (*w).Username)
+		res = append(res, w.Username)
 	}
 	return res, nil
 }

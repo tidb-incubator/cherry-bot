@@ -5,14 +5,14 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
 )
 
-type CommandRedeliver struct {
+type Redeliver struct {
 	repo *config.RepoConfig
 	opr  *operator.Operator
 }
 
 // Init create cherry pick middleware instance
-func Init(repo *config.RepoConfig, opr *operator.Operator) *CommandRedeliver {
-	return &CommandRedeliver{
+func Init(repo *config.RepoConfig, opr *operator.Operator) *Redeliver {
+	return &Redeliver{
 		repo: repo,
 		opr:  opr,
 	}

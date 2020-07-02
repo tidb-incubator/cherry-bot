@@ -19,7 +19,7 @@ func (cherry *cherry) MonthCheck(pr *github.PullRequest) ([]string, error) {
 	// PR in expected duration
 	for _, label := range pr.Labels {
 		// if label format cherry-pick rule
-		target, _, err := cherry.getTarget(*(*label).Name)
+		target, _, err := cherry.getTarget(*label.Name)
 		if err != nil {
 			// no match, skip
 			continue

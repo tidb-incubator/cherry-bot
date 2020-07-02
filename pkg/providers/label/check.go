@@ -2,12 +2,12 @@ package label
 
 import (
 	"context"
-	"github.com/pingcap-incubator/cherry-bot/util"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/go-github/v32/github"
+	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 )
 
@@ -22,10 +22,10 @@ func (l *label) restartJobs() {
 		util.Error(errors.Wrap(err, "restart label check jobs"))
 	} else {
 		for _, job := range jobs {
-			if (*job).HasLabel || (*job).SendNotice {
+			if job.HasLabel || job.SendNotice {
 				continue
 			}
-			if issue, er := l.getIssueByID((*job).PrID); er != nil {
+			if issue, er := l.getIssueByID(job.PrID); er != nil {
 				util.Error(errors.Wrap(er, "restart label check jobs"))
 			} else {
 				l.startJob(issue)
@@ -35,7 +35,6 @@ func (l *label) restartJobs() {
 }
 
 func (l *label) processLabelCheck(issue *github.Issue) error {
-
 	// c, err := l.ifCheck(issue)
 	// if err != nil {
 	// 	return errors.Wrap(err, "process label check")
@@ -98,7 +97,7 @@ func (l *label) checkLater(issue *github.Issue, duration time.Duration,
 		// 	}
 		// } else {
 		// check later
-		delay := issue.GetCreatedAt().Add(duration).Sub(time.Now())
+		delay := time.Until(issue.GetCreatedAt().Add(duration))
 		util.Println(l.owner, l.repo, issue.GetNumber(), delay)
 		time.AfterFunc(delay, func() {
 			util.Println(l.owner, l.repo, issue.GetNumber(), delay, "on going")

@@ -81,7 +81,8 @@ func (r *redeliver) sendNotice(issue *github.Issue, channel string, msg string) 
 	return nil
 }
 
-func (r *redeliver) sendCommentNotice(channel string, msg string, issue *github.Issue, comment *github.IssueComment) error {
+func (r *redeliver) sendCommentNotice(channel string, msg string,
+	issue *github.Issue, comment *github.IssueComment) error {
 	err := r.opr.Slack.SendMessageWithIssueComment(channel, msg, issue, comment)
 	return errors.Wrap(err, "send comment notice")
 }

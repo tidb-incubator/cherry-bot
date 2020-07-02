@@ -31,6 +31,6 @@ func Init(repo *config.RepoConfig, opr *operator.Operator) *Notify {
 	return &n
 }
 
-func (c *Notify) Ready() {
-	c.ready = true
+func (n *Notify) Ready() {
+	n.ready = true
 }

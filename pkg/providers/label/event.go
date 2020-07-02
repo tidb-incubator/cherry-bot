@@ -43,15 +43,12 @@ func (l *label) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 
 	var err error
 
-	switch *event.Action {
-	case "opened":
-		{
-			issue, er := l.getIssueByID(event.GetPullRequest().GetNumber())
-			if er != nil {
-				util.Error(errors.Wrap(er, "cherry picker process pull request event"))
-			}
-			err = l.processLabelCheck(issue)
+	if *event.Action == "opened" {
+		issue, er := l.getIssueByID(event.GetPullRequest().GetNumber())
+		if er != nil {
+			util.Error(errors.Wrap(er, "cherry picker process pull request event"))
 		}
+		err = l.processLabelCheck(issue)
 	}
 
 	if err != nil {

@@ -14,8 +14,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const day = 24 * time.Hour
-
 var tag2val = map[string]int{
 	"rc": 1,
 	"ga": 2,
@@ -46,9 +44,7 @@ func (cherry *cherry) commitLabel(pr *github.PullRequest, label string) error {
 		return errors.Wrap(err, "commit label")
 	}
 	if !ifHasLabel {
-		if err := cherry.addLabel(model, label); err != nil {
-			return errors.Wrap(err, "commit label")
-		}
+		cherry.addLabel(model, label)
 	}
 
 	// unmerged issue will be cherry picked later when it merged
@@ -149,30 +145,31 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 		model.Repo = cherry.repo
 		model.FromPr = from
 		model.Base = target
-		model.TryTime = model.TryTime + 1
+		model.TryTime++
 		model.Success = false
 		cherry.saveModel(model)
 		// util.Error(cherry.prNotice(false, pr, target, 0, from, prepareMessage))
-		util.Error(cherry.prNotice(false, target, pr, nil, "fail", prepareMessage))
+		util.Error(cherry.prNotice(false, target, pr, nil, prepareMessage))
 		util.Error(cherry.addGithubReadyComment(pr, false, target, 0))
 		return errors.Wrap(err, "commit cherry pick")
 	}
 	resPr, tryTime, err := cherry.submitCherryPick(newPr)
 
 	success := false
-	if resPr == nil && err == nil {
+	if resPr != nil || err != nil {
+		if err != nil {
+			// pr create failed
+			// util.Error(cherry.prNotice(false, pr, target, 0, from, "submit PR failed"))
+			util.Error(cherry.prNotice(false, target, pr, nil, "submit PR failed"))
+			util.Error(cherry.addGithubReadyComment(pr, false, target, 0))
+			// util.Error(cherry.opr.Slack.FailPR(cherry.cfg.CherryPickChannel,
+			// 	cherry.owner, cherry.repo, *pr.Head.Label, target, *pr.Number))
+			return errors.Wrap(err, "commit cherry pick")
+		}
+		success = true
+	} else {
 		// pr already exist
 		return nil
-	} else if err != nil {
-		// pr create failed
-		// util.Error(cherry.prNotice(false, pr, target, 0, from, "submit PR failed"))
-		util.Error(cherry.prNotice(false, target, pr, nil, "fail", "submit PR failed"))
-		util.Error(cherry.addGithubReadyComment(pr, false, target, 0))
-		// util.Error(cherry.opr.Slack.FailPR(cherry.cfg.CherryPickChannel,
-		// 	cherry.owner, cherry.repo, *pr.Head.Label, target, *pr.Number))
-		return errors.Wrap(err, "commit cherry pick")
-	} else {
-		success = true
 	}
 
 	model.PrID = *resPr.Number
@@ -185,7 +182,7 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	model.Body = *newPr.Body
 	model.CreatedByBot = true
 	model.Success = success
-	model.TryTime = model.TryTime + tryTime
+	model.TryTime += tryTime
 
 	err = cherry.saveModel(model)
 	if err != nil {
@@ -222,7 +219,7 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 		updateResPr = resPr
 		util.Error(err)
 	}
-	util.Error(cherry.prNotice(true, target, pr, updateResPr, "success", ""))
+	util.Error(cherry.prNotice(true, target, pr, updateResPr, ""))
 
 	return nil
 }
@@ -230,7 +227,8 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 func (cherry *cherry) addAssignee(oldPull *github.PullRequest, newPull *github.PullRequest) (string, error) {
 	assignee := oldPull.GetUser()
 	if !cherry.opr.Member.IfMember(assignee.GetLogin()) {
-		reviews, _, err := cherry.opr.Github.PullRequests.ListReviews(context.Background(), cherry.owner, cherry.repo, oldPull.GetNumber(), &github.ListOptions{PerPage: 100})
+		reviews, _, err := cherry.opr.Github.PullRequests.ListReviews(context.Background(),
+			cherry.owner, cherry.repo, oldPull.GetNumber(), &github.ListOptions{PerPage: 100})
 		if err != nil {
 			return "", errors.Wrap(err, "assign reviewer, get reviews failed")
 		}
@@ -243,7 +241,8 @@ func (cherry *cherry) addAssignee(oldPull *github.PullRequest, newPull *github.P
 		}
 	}
 
-	_, _, err := cherry.opr.Github.Issues.AddAssignees(context.Background(), cherry.owner, cherry.repo, newPull.GetNumber(), []string{assignee.GetLogin()})
+	_, _, err := cherry.opr.Github.Issues.AddAssignees(context.Background(),
+		cherry.owner, cherry.repo, newPull.GetNumber(), []string{assignee.GetLogin()})
 	return assignee.GetLogin(), errors.Wrap(err, "assign reviewer, update pull request")
 }
 
@@ -257,9 +256,11 @@ func (cherry *cherry) assignMilestone(newPull *github.PullRequest, version strin
 		return errors.New("assign milestone, milestone not found")
 	}
 
-	_, _, err = cherry.opr.Github.Issues.Edit(context.Background(), cherry.owner, cherry.repo, newPull.GetNumber(), &github.IssueRequest{
-		Milestone: matchedMilestone.Number,
-	})
+	_, _, err = cherry.opr.Github.Issues.Edit(context.Background(),
+		cherry.owner, cherry.repo, newPull.GetNumber(),
+		&github.IssueRequest{
+			Milestone: matchedMilestone.Number,
+		})
 	return errors.Wrap(err, "assign milestone, update pull request")
 }
 
