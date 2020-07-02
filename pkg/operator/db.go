@@ -124,6 +124,6 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 }
 
 func (o *Operator) GetLGTMNumForPR(owner, repo string, pullNumber int) (num int, err error) {
-	err = o.DB.Table("lgtm_records").Where("score>0 and repo=? and owner=? and pull_number=?", owner, repo, pullNumber).Count(&num).Error
+	err = o.DB.Table("lgtm_records").Where("score>0 and repo=? and owner=? and pull_number=?", repo, owner, pullNumber).Count(&num).Error
 	return num, err
 }

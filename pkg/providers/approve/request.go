@@ -104,6 +104,14 @@ func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
 	if e != nil {
 		log.Error(e)
 	}
+	if lgtmNum >= 2 {
+		err = a.sendApprove(pullNumber)
+	} else {
+		err = a.dismissApprove(pullNumber)
+	}
+	if err != nil {
+		log.Error(e)
+	}
 }
 
 func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
@@ -129,4 +137,48 @@ func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
 	}
 
 	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?", record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
+}
+
+func (a *Approve) sendApprove(pullNumber int) error {
+	var (
+		body  string = "LGTM"
+		event string = "APPROVE"
+	)
+	review := &github.PullRequestReviewRequest{
+		Body:  &body,
+		Event: &event,
+	}
+	_, _, err := a.opr.Github.PullRequests.CreateReview(context.Background(), a.owner, a.repo, pullNumber, review)
+	return errors.Wrap(err, "send approve")
+}
+
+func (a *Approve) dismissApprove(pullNumber int) error {
+	reviews, _, err := a.opr.Github.PullRequests.ListReviews(context.Background(), a.owner, a.repo, pullNumber, &github.ListOptions{
+		PerPage: 100,
+	})
+	if err != nil {
+		return errors.Wrap(err, "dismiss approve")
+	}
+
+	var (
+		reviewID       int64
+		dismissMessage = "approve cancel command"
+	)
+	for _, review := range reviews {
+		if review.GetState() == "APPROVED" && review.GetUser().GetLogin() == a.opr.Config.Github.Bot {
+			reviewID = review.GetID()
+		}
+	}
+
+	if reviewID == 0 {
+		return nil
+		//return a.addGithubComment(pullNumber, "bot approve review not found")
+	}
+
+	_, _, err = a.opr.Github.PullRequests.DismissReview(context.Background(), a.owner, a.repo, pullNumber, reviewID,
+		&github.PullRequestReviewDismissalRequest{
+			Message: &dismissMessage,
+		})
+
+	return errors.Wrap(err, "dismiss approve")
 }

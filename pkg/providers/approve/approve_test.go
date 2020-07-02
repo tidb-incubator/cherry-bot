@@ -13,8 +13,8 @@ import (
 
 func initDB() (Approve, LgtmRecord) {
 	dbCfg := config.Database{
-		Address:  "db",
-		Port:     0,
+		Address:  "xxt",
+		Port:     110,
 		Username: "root",
 		Password: "",
 		Dbname:   "test",
@@ -24,7 +24,7 @@ func initDB() (Approve, LgtmRecord) {
 		DB: dbConnect,
 	}
 	app := Approve{
-		owner:   "tikv",
+		owner:   "pingcap",
 		repo:    "tikv",
 		ready:   true,
 		approve: true,
