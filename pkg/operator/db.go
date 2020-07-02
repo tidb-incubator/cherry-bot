@@ -122,3 +122,8 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 	errMsg := fmt.Sprintf("You are not a %s for the related sigs:%s.", strings.Join(roles, " or "), strings.Join(sig_infos, ","))
 	return errors.New(errMsg)
 }
+
+func (o *Operator) GetLGTMNumForPR(owner, repo string, pullNumber int) (num int, err error) {
+	err = o.DB.Table("lgtm_records").Where("score>0 and repo=? and owner=? and pull_number=?", owner, repo, pullNumber).Count(&num).Error
+	return num, err
+}

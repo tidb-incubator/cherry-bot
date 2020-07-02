@@ -13,8 +13,8 @@ import (
 
 func initDB() (Approve, LgtmRecord) {
 	dbCfg := config.Database{
-		Address:  "10.10.10.1",
-		Port:     3306,
+		Address:  "db",
+		Port:     0,
 		Username: "root",
 		Password: "",
 		Dbname:   "test",
@@ -49,8 +49,8 @@ func TestOrm(t *testing.T) {
 func TestOrmUpdate(t *testing.T) {
 	app, record := initDB()
 	fmt.Println(app.getLGTMNum(record.PullNumber))
-	err := app.addLGTMRecord(record.Github, record.PullNumber, []*github.Label{})
-	fmt.Println(err)
+	already_exist, err := app.addLGTMRecord(record.Github, record.PullNumber, []*github.Label{})
+	fmt.Println(already_exist, err)
 	// err = app.removeLGTMRecord(record.Github, record.PullNumber)
 	// fmt.Println(err)
 }

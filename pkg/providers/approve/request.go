@@ -70,8 +70,7 @@ func (a *Approve) LGTMRecordExist(record *LgtmRecord, txn *gorm.DB) (bool, error
 }
 
 func (a *Approve) getLGTMNum(pullNumber int) (num int, err error) {
-	a.opr.DB.Model(&LgtmRecord{}).Where("score>0 and repo=? and owner=? and pull_number=?", a.owner, a.repo, pullNumber).Count(&num)
-	return num, a.opr.DB.Error
+	return a.opr.GetLGTMNumForPR(a.owner, a.repo, pullNumber)
 }
 
 func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
