@@ -33,7 +33,7 @@ endif
 
 all: check build
 
-check: fmt staticcheck
+check: fmt tidy staticcheck
 
 fmt:
 	@echo "gofmt (simplify)"
@@ -44,6 +44,10 @@ build:
 
 test:
 	$(GOTEST) ./...
+
+tidy:
+	@echo "go mod tidy"
+	./tools/check/check-tidy.sh
 
 staticcheck: tools/bin/golangci-lint
 	tools/bin/golangci-lint run  $$($(PACKAGE_DIRECTORIES))
