@@ -35,7 +35,6 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		r := ctx.Request()
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			// body parse error
 			util.Error(errors.Wrap(err, "get request body failed"))
 			ctx.StatusCode(iris.StatusInternalServerError)
 			ctx.WriteString(err.Error())
