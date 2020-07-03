@@ -104,7 +104,8 @@ func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
 	if e != nil {
 		log.Error(e)
 	}
-	if lgtmNum >= 2 {
+	needLGTMNum := a.opr.GetNumberOFLGTMByLable(a.repo, labels)
+	if lgtmNum >= needLGTMNum {
 		err = a.sendApprove(pullNumber)
 	} else {
 		err = a.dismissApprove(pullNumber)

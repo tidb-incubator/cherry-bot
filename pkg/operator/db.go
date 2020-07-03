@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-github/v32/github"
 	"github.com/jinzhu/gorm"
+	"github.com/ngaut/log"
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 )
@@ -25,6 +26,7 @@ type Sig struct {
 	ProjectURL string `gorm:"project_url"`
 	SigUrl     string `gorm:"sig_url"`
 	Channel    string `gorm:"channel"`
+	Lgtm       int    `gorm:"column:lgtm"`
 }
 
 const (
@@ -58,6 +60,21 @@ func (o *Operator) ListSIGByLabel(repo string, labels []*github.Label) (sigs []*
 	util.Println("get sig list failed", err)
 	err = errors.Wrap(err, "get siglist")
 	return
+}
+
+func (o *Operator) GetNumberOFLGTMByLable(repo string, labels []*github.Label) int {
+	sigs, err := o.ListSIGByLabel(repo, labels)
+	if err != nil {
+		log.Error(err)
+		return 2
+	}
+	lgtm := 1
+	for _, sig := range sigs {
+		if sig.Lgtm < lgtm {
+			lgtm = sig.Lgtm
+		}
+	}
+	return lgtm
 }
 
 func (o *Operator) GetRolesInSigByGithubID(githubID string) (members []*SigMember, err error) {

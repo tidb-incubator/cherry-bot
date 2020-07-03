@@ -20,8 +20,9 @@ func (m *merge) CanMergeToMaster(pullNumber int, labels []*github.Label, userNam
 		log.Error(err)
 		return nil
 	}
-	if lgtmNum < 2 {
-		return fmt.Errorf("The number of `LGTM` for this PR is %v while it needs 2 at least", lgtmNum)
+	needLGTMNum := m.opr.GetNumberOFLGTMByLable(m.repo, labels)
+	if lgtmNum < needLGTMNum {
+		return fmt.Errorf("The number of `LGTM` for this PR is %v while it needs %v at least", lgtmNum, needLGTMNum)
 	}
 	return nil
 }
