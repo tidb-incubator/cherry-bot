@@ -21,8 +21,8 @@ type LgtmRecord struct {
 	Score      int    `gorm:"column:score"`
 }
 
-func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.Label) (already_exist bool, err error) {
-	already_exist = false
+func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.Label) (alreadyExist bool, err error) {
+	alreadyExist = false
 	record := LgtmRecord{
 		Owner:      a.owner,
 		Repo:       a.repo,
@@ -39,8 +39,8 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 		}
 	}()
 
-	already_exist, _ = a.LGTMRecordExist(&record, txn)
-	if already_exist {
+	alreadyExist, _ = a.LGTMRecordExist(&record, txn)
+	if alreadyExist {
 		//err = errors.New("You already give a LGTM to this PR")
 		return
 	}

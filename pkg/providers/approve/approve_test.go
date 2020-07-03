@@ -49,8 +49,8 @@ func TestOrm(t *testing.T) {
 func TestOrmUpdate(t *testing.T) {
 	app, record := initDB()
 	fmt.Println(app.getLGTMNum(record.PullNumber))
-	already_exist, err := app.addLGTMRecord(record.Github, record.PullNumber, []*github.Label{})
-	fmt.Println(already_exist, err)
+	alreadyExist, err := app.addLGTMRecord(record.Github, record.PullNumber, []*github.Label{})
+	fmt.Println(alreadyExist, err)
 	// err = app.removeLGTMRecord(record.Github, record.PullNumber)
 	// fmt.Println(err)
 }
