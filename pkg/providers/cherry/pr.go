@@ -156,21 +156,20 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	resPr, tryTime, err := cherry.submitCherryPick(newPr)
 
 	success := false
-	if resPr != nil || err != nil {
-		if err != nil {
-			// pr create failed
-			// util.Error(cherry.prNotice(false, pr, target, 0, from, "submit PR failed"))
-			util.Error(cherry.prNotice(false, target, pr, nil, "submit PR failed"))
-			util.Error(cherry.addGithubReadyComment(pr, false, target, 0))
-			// util.Error(cherry.opr.Slack.FailPR(cherry.cfg.CherryPickChannel,
-			// 	cherry.owner, cherry.repo, *pr.Head.Label, target, *pr.Number))
-			return errors.Wrap(err, "commit cherry pick")
-		}
-		success = true
-	} else {
+	if resPr == nil && err == nil {
 		// pr already exist
 		return nil
 	}
+	if err != nil {
+		// pr create failed
+		// util.Error(cherry.prNotice(false, pr, target, 0, from, "submit PR failed"))
+		util.Error(cherry.prNotice(false, target, pr, nil, "submit PR failed"))
+		util.Error(cherry.addGithubReadyComment(pr, false, target, 0))
+		// util.Error(cherry.opr.Slack.FailPR(cherry.cfg.CherryPickChannel,
+		// 	cherry.owner, cherry.repo, *pr.Head.Label, target, *pr.Number))
+		return errors.Wrap(err, "commit cherry pick")
+	}
+	success = true
 
 	model.PrID = *resPr.Number
 	model.FromPr = from
