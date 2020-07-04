@@ -60,15 +60,20 @@ func (m *merge) startJob(mergeJob *AutoMerge) error {
 		time.Sleep(waitForStatus)
 	}
 
-	commentBody := testCommentBody
-	conmment := &github.IssueComment{
-		Body: &commentBody,
+	needRunAllTests := needUpdate || !mergeJob.WithoutTests
+
+	if needRunAllTests {
+		commentBody := testCommentBody
+		comment := &github.IssueComment{
+			Body: &commentBody,
+		}
+		_, _, err = m.opr.Github.Issues.CreateComment(context.Background(),
+			m.owner, m.repo, *pr.Number, comment)
+		if err != nil {
+			return errors.Wrap(err, "start merge job")
+		}
 	}
-	_, _, err = m.opr.Github.Issues.CreateComment(context.Background(),
-		m.owner, m.repo, *pr.Number, conmment)
-	if err != nil {
-		return errors.Wrap(err, "start merge job")
-	}
+
 	mergeJob.Started = true
 	if err := m.saveModel(mergeJob); err != nil {
 		util.Error(errors.Wrap(err, "start merge job"))

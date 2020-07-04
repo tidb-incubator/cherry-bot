@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	autoMergeCommand      = "/run-auto-merge"
-	autoMergeAlias        = "/merge"
-	unMergeCommand        = "/unmerge"
-	noAccessComment       = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
-	versionReleaseComment = "The version releasement is in progress."
+	autoMergeCommand         = "/run-auto-merge"
+	autoMergeAlias           = "/merge"
+	unMergeCommand           = "/unmerge"
+	withoutTestsMergeCommand = "/merge-without-tests"
+	noAccessComment          = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
+	versionReleaseComment    = "The version release is in progress."
 )
 
 func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
@@ -82,7 +83,7 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	}
 
 	body := event.Comment.GetBody()
-	if body == autoMergeCommand || body == autoMergeAlias || body == unMergeCommand {
+	if body == autoMergeCommand || body == autoMergeAlias || body == withoutTestsMergeCommand || body == unMergeCommand {
 		// command only for org members
 		login := event.GetSender().GetLogin()
 		if !m.opr.Member.IfMember(login) {
@@ -104,12 +105,13 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 		}
 		util.Error(m.addCanMerge(pr))
 		model := AutoMerge{
-			PrID:      pr.GetNumber(),
-			Owner:     m.owner,
-			Repo:      m.repo,
-			BaseRef:   pr.GetBase().GetRef(),
-			Status:    false,
-			CreatedAt: time.Now(),
+			PrID:         pr.GetNumber(),
+			Owner:        m.owner,
+			Repo:         m.repo,
+			BaseRef:      pr.GetBase().GetRef(),
+			Status:       false,
+			CreatedAt:    time.Now(),
+			WithoutTests: body == withoutTestsMergeCommand,
 		}
 		if err := m.saveModel(&model); err != nil {
 			util.Error(errors.Wrap(err, "merge process PR event"))
