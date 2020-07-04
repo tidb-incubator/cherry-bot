@@ -59,17 +59,19 @@ func (au *autoUpdate) Update(pr *github.PullRequest, target string) error {
 	resPr, _, err := au.submitUpdate(newPr)
 
 	success := false
-	if newPr != nil || err != nil {
-		if err != nil {
-			// pr create failed
-			util.Error(au.prNotice(false, pr, nil, "submit PR failed"))
-			return errors.Wrap(err, "commit update")
-		}
-		success = true
-	} else {
+
+	if newPr == nil && err == nil {
 		// pr already exist
 		return nil
 	}
+
+	if err != nil {
+		// pr create failed
+		util.Error(au.prNotice(false, pr, nil, "submit PR failed"))
+		return errors.Wrap(err, "commit update")
+	}
+
+	success = true
 
 	if success {
 		util.Error(au.addMergeComment(resPr))
