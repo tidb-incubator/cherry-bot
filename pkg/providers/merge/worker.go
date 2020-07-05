@@ -103,7 +103,7 @@ func (m *merge) canMergeWithoutRunAllTest(mergeJob *AutoMerge, pr *github.PullRe
 	if err != nil {
 		return false, errors.Wrap(err, "list pull request head commits")
 	}
-	// If after last test all when got new commit, we need update the pull request.
+	// If after last all test we got a new commit, we need update the pull request.
 	if len(headCommits) > 0 {
 		return false, nil
 	}
