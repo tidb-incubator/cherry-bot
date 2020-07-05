@@ -74,13 +74,13 @@ func (m *merge) startJob(mergeJob *AutoMerge) error {
 		if err != nil {
 			return errors.Wrap(err, "start merge job")
 		}
+		time.Sleep(waitForStatus)
 	}
 
 	mergeJob.Started = true
 	if err := m.saveModel(mergeJob); err != nil {
 		util.Error(errors.Wrap(err, "start merge job"))
 	}
-	time.Sleep(waitForStatus)
 	return nil
 }
 
