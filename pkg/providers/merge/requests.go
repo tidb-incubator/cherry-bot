@@ -23,15 +23,16 @@ const (
 
 // AutoMerge define merge database structure
 type AutoMerge struct {
-	ID           int       `gorm:"column:id"`
-	PrID         int       `gorm:"column:pull_number"`
-	Owner        string    `gorm:"column:owner"`
-	Repo         string    `gorm:"column:repo"`
-	BaseRef      string    `gorm:"column:base_ref"`
-	Started      bool      `gorm:"column:started"`
-	Status       bool      `gorm:"column:status"`
-	WithoutTests bool      `gorm:"column:without_tests"`
-	CreatedAt    time.Time `gorm:"column:created_at"`
+	ID            int       `gorm:"column:id"`
+	PrID          int       `gorm:"column:pull_number"`
+	Owner         string    `gorm:"column:owner"`
+	Repo          string    `gorm:"column:repo"`
+	BaseRef       string    `gorm:"column:base_ref"`
+	Started       bool      `gorm:"column:started"`
+	Status        bool      `gorm:"column:status"`
+	WithoutTests  bool      `gorm:"column:without_tests"`
+	LastTestAllAt time.Time `grom:"column:last_test_all_at"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
 }
 
 // ReleaseVersion for release records

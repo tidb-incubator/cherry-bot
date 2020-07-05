@@ -60,7 +60,9 @@ func (m *merge) startJob(mergeJob *AutoMerge) error {
 		time.Sleep(waitForStatus)
 	}
 
-	needRunAllTests := needUpdate || !mergeJob.WithoutTests
+	canMergeWithoutTests, err := m.canMergeWithoutRunAllTest(mergeJob, pr)
+
+	needRunAllTests := needUpdate || !canMergeWithoutTests
 
 	if needRunAllTests {
 		commentBody := testCommentBody
@@ -80,6 +82,32 @@ func (m *merge) startJob(mergeJob *AutoMerge) error {
 	}
 	time.Sleep(waitForStatus)
 	return nil
+}
+
+func (m *merge) canMergeWithoutRunAllTest(mergeJob *AutoMerge, pr *github.PullRequest) (bool, error) {
+	if mergeJob == nil {
+		return false, errors.New("got a nil merge job")
+	}
+	if pr == nil {
+		return false, errors.New("got a nil pr")
+	}
+
+	if !mergeJob.WithoutTests {
+		return false, nil
+	}
+
+	headCommits, _, err := m.opr.Github.Repositories.ListCommits(context.Background(), m.owner, m.repo, &github.CommitsListOptions{
+		SHA:   pr.Head.GetSHA(),
+		Since: mergeJob.LastTestAllAt,
+	})
+	if err != nil {
+		return false, errors.Wrap(err, "list pull request head commits")
+	}
+	// If after last test all when got new commit, we need update the pull request.
+	if len(headCommits) > 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (m *merge) startPolling() {

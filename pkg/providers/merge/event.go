@@ -3,6 +3,7 @@ package merge
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pingcap-incubator/cherry-bot/util"
@@ -113,10 +114,52 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 			CreatedAt:    time.Now(),
 			WithoutTests: body == withoutTestsMergeCommand,
 		}
+
+		if model.WithoutTests {
+			lastRunAllTestTime, err := m.getLastRunAllTestAt(pr)
+			if err != nil {
+				// When we can not find the last run all tests command, we need to set the without tests flag as false.
+				model.WithoutTests = false
+				util.Error(errors.Wrap(err, "get last run all test time"))
+			} else {
+				model.LastTestAllAt = lastRunAllTestTime
+			}
+		}
+
 		if err := m.saveModel(&model); err != nil {
 			util.Error(errors.Wrap(err, "merge process PR event"))
 		} else {
 			util.Error(m.queueComment(pr))
 		}
 	}
+}
+
+// getLastRunAllTestAt get last run all test comment time.
+func (m *merge) getLastRunAllTestAt(pr *github.PullRequest) (time.Time, error) {
+	if pr == nil {
+		return time.Time{}, errors.New("got a nil pr")
+	}
+
+	// Get comments in descending order.
+	options := &github.PullRequestListCommentsOptions{
+		Direction: "desc",
+	}
+
+	comments, _, err := m.opr.Github.PullRequests.ListComments(context.Background(), m.owner, m.repo,
+		pr.GetNumber(), options)
+
+	if err != nil {
+		return time.Time{}, errors.Wrap(err, "list pull request comments")
+	}
+
+	for _, comment := range comments {
+		if strings.Contains(comment.GetBody(), testCommentBody) {
+			// Get updated time or created time.
+			if !comment.GetUpdatedAt().IsZero() {
+				return comment.GetUpdatedAt(), nil
+			}
+			return comment.GetCreatedAt(), nil
+		}
+	}
+	return time.Time{}, errors.New("can not find any run all tests comment")
 }

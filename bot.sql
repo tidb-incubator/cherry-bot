@@ -80,15 +80,16 @@ DROP TABLE IF EXISTS `auto_merges`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `auto_merges`
 (
-    `id`            int(11)                        NOT NULL AUTO_INCREMENT,
-    `pull_number`   int(11)                                 DEFAULT NULL,
-    `owner`         varchar(1023) COLLATE utf8_bin          DEFAULT NULL,
-    `repo`          varchar(1023) COLLATE utf8_bin NOT NULL,
-    `base_ref`      varchar(1023) COLLATE utf8_bin NOT NULL,
-    `started`       tinyint(1)                     NOT NULL,
-    `status`        tinyint(1)                     NOT NULL,
-    `without_tests` tinyint(1)                     NOT NULL,
-    `created_at`    timestamp                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `id`               int(11)                        NOT NULL AUTO_INCREMENT,
+    `pull_number`      int(11)                                 DEFAULT NULL,
+    `owner`            varchar(1023) COLLATE utf8_bin          DEFAULT NULL,
+    `repo`             varchar(1023) COLLATE utf8_bin NOT NULL,
+    `base_ref`         varchar(1023) COLLATE utf8_bin NOT NULL,
+    `started`          tinyint(1)                     NOT NULL,
+    `status`           tinyint(1)                     NOT NULL,
+    `without_tests`    tinyint(1)                     NOT NULL,
+    `last_test_all_at` timestamp                               DEFAULT NULL,
+    `created_at`       timestamp                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8
