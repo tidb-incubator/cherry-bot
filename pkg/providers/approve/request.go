@@ -60,7 +60,6 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 func (a *Approve) LGTMRecordExist(record *LgtmRecord, txn *gorm.DB) (bool, error) {
 	records := []LgtmRecord{}
 	terr := txn.Where("score>0 and repo=? and owner=? and pull_number=? and github=?", record.Repo, record.Owner, record.PullNumber, record.Github).Find(&records).Error
-	log.Error(len(records), terr)
 	if terr == nil || gorm.IsRecordNotFoundError(terr) {
 		return len(records) > 0, nil
 	}
@@ -96,6 +95,18 @@ func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
 			}
 		}
 	}
+	// send or cancel approve
+	needLGTMNum := a.opr.GetNumberOFLGTMByLable(a.repo, labels)
+	if lgtmNum >= needLGTMNum {
+		log.Info(lgtmNum, needLGTMNum)
+		err = a.sendApprove(pullNumber)
+	} else {
+		err = a.dismissApprove(pullNumber)
+	}
+	if err != nil {
+		log.Error(err)
+	}
+
 	if labelAlreadyExist || lgtmNum == 0 {
 		return
 	}
@@ -104,15 +115,7 @@ func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
 	if e != nil {
 		log.Error(e)
 	}
-	needLGTMNum := a.opr.GetNumberOFLGTMByLable(a.repo, labels)
-	if lgtmNum >= needLGTMNum {
-		err = a.sendApprove(pullNumber)
-	} else {
-		err = a.dismissApprove(pullNumber)
-	}
-	if err != nil {
-		log.Error(e)
-	}
+
 }
 
 func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
@@ -145,7 +148,7 @@ func (a *Approve) sendApprove(pullNumber int) error {
 		return nil
 	}
 	var (
-		body  string = "LGTM"
+		body  string = ""
 		event string = "APPROVE"
 	)
 	review := &github.PullRequestReviewRequest{
@@ -172,9 +175,12 @@ func (a *Approve) getApproveFromBot(pullNumber int) int64 {
 	}
 	return 0
 }
+
 func (a *Approve) dismissApprove(pullNumber int) error {
+
 	dismissMessage := "approve cancel command"
 	reviewID := a.getApproveFromBot(pullNumber)
+	log.Info("cancel approve", pullNumber, reviewID)
 	if reviewID == 0 {
 		return nil
 		//return a.addGithubComment(pullNumber, "bot approve review not found")

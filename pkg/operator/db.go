@@ -57,7 +57,7 @@ func (o *Operator) ListSIGByLabel(repo string, labels []*github.Label) (sigs []*
 	if err == nil || gorm.IsRecordNotFoundError(err) {
 		return sigs, nil
 	}
-	util.Println("get sig list failed", err)
+	log.Error("get sig list failed", err)
 	err = errors.Wrap(err, "get siglist")
 	return
 }
@@ -68,8 +68,9 @@ func (o *Operator) GetNumberOFLGTMByLable(repo string, labels []*github.Label) i
 		log.Error(err)
 		return 2
 	}
-	lgtm := 1
+	lgtm := 2
 	for _, sig := range sigs {
+		log.Info(sig.Label, sig.Lgtm)
 		if sig.Lgtm < lgtm {
 			lgtm = sig.Lgtm
 		}
