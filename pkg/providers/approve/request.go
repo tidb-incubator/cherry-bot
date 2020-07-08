@@ -21,8 +21,8 @@ type LgtmRecord struct {
 	Score      int    `gorm:"column:score"`
 }
 
-func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.Label) (already_exist bool, err error) {
-	already_exist = false
+func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.Label) (alreadyExist bool, err error) {
+	alreadyExist = false
 	record := LgtmRecord{
 		Owner:      a.owner,
 		Repo:       a.repo,
@@ -39,8 +39,8 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 		}
 	}()
 
-	already_exist, _ = a.LGTMRecordExist(&record, txn)
-	if already_exist {
+	alreadyExist, _ = a.LGTMRecordExist(&record, txn)
+	if alreadyExist {
 		//err = errors.New("You already give a LGTM to this PR")
 		return
 	}
@@ -60,7 +60,6 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 func (a *Approve) LGTMRecordExist(record *LgtmRecord, txn *gorm.DB) (bool, error) {
 	records := []LgtmRecord{}
 	terr := txn.Where("score>0 and repo=? and owner=? and pull_number=? and github=?", record.Repo, record.Owner, record.PullNumber, record.Github).Find(&records).Error
-	log.Error(len(records), terr)
 	if terr == nil || gorm.IsRecordNotFoundError(terr) {
 		return len(records) > 0, nil
 	}
@@ -70,8 +69,7 @@ func (a *Approve) LGTMRecordExist(record *LgtmRecord, txn *gorm.DB) (bool, error
 }
 
 func (a *Approve) getLGTMNum(pullNumber int) (num int, err error) {
-	a.opr.DB.Model(&LgtmRecord{}).Where("score>0 and repo=? and owner=? and pull_number=?", a.owner, a.repo, pullNumber).Count(&num)
-	return num, a.opr.DB.Error
+	return a.opr.GetLGTMNumForPR(a.owner, a.repo, pullNumber)
 }
 
 func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
@@ -97,6 +95,18 @@ func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
 			}
 		}
 	}
+	// send or cancel approve
+	needLGTMNum := a.opr.GetNumberOFLGTMByLable(a.repo, labels)
+	if lgtmNum >= needLGTMNum {
+		log.Info(lgtmNum, needLGTMNum)
+		err = a.sendApprove(pullNumber)
+	} else {
+		err = a.dismissApprove(pullNumber)
+	}
+	if err != nil {
+		log.Error(err)
+	}
+
 	if labelAlreadyExist || lgtmNum == 0 {
 		return
 	}
@@ -105,6 +115,7 @@ func (a *Approve) correctLGTMLable(pullNumber int, labels []*github.Label) {
 	if e != nil {
 		log.Error(e)
 	}
+
 }
 
 func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
@@ -129,5 +140,56 @@ func (a *Approve) removeLGTMRecord(login string, pullNumber int) (err error) {
 		return err
 	}
 
-	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=?", record.Repo, record.Owner, record.PullNumber).Update("score", record.Score).Error
+	return txn.Table("lgtm_records").Where("repo=? and owner=? and pull_number=? and github=?", record.Repo, record.Owner, record.PullNumber, record.Github).Update("score", record.Score).Error
+}
+
+func (a *Approve) sendApprove(pullNumber int) error {
+	if a.getApproveFromBot(pullNumber) > 0 {
+		return nil
+	}
+	var (
+		body  string = ""
+		event string = "APPROVE"
+	)
+	review := &github.PullRequestReviewRequest{
+		Body:  &body,
+		Event: &event,
+	}
+	_, _, err := a.opr.Github.PullRequests.CreateReview(context.Background(), a.owner, a.repo, pullNumber, review)
+	return errors.Wrap(err, "send approve")
+}
+
+func (a *Approve) getApproveFromBot(pullNumber int) int64 {
+	reviews, _, err := a.opr.Github.PullRequests.ListReviews(context.Background(), a.owner, a.repo, pullNumber, &github.ListOptions{
+		PerPage: 100,
+	})
+	if err != nil {
+		log.Error(errors.Wrap(err, "dismiss approve"))
+		return 0
+	}
+
+	for _, review := range reviews {
+		if review.GetState() == "APPROVED" && review.GetUser().GetLogin() == a.opr.Config.Github.Bot {
+			return review.GetID()
+		}
+	}
+	return 0
+}
+
+func (a *Approve) dismissApprove(pullNumber int) error {
+
+	dismissMessage := "approve cancel command"
+	reviewID := a.getApproveFromBot(pullNumber)
+	log.Info("cancel approve", pullNumber, reviewID)
+	if reviewID == 0 {
+		return nil
+		//return a.addGithubComment(pullNumber, "bot approve review not found")
+	}
+
+	_, _, err := a.opr.Github.PullRequests.DismissReview(context.Background(), a.owner, a.repo, pullNumber, reviewID,
+		&github.PullRequestReviewDismissalRequest{
+			Message: &dismissMessage,
+		})
+
+	return errors.Wrap(err, "dismiss approve")
 }

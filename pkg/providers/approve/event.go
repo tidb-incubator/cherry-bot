@@ -22,12 +22,16 @@ const (
 var lgtmCommands = []string{lgtmMsg, lgtmCommand, approveCommand}
 
 func (a *Approve) ProcessPullRequestReviewEvent(event *github.PullRequestReviewEvent) {
+
 	review := event.GetReview()
 	pr := event.GetPullRequest()
 	if review == nil || pr == nil {
 		return
 	}
 	reviewer := event.GetSender().GetLogin()
+	if reviewer == a.opr.Config.Github.Bot {
+		return
+	}
 	author := pr.GetUser().GetLogin()
 	pullNumber := pr.GetNumber()
 
@@ -88,19 +92,23 @@ func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	if pr.GetPullRequestLinks() == nil {
 		return
 	}
+	reviewer := event.GetSender().GetLogin()
+	if reviewer == a.opr.Config.Github.Bot {
+		return
+	}
 	approve, cancel := a.distinguishCommontBody(event.GetComment().GetBody())
 	pullNumber := pr.GetNumber()
 	if approve {
 		prAuthorID := pr.GetUser().GetLogin()
-		a.createApprove(event.GetSender().GetLogin(), prAuthorID, pullNumber, pr.Labels)
+		a.createApprove(reviewer, prAuthorID, pullNumber, pr.Labels)
 	} else if cancel {
-		a.cancelApprove(event.GetSender().GetLogin(), pullNumber, pr.Labels)
+		a.cancelApprove(reviewer, pullNumber, pr.Labels)
 	}
 }
 
 func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, labels []*github.Label) {
 
-	comment := fmt.Sprintf("@%s,Thanks for you review.", senderID)
+	comment := fmt.Sprintf("@%s,Thanks for your review.", senderID)
 	defer func() {
 		log.Info(a.owner, a.repo, pullNumber, comment)
 		if err := a.opr.CommentOnGithub(a.owner, a.repo, pullNumber, comment); err != nil {
@@ -113,8 +121,8 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 		comment = fmt.Sprintf("%s you are the author.", msg)
 		return
 	}
-	already_exist, err := a.addLGTMRecord(senderID, pullNumber, labels)
-	if already_exist {
+	alreadyExist, err := a.addLGTMRecord(senderID, pullNumber, labels)
+	if alreadyExist {
 		comment = ""
 		return
 	}

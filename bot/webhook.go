@@ -82,6 +82,7 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 
 	if b.cfg.Merge {
 		b.Middleware.Merge.ProcessIssueCommentEvent(event)
+		b.Middleware.Approve.ProcessIssueCommentEvent(event)
 	}
 
 	if b.cfg.IssueRedeliver {
@@ -96,9 +97,9 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 		b.Middleware.Notify.ProcessIssueCommentEvent(event)
 	}
 
-	if b.cfg.PullApprove {
-		b.Middleware.Approve.ProcessIssueCommentEvent(event)
-	}
+	// if b.cfg.PullApprove {
+	// 	b.Middleware.Approve.ProcessIssueCommentEvent(event)
+	// }
 
 	if b.cfg.AutoUpdate {
 		b.Middleware.AutoUpdate.ProcessIssueCommentEvent(event)
@@ -115,7 +116,7 @@ func (b *bot) processPullRequestReviewEvent(event *github.PullRequestReviewEvent
 	if b.cfg.StatusControl {
 		b.Middleware.PullStatus.ProcessPullRequestReviewEvent(event)
 	}
-	if b.cfg.PullApprove {
+	if b.cfg.Merge {
 		b.Middleware.Approve.ProcessPullRequestReviewEvent(event)
 	}
 }
