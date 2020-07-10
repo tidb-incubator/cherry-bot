@@ -2,6 +2,7 @@ package operator
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v32/github"
@@ -38,9 +39,14 @@ const (
 	ROLE_REVIEWER    = "reviewer"
 )
 
+const (
+	LABEL_REQUIRE_LGT = "require-LGT"
+)
+
 var (
-	MERGE_ROLES  = []string{ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
-	REVIEW_ROLES = []string{ROLE_REVIEWER, ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
+	MERGE_ROLES              = []string{ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
+	REVIEW_ROLES             = []string{ROLE_REVIEWER, ROLE_COMMITTER, ROLE_COLEADER, ROLE_LEADER}
+	LABEL_REQUIRE_LGTM_LOWER = strings.ToLower(LABEL_REQUIRE_LGT)
 )
 
 func LabelsToStrArr(labels []*github.Label) []string {
@@ -63,6 +69,22 @@ func (o *Operator) ListSIGByLabel(repo string, labels []*github.Label) (sigs []*
 }
 
 func (o *Operator) GetNumberOFLGTMByLable(repo string, labels []*github.Label) int {
+	// check if there is a require lgtm label
+	for _, label := range labels {
+		name := strings.ToLower(label.GetName())
+		if !strings.HasPrefix(name, LABEL_REQUIRE_LGTM_LOWER) {
+			continue
+		}
+		lgtm_num_str := strings.TrimPrefix(name, LABEL_REQUIRE_LGTM_LOWER)
+		num, err := strconv.Atoi(lgtm_num_str)
+		if err != nil || num == 0 {
+			log.Error("parse require lgtm failed", name, err)
+			continue
+		}
+		log.Info("there is a require lgtm label", name, num)
+		return num
+	}
+
 	sigs, err := o.ListSIGByLabel(repo, labels)
 	if err != nil {
 		log.Error(err)
