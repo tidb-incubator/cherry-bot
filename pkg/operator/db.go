@@ -128,7 +128,7 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 		if member.Level == ROLE_MAMINTAINER || member.Level == ROLE_PMC {
 			return nil // the PMC or maintainer can do anything
 		}
-		if legallRoles[member.Level] == true {
+		if legallRoles[member.Level] {
 			canEditSigs[member.SigID] = true
 		}
 	}
@@ -159,7 +159,7 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 		sig_infos = append(sig_infos, fmt.Sprintf("[%s](%s)([slack](%s))", sig.SigName, sig.SigUrl, sig.Channel))
 	}
 
-	errMsg := fmt.Sprintf("You are not a %s for the related sigs:%s.", strings.Join(roles, " or "), strings.Join(sig_infos, ","))
+	errMsg := fmt.Sprintf("See the corresponding SIG page for more information. Related SIGs: %s.", strings.Join(sig_infos, ","))
 	return errors.New(errMsg)
 }
 

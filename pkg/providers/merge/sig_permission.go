@@ -13,6 +13,7 @@ import (
 func (m *merge) CanMergeToMaster(pullNumber int, labels []*github.Label, userName string) error {
 	err := m.opr.HasPermissionToPRWithLables(m.owner, m.repo, labels, userName, operator.MERGE_ROLES)
 	if err != nil {
+		err = fmt.Errorf("@%s Oops! auto merge is restricted to Committers of the SIG.%s", userName, err)
 		return err
 	}
 	lgtmNum, err := m.opr.GetLGTMNumForPR(m.owner, m.repo, pullNumber)
@@ -22,7 +23,7 @@ func (m *merge) CanMergeToMaster(pullNumber int, labels []*github.Label, userNam
 	}
 	needLGTMNum := m.opr.GetNumberOFLGTMByLable(m.repo, labels)
 	if lgtmNum < needLGTMNum {
-		return fmt.Errorf("The number of `LGTM` for this PR is %v while it needs %v at least", lgtmNum, needLGTMNum)
+		return fmt.Errorf("@%s Oops! This PR requires at least %v LGTMs to merge. The current number of `LGTM` is %v.", userName, needLGTMNum, lgtmNum)
 	}
 	return nil
 }

@@ -45,8 +45,8 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
 		}
 		err := m.CanMergeToMaster(pr.GetNumber(), pr.Labels, username)
 		if err != nil {
-			msg := fmt.Sprintf(noAccessComment, username)
-			msg = fmt.Sprintf("%s %s", msg, err)
+			// msg := fmt.Sprintf(noAccessComment, username)
+			msg := fmt.Sprintf("%s", err)
 			util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg))
 			return false
 		} else {
