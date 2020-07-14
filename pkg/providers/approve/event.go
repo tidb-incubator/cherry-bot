@@ -108,7 +108,7 @@ func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 
 func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, labels []*github.Label) {
 
-	comment := fmt.Sprintf("@%s,Thanks for your review.", senderID)
+	comment := "" //fmt.Sprintf("@%s,Thanks for your review.", senderID)""
 	defer func() {
 		log.Info(a.owner, a.repo, pullNumber, comment)
 		if err := a.opr.CommentOnGithub(a.owner, a.repo, pullNumber, comment); err != nil {
@@ -117,18 +117,15 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 	}()
 
 	if senderID == prAuthorID {
-		msg := fmt.Sprintf(noAccessComment, senderID)
-		comment = fmt.Sprintf("%s you are the author.", msg)
+		comment = fmt.Sprintf("@%s Oops. LGTM is restricted to reviewers.", senderID)
 		return
 	}
 	alreadyExist, err := a.addLGTMRecord(senderID, pullNumber, labels)
 	if alreadyExist {
-		comment = ""
 		return
 	}
 	if err != nil {
-		msg := fmt.Sprintf(noAccessComment, senderID)
-		comment = fmt.Sprintf("%s %s", msg, err)
+		comment = fmt.Sprintf("%s", err)
 		util.Error(err)
 		return
 	}
