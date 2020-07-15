@@ -614,7 +614,7 @@ func (cherry *cherry) getReviewers(pr *github.PullRequest) github.ReviewersReque
 				continue
 			}
 			username := review.GetUser().GetLogin()
-			if username != author {
+			if username != author && username != cherry.opr.Config.Github.Bot {
 				if !checkExist(username, reviewers) {
 					reviewers = append(reviewers, username)
 				}
