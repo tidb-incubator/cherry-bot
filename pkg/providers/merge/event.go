@@ -140,12 +140,13 @@ func (m *merge) getLastRunAllTestAt(pr *github.PullRequest) (time.Time, error) {
 		return time.Time{}, errors.New("got a nil pr")
 	}
 
+	var direction = "desc"
 	// Get comments in descending order.
-	options := &github.PullRequestListCommentsOptions{
-		Direction: "desc",
+	options := &github.IssueListCommentsOptions{
+		Direction: &direction,
 	}
 
-	comments, _, err := m.opr.Github.PullRequests.ListComments(context.Background(), m.owner, m.repo,
+	comments, _, err := m.opr.Github.Issues.ListComments(context.Background(), m.owner, m.repo,
 		pr.GetNumber(), options)
 
 	if err != nil {
