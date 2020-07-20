@@ -27,6 +27,6 @@ func Init(repo *config.RepoConfig, opr *operator.Operator) *Approve {
 	return &n
 }
 
-func (c *Approve) Ready() {
-	c.ready = true
-}
+// func (c *Approve) Ready() {
+// 	c.ready = true
+// }

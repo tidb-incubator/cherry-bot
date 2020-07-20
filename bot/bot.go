@@ -10,6 +10,7 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/assign"
 	autoUpdate "github.com/pingcap-incubator/cherry-bot/pkg/providers/auto-update"
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/cherry"
+	"github.com/pingcap-incubator/cherry-bot/pkg/providers/community"
 	"github.com/pingcap-incubator/cherry-bot/pkg/providers/contributor"
 	fileWatcher "github.com/pingcap-incubator/cherry-bot/pkg/providers/file-watcher"
 	notify "github.com/pingcap-incubator/cherry-bot/pkg/providers/issue-notify"
@@ -45,6 +46,7 @@ type Middleware struct {
 	FileWatcher      *fileWatcher.Watcher
 	Assign           *assign.Assign
 	AddLabel         *addLabel.Label
+	community        *community.CommunityCmd
 }
 
 type bot struct {
@@ -83,6 +85,7 @@ func InitBot(repo *config.RepoConfig, opr *operator.Operator) Bot {
 			label:            label.Init(repo, opr),
 			Prlimit:          prlimit.Init(repo, opr),
 			Merge:            merge.Init(repo, opr),
+			community:        community.Init(repo, opr),
 			IssueRedeliver:   issueRedeliver.Init(repo, opr),
 			PullStatus:       pullstatus.Init(repo, opr),
 			AutoUpdate:       autoUpdate.Init(repo, opr),

@@ -6,23 +6,21 @@ import (
 )
 
 type Label struct {
-	owner   string
-	repo    string
-	ready   bool
-	approve bool
-	opr     *operator.Operator
-	cfg     *config.RepoConfig
+	owner string
+	repo  string
+	ready bool
+	opr   *operator.Operator
+	cfg   *config.RepoConfig
 }
 
 // Init create cherry pick middleware instance
 func Init(repo *config.RepoConfig, opr *operator.Operator) *Label {
 	n := Label{
-		owner:   repo.Owner,
-		repo:    repo.Repo,
-		ready:   false,
-		approve: repo.PullApprove,
-		cfg:     repo,
-		opr:     opr,
+		owner: repo.Owner,
+		repo:  repo.Repo,
+		ready: false,
+		cfg:   repo,
+		opr:   opr,
 	}
 	return &n
 }

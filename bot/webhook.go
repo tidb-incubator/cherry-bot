@@ -79,6 +79,7 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 	if b.cfg.CherryPick {
 		b.Middleware.cherry.ProcessIssueCommentEvent(event)
 	}
+	b.Middleware.community.ProcessIssueCommentEvent(event)
 
 	if b.cfg.Merge {
 		b.Middleware.Merge.ProcessIssueCommentEvent(event)
@@ -96,10 +97,6 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 	if b.cfg.IssueSlackNotice {
 		b.Middleware.Notify.ProcessIssueCommentEvent(event)
 	}
-
-	// if b.cfg.PullApprove {
-	// 	b.Middleware.Approve.ProcessIssueCommentEvent(event)
-	// }
 
 	if b.cfg.AutoUpdate {
 		b.Middleware.AutoUpdate.ProcessIssueCommentEvent(event)
