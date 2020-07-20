@@ -88,7 +88,7 @@ CREATE TABLE `auto_merges`
     `started`          tinyint(1)                     NOT NULL,
     `status`           tinyint(1)                     NOT NULL,
     `without_tests`    tinyint(1)                     NOT NULL,
-    `last_test_all_at` timestamp                               DEFAULT NULL,
+    `last_test_all_at` timestamp                          NULL DEFAULT NULL,
     `created_at`       timestamp                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
