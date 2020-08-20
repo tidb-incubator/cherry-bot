@@ -85,14 +85,14 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	if body == autoMergeCommand || body == autoMergeAlias || body == unMergeCommand {
 		// command only for org members
 		login := event.GetSender().GetLogin()
-		if !m.opr.Member.IfMember(login) {
-			return
-		}
 
 		pr, _, err := m.opr.Github.PullRequests.Get(context.Background(),
 			m.owner, m.repo, event.Issue.GetNumber())
 		if err != nil {
 			util.Error(errors.Wrap(err, "issue comment get PR"))
+			return
+		}
+		if pr.GetBase().GetRef() != "master" && !m.opr.Member.IfMember(login) {
 			return
 		}
 		if !m.havePermission(login, pr) {

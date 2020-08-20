@@ -63,9 +63,9 @@ func (l *Label) checkLabels(labels []string) (legalLabels, illegalLabels []strin
 }
 
 func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error {
-	if !l.opr.Member.IfMember(event.GetSender().GetLogin()) {
-		return nil
-	}
+	// if !l.opr.Member.IfMember(event.GetSender().GetLogin()) {
+	// 	return nil
+	// }
 	issueID := event.GetIssue().GetNumber()
 
 	var labels []string
@@ -93,9 +93,9 @@ func (l *Label) processLabel(event *github.IssueCommentEvent, raw string) error 
 }
 
 func (l *Label) processUnlabel(event *github.IssueCommentEvent, raw string) error {
-	if !l.opr.Member.IfMember(event.GetSender().GetLogin()) {
-		return nil
-	}
+	// if !l.opr.Member.IfMember(event.GetSender().GetLogin()) {
+	// 	return nil
+	// }
 	issueID := event.GetIssue().GetNumber()
 
 	labels := strings.Split(raw, ",")
