@@ -26,7 +26,11 @@ func (c *Comment) processComment(event *github.IssueCommentEvent, comment string
 	issueID := event.GetIssue().GetNumber()
 	temMatches := templatePattern.FindStringSubmatch(comment)
 	if strings.TrimSpace(temMatches[0]) == "/info" {
-		return errors.Wrap(c.addTemplate(issueID), "label issue")
+		e := c.addTemplate(issueID)
+		if e != nil {
+			err := errors.Wrap(e,"add template to comment fail")
+			return err
+		}
 	}
 
 	return nil
