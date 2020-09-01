@@ -23,6 +23,9 @@ func (cherry *cherry) ProcessPullRequest(pr *github.PullRequest) {
 			util.Error(cherry.createCherryPick(pr))
 		} else {
 			for _, label := range pr.Labels {
+				if strings.HasPrefix(*label.Name, "LGT") {
+					continue
+				}
 				util.Error(cherry.commitLabel(pr, *label.Name))
 			}
 			if pr.MergedAt != nil {
