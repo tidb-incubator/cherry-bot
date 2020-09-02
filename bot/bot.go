@@ -47,7 +47,7 @@ type Middleware struct {
 	FileWatcher      *fileWatcher.Watcher
 	Assign           *assign.Assign
 	AddLabel         *addLabel.Label
-	AddTemplate      *add_template.Comment
+	AddTemplate      *addTemplate.Comment
 	community        *community.CommunityCmd
 }
 
@@ -98,7 +98,7 @@ func InitBot(repo *config.RepoConfig, opr *operator.Operator) Bot {
 			FileWatcher:      fileWatcher.Init(repo, opr),
 			Assign:           assign.Init(repo, opr),
 			AddLabel:         addLabel.Init(repo, opr),
-			AddTemplate:      add_template.Init(repo, opr),
+			AddTemplate:      addTemplate.Init(repo, opr),
 		},
 	}
 }

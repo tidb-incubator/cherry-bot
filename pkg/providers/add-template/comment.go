@@ -1,8 +1,8 @@
-package add_template
+package addTemplate
 
 import (
-"github.com/pingcap-incubator/cherry-bot/config"
-"github.com/pingcap-incubator/cherry-bot/pkg/operator"
+	"github.com/pingcap-incubator/cherry-bot/config"
+	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
 )
 
 type Comment struct {
@@ -20,4 +20,3 @@ func Init(repoCfg *config.RepoConfig, opr *operator.Operator) *Comment {
 		cfg:   repoCfg,
 	}
 }
-

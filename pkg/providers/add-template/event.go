@@ -1,6 +1,7 @@
-package add_template
+package addTemplate
 
 import (
+	"fmt"
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
@@ -24,8 +25,11 @@ func (c *Comment) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 
 func (c *Comment) processComment(event *github.IssueCommentEvent, comment string) error {
 	issueID := event.GetIssue().GetNumber()
+	fmt.Println(issueID)
+	//fmt.Println(comment)
 	temMatches := templatePattern.FindStringSubmatch(comment)
-	if strings.TrimSpace(temMatches[0]) == "/info" {
+	fmt.Println(temMatches)
+	if len(temMatches)>0 && strings.TrimSpace(temMatches[0]) == "/info" {
 		e := c.addTemplate(issueID)
 		if e != nil {
 			err := errors.Wrap(e,"add template to comment fail")
@@ -43,7 +47,9 @@ func (c *Comment) addTemplate(issueID int) (err error) {
 		err = errors.Wrap(e, "read template file failed")
 		return err
 	}
+
 	template := string(b)
+	//fmt.Println(template)
 	e = c.opr.CommentOnGithub(c.owner, c.repo, issueID, template)
 
 	if e != nil {
