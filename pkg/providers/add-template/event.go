@@ -2,12 +2,12 @@ package addTemplate
 
 import (
 	"fmt"
-	"github.com/google/go-github/v32/github"
-	"github.com/pingcap-incubator/cherry-bot/util"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"regexp"
 	"strings"
+	"github.com/google/go-github/v32/github"
+	"github.com/pkg/errors"
+	"github.com/pingcap-incubator/cherry-bot/util"
 )
 
 var (
@@ -28,11 +28,11 @@ func (c *Comment) processComment(event *github.IssueCommentEvent, comment string
 	fmt.Println(issueID)
 	//fmt.Println(comment)
 	temMatches := templatePattern.FindStringSubmatch(comment)
-	fmt.Println(temMatches)
-	if len(temMatches)>0 && strings.TrimSpace(temMatches[0]) == "/info" {
+	fmt.Println("temMatches:",temMatches)
+	if len(temMatches) > 0 && strings.TrimSpace(temMatches[0]) == "/info" {
 		e := c.addTemplate(issueID)
 		if e != nil {
-			err := errors.Wrap(e,"add template to comment fail")
+			err := errors.Wrap(e, "add template to comment fail")
 			return err
 		}
 	}

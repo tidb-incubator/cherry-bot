@@ -22,8 +22,9 @@ import (
 	"net/http"
 	"testing"
 )
+
 var (
-	comments_json =`
+	comments_json = `
 	{
 		"url": "https://api.github.com/repos/pingcap/tidb/issues/comments/147186180",
 		"html_url": "https://github.com/pingcap/tidb/pull/351#issuecomment-147186180",
@@ -64,7 +65,7 @@ func initOperator() operator.Operator {
 	httpcli := http.Client{}
 	cli := github.NewClient(&httpcli)
 	op := operator.Operator{
-		Github : cli,
+		Github: cli,
 	}
 
 	return op
@@ -83,7 +84,7 @@ func initOperator() operator.Operator {
 func InitComment() Comment {
 	v_operator := initOperator()
 	v_cfg := config.RepoConfig{}
-	cmt := Comment {
+	cmt := Comment{
 		owner: "pingcap",
 		repo:  "qa",
 		opr:   &v_operator,
@@ -95,13 +96,13 @@ func InitComment() Comment {
 func InitIssueComment() github.IssueComment {
 	comment := github.IssueComment{}
 	err := json.Unmarshal([]byte(comments_json), &comment)
-	if err!=nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 	return comment
 }
 
-func InitEvent() *github.IssueCommentEvent{
+func InitEvent() *github.IssueCommentEvent {
 	action := "opened"
 	issue_json := `
 	{
@@ -118,52 +119,51 @@ func InitEvent() *github.IssueCommentEvent{
 	}`
 	comment := InitIssueComment()
 	issue := github.Issue{}
-	err:=json.Unmarshal([]byte(issue_json), &issue)
-	if err!=nil{
+	err := json.Unmarshal([]byte(issue_json), &issue)
+	if err != nil {
 		fmt.Println(err)
 	}
-
 
 	empty_json := `{}`
 	change := github.EditChange{}
 	err = json.Unmarshal([]byte(empty_json), &change)
-	if err!=nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 
 	repo := github.Repository{}
 	err = json.Unmarshal([]byte(empty_json), &repo)
-	if err!=nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 
 	sender := github.User{}
 	err = json.Unmarshal([]byte(empty_json), &sender)
-	if err!=nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 
 	installation := github.Installation{}
 	err = json.Unmarshal([]byte(empty_json), &installation)
-	if err!=nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 
-	event := github.IssueCommentEvent{&action, &issue, &comment,&change,
-		&repo, &sender, &installation }
+	event := github.IssueCommentEvent{&action, &issue, &comment, &change,
+		&repo, &sender, &installation}
 	return &event
 
 }
 
-
-func TestProcessComment(t *testing.T){
+func TestProcessComment(t *testing.T) {
 
 	c := InitComment()
 
 	event := InitEvent()
-	c.processComment(event,comments_json)
+	c.processComment(event, comments_json)
 }
 
+//
 //func TestAddComments(t *testing.T){
 //	c := InitComment()
 //	e := c.addTemplate(351)
