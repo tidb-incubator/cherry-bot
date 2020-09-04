@@ -117,7 +117,7 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 	}()
 
 	if senderID == prAuthorID {
-		comment = fmt.Sprintf("@%s Oops. LGTM is restricted to reviewers.", senderID)
+		comment = fmt.Sprintf("@%s Sorry, You can’t approve your own PR.", senderID)
 		return
 	}
 	alreadyExist, err := a.addLGTMRecord(senderID, pullNumber, labels)

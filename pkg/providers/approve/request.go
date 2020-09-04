@@ -46,7 +46,7 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 	}
 	err = a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, login, operator.REVIEW_ROLES)
 	if err != nil {
-		err = fmt.Errorf("@%s,Thanks for your review. However, LGTM is restricted to Reviewers or higher roles.%s", login, err)
+		err = fmt.Errorf("@%s,Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments.%s", login, err)
 		return
 	}
 	err = txn.Save(&record).Error
