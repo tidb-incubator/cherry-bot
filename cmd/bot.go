@@ -18,6 +18,7 @@ var (
 	configPath = flag.String("c", "./config.toml", "config path")
 	address    = flag.String("addr", "0.0.0.0", "listen address")
 	port       = flag.Int("port", 8080, "listen port")
+	BotPath    = configPath
 )
 
 func main() {

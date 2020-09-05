@@ -2,12 +2,13 @@ package addTemplate
 
 import (
 	"fmt"
+	"github.com/google/go-github/v32/github"
+	"github.com/pingcap-incubator/cherry-bot/util"
+	"github.com/pkg/errors"
 	"io/ioutil"
+	"path"
 	"regexp"
 	"strings"
-	"github.com/google/go-github/v32/github"
-	"github.com/pkg/errors"
-	"github.com/pingcap-incubator/cherry-bot/util"
 )
 
 var (
@@ -28,7 +29,7 @@ func (c *Comment) processComment(event *github.IssueCommentEvent, comment string
 	fmt.Println(issueID)
 	//fmt.Println(comment)
 	temMatches := templatePattern.FindStringSubmatch(comment)
-	fmt.Println("temMatches:",temMatches)
+	fmt.Println("temMatches:", temMatches)
 	if len(temMatches) > 0 && strings.TrimSpace(temMatches[0]) == "/info" {
 		e := c.addTemplate(issueID)
 		if e != nil {
@@ -42,7 +43,8 @@ func (c *Comment) processComment(event *github.IssueCommentEvent, comment string
 
 func (c *Comment) addTemplate(issueID int) (err error) {
 
-	b, e := ioutil.ReadFile("template.txt")
+	tepPath := path.Join(BotPath, "template.txt")
+	b, e := ioutil.ReadFile("/root/github-bot/repos/template.txt")
 	if e != nil {
 		err = errors.Wrap(e, "read template file failed")
 		return err
