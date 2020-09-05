@@ -159,7 +159,12 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 		sig_infos = append(sig_infos, fmt.Sprintf("[%s](%s)([slack](%s))", sig.SigName, sig.SigUrl, sig.Channel))
 	}
 
-	errMsg := fmt.Sprintf("See the corresponding SIG page for more information. Related SIGs: %s.", strings.Join(sig_infos, ","))
+	sigStr := "SIG"
+	if len(sig_infos) > 1 {
+		sigStr = "SIGs"
+	}
+
+	errMsg := fmt.Sprintf("See the corresponding SIG page for more information. Related %s: %s.", sigStr, strings.Join(sig_infos, ","))
 	return errors.New(errMsg)
 }
 
