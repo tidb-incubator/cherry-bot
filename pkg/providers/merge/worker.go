@@ -200,7 +200,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) bool {
 		// }
 		util.Println("Tests test passed", status, checks)
 		// compose commit message
-		message := ""
+		message := " "
 		if m.cfg.SignedOffMessage {
 			msg, err := m.getMergeMessage(pr.GetNumber())
 			if err != nil {

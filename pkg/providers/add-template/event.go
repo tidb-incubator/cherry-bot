@@ -6,7 +6,6 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 	"io/ioutil"
-	"path"
 	"regexp"
 	"strings"
 )
@@ -43,8 +42,7 @@ func (c *Comment) processComment(event *github.IssueCommentEvent, comment string
 
 func (c *Comment) addTemplate(issueID int) (err error) {
 
-	tepPath := path.Join(BotPath, "template.txt")
-	b, e := ioutil.ReadFile("/root/github-bot/repos/template.txt")
+	b, e := ioutil.ReadFile("template.txt")
 	if e != nil {
 		err = errors.Wrap(e, "read template file failed")
 		return err
