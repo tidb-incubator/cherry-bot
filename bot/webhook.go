@@ -107,6 +107,8 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 	b.Middleware.Assign.ProcessIssueCommentEvent(event)
 
 	b.Middleware.CommandRedeliver.ProcessIssueCommentEvent(event)
+
+	b.Middleware.AddTemplate.ProcessIssueCommentEvent(event)
 }
 
 func (b *bot) processPullRequestReviewEvent(event *github.PullRequestReviewEvent) {
