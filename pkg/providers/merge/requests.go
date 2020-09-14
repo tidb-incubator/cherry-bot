@@ -196,6 +196,9 @@ func (m *merge) getMergeMessage(ID int) (string, error) {
 			}
 		}
 	}
+	if len(signedOffs) == 0 {
+		return " ", nil
+	}
 	return strings.Join(signedOffs, "\n"), nil
 }
 
