@@ -47,7 +47,9 @@ func (a *Assign) do(event *github.IssueCommentEvent, comment string) (err error)
 	for _, login := range strings.Split(comment, ",") {
 		user := strings.TrimSpace(login)
 		user = strings.TrimPrefix(user, "@")
-		assignees = append(assignees, user)
+		if user != "" {
+			assignees = append(assignees, user)
+		}
 	}
 	if len(assignees) == 0 {
 		assignees = []string{event.GetComment().GetUser().GetLogin()}
