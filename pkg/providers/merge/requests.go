@@ -99,17 +99,6 @@ func (m *merge) getReleaseVersions(base string) ([]*ReleaseVersion, error) {
 	return releaseVersions, nil
 }
 
-func (m *merge) getReleaseMembers(base string) ([]*ReleaseMember, error) {
-	var releaseMembers []*ReleaseMember
-	if err := m.opr.DB.Where("owner = ? and repo = ? and branch = ?", m.owner, m.repo,
-		base).Find(&releaseMembers).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
-		return nil, errors.Wrap(err, "get release members from DB")
-	} else if gorm.IsRecordNotFoundError(err) {
-		return nil, nil
-	}
-	return releaseMembers, nil
-}
-
 func (m *merge) canMergeReleaseVersion(base, user string) (bool, bool, error) {
 	var (
 		errMsg = "can merge release version"
