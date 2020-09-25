@@ -133,15 +133,10 @@ func (m *merge) canMergeReleaseVersion(base, user string) (bool, bool, error) {
 	}
 	// this branch's release version is in progress
 	// check out if the user has permission to merge it
-	members, err := m.getReleaseMembers(base)
-	if err != nil {
-		return false, true, errors.Wrap(err, errMsg)
+	if m.opr.Member.IfMember(user) {
+		return true, true, nil
 	}
-	for _, m := range members {
-		if m.User == user {
-			return true, true, nil
-		}
-	}
+
 	return false, true, nil
 }
 
