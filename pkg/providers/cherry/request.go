@@ -329,7 +329,7 @@ func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (
 				return errors.Wrap(err, message)
 			}
 			if out, err := do(dir, "git", "commit", "-s", "-m", commitMessage); err != nil {
-				if !strings.Contains(out, "nothing to commit, working directory clean") {
+				if !strings.Contains(out, "nothing to commit") {
 					message = "git commit failed"
 					return errors.Wrap(err, message)
 				}
