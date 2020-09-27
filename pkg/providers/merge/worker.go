@@ -27,7 +27,7 @@ func (m *merge) processPREvent(event *github.PullRequestEvent) {
 		Owner:     m.owner,
 		Repo:      m.repo,
 		BaseRef:   event.GetPullRequest().GetBase().GetRef(),
-		Status:    mergeImcomplete,
+		Status:    mergeIncomplete,
 		CreatedAt: time.Now(),
 	}
 	if err := m.saveModel(&model); err != nil {
@@ -99,7 +99,7 @@ func (m *merge) startPolling() {
 						job.Started = true
 					}
 					m.checkPR(job)
-					if job.Status != mergeImcomplete {
+					if job.Status != mergeIncomplete {
 						if err := m.saveModel(job); err != nil {
 							util.Error(errors.Wrap(err, "merge polling job"))
 						}

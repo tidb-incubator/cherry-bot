@@ -20,7 +20,7 @@ const (
 	maxRetryTime   = 1
 	signedOffRegex = "^(Signed-off-by:.*)$"
 
-	mergeImcomplete int = iota
+	mergeIncomplete int = iota
 	mergeFinish
 	mergeSuccess
 	mergeTestFail
@@ -29,8 +29,8 @@ const (
 
 func MergeStatusMessage(status int) string {
 	switch status {
-	case mergeImcomplete:
-		return "running"
+	case mergeIncomplete:
+		return "incomplete"
 	case mergeFinish:
 		return "finish"
 	case mergeSuccess:
