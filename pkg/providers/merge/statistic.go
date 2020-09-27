@@ -55,7 +55,10 @@ func MakeStatusStatistic(counts []*StatusCount) []*StatusStatistic {
 
 	statistic := make([]*StatusStatistic, 0, len(repoMap))
 	for _, repo := range repoMap {
-		repo.SuccessRate = float32(repo.Success) / float32(repo.Success+repo.TestFail+repo.MergeFail)
+		confirmedTotalCount := repo.Success + repo.TestFail + repo.MergeFail
+		if confirmedTotalCount != 0 {
+			repo.SuccessRate = float32(repo.Success) / float32(confirmedTotalCount)
+		}
 		statistic = append(statistic, repo)
 	}
 	return statistic
