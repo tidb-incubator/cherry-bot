@@ -17,12 +17,12 @@ const (
 	cancelCommand   = "cancel"
 	noAccessComment = "@%s, Thanks for your review, however we are sorry that your vote won't be count."
 	lgtmLabelPrefix = "status/LGT"
+	releasePrefix   = "release"
 )
 
 var lgtmCommands = []string{lgtmMsg, lgtmCommand, approveCommand}
 
 func (a *Approve) ProcessPullRequestReviewEvent(event *github.PullRequestReviewEvent) {
-
 	review := event.GetReview()
 	pr := event.GetPullRequest()
 	if review == nil || pr == nil {
@@ -34,6 +34,15 @@ func (a *Approve) ProcessPullRequestReviewEvent(event *github.PullRequestReviewE
 	}
 	author := pr.GetUser().GetLogin()
 	pullNumber := pr.GetNumber()
+
+	base := pr.GetBase().GetRef()
+	if a.cfg.ReleaseApproveControl && strings.HasPrefix(base, releasePrefix) && !a.opr.IsAllowed(a.owner, a.repo, reviewer) {
+		comment := fmt.Sprintf(noAccessComment, reviewer)
+		if err := a.opr.CommentOnGithub(a.owner, a.repo, pullNumber, comment); err != nil {
+			util.Error(err)
+		}
+		return
+	}
 
 	switch review.GetState() {
 	case "approved":

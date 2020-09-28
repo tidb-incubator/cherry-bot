@@ -118,7 +118,8 @@ type RepoConfig struct {
 	IssueSlackNoticeChannel string `toml:"issue-slack-notice-channel"`
 	IssueSlackNoticeNotify  string `toml:"issue-slack-notice-notify"`
 	// approve
-	PullApprove bool `toml:"pull-approve"`
+	PullApprove           bool `toml:"pull-approve"`
+	ReleaseApproveControl bool `toml:"release-approve-control"`
 	// contributor
 	NotifyNewContributorPR bool `toml:"notify-new-contributor-pr"`
 	// watch file change
