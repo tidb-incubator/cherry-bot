@@ -11,6 +11,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	defaultReleaseLGTMNeed = 2
+)
+
 // Config is cherry picker config struct
 type Config struct {
 	Github   *Github
@@ -120,6 +124,7 @@ type RepoConfig struct {
 	// approve
 	PullApprove           bool `toml:"pull-approve"`
 	ReleaseApproveControl bool `toml:"release-approve-control"`
+	ReleaseLGTMNeed       int  `toml:"release-lgtm-need"`
 	// contributor
 	NotifyNewContributorPR bool `toml:"notify-new-contributor-pr"`
 	// watch file change
@@ -173,6 +178,9 @@ func GetConfig(configPath *string) (*Config, error) {
 	}
 	repos := make(map[string]*RepoConfig)
 	for _, repo := range rawCfg.Repos {
+		if repo.ReleaseLGTMNeed == 0 {
+			repo.ReleaseLGTMNeed = defaultReleaseLGTMNeed
+		}
 		key := fmt.Sprintf("%s-%s", repo.Owner, repo.Repo)
 		repos[key] = repo
 	}

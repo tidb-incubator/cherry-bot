@@ -110,6 +110,23 @@ func (m *merge) getReleaseMembers(base string) ([]*ReleaseMember, error) {
 	return releaseMembers, nil
 }
 
+func (m *merge) currentReleaseVersion(base string) (releaseVersion *ReleaseVersion, err error) {
+	now := time.Now()
+	releaseVersions, err := m.getReleaseVersions(base)
+	if err != nil {
+		return
+	}
+	for _, r := range releaseVersions {
+		if r.Start != nil && r.Start.Before(now) {
+			if r.End == nil || r.End.After(now) {
+				releaseVersion = r
+				break
+			}
+		}
+	}
+	return
+}
+
 func (m *merge) canMergeReleaseVersion(base, user string) (bool, bool, error) {
 	var (
 		errMsg = "can merge release version"
