@@ -7,7 +7,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/ngaut/log"
-	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
 	"github.com/pkg/errors"
 
 	"github.com/google/go-github/v32/github"
@@ -42,11 +41,6 @@ func (a *Approve) addLGTMRecord(login string, pullNumber int, labels []*github.L
 	alreadyExist, _ = a.LGTMRecordExist(&record, txn)
 	if alreadyExist {
 		//err = errors.New("You already give a LGTM to this PR")
-		return
-	}
-	err = a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, login, operator.REVIEW_ROLES)
-	if err != nil {
-		err = fmt.Errorf("@%s,Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments.%s", login, err)
 		return
 	}
 	err = txn.Save(&record).Error

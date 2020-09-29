@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
 	"github.com/pingcap-incubator/cherry-bot/util"
 
 	"github.com/google/go-github/v32/github"
@@ -18,6 +19,7 @@ const (
 	noAccessComment = "@%s, Thanks for your review, however we are sorry that your vote won't be count."
 	lgtmLabelPrefix = "status/LGT"
 	releasePrefix   = "release"
+	master          = "master"
 )
 
 var lgtmCommands = []string{lgtmMsg, lgtmCommand, approveCommand}
@@ -36,11 +38,23 @@ func (a *Approve) ProcessPullRequestReviewEvent(event *github.PullRequestReviewE
 	pullNumber := pr.GetNumber()
 
 	base := pr.GetBase().GetRef()
-	if a.cfg.ReleaseApproveControl && strings.HasPrefix(base, releasePrefix) && !a.opr.IsAllowed(a.owner, a.repo, reviewer) {
-		comment := fmt.Sprintf(noAccessComment, reviewer)
-		if err := a.opr.CommentOnGithub(a.owner, a.repo, pullNumber, comment); err != nil {
-			util.Error(err)
+
+	var comment string
+	defer func() {
+		comment = strings.TrimSpace(comment)
+		if comment != "" {
+			if err := a.opr.CommentOnGithub(a.owner, a.repo, pullNumber, comment); err != nil {
+				util.Error(err)
+			}
 		}
+	}()
+	if base == master {
+		if err := a.opr.HasPermissionToPRWithLables(a.owner, a.repo, pr.Labels, reviewer, operator.REVIEW_ROLES); err != nil {
+			comment = fmt.Sprintf("@%s,Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments.%s", reviewer, err)
+			return
+		}
+	} else if a.cfg.ReleaseApproveControl && strings.HasPrefix(base, releasePrefix) && !a.opr.IsAllowed(a.owner, a.repo, reviewer) {
+		comment = fmt.Sprintf(noAccessComment, reviewer)
 		return
 	}
 
