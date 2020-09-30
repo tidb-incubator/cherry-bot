@@ -3,6 +3,7 @@ package merge
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pingcap-incubator/cherry-bot/util"
@@ -34,44 +35,61 @@ func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 	}
 }
 
-func (m *merge) havePermission(username string, pr *github.PullRequest) bool {
+func (m *merge) havePermission(username string, pr *github.PullRequest) (permission bool) {
 	base := pr.GetBase().GetRef()
+	var msg string
+
+	defer func() {
+		if msg != "" {
+			util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg))
+		}
+	}()
+
 	if base == "master" {
-		if username == m.opr.Config.Github.Bot {
-			return true
+		if username != m.opr.Config.Github.Bot && m.cfg.MergeSIGControl {
+			if err := m.CanMergeToMaster(pr.GetNumber(), pr.Labels, username); err != nil {
+				msg = err.Error()
+				return
+			}
 		}
-		if !m.cfg.MergeSIGControl {
-			return true
+	} else if strings.HasPrefix(base, "release") {
+		if err := m.CanMergeToRelease(pr.GetNumber(), username); err != nil {
+			msg = err.Error()
+			return
 		}
-		err := m.CanMergeToMaster(pr.GetNumber(), pr.Labels, username)
+
+		currentReleaseVersion, err := m.currentReleaseVersion(base)
 		if err != nil {
-			// msg := fmt.Sprintf(noAccessComment, username)
-			msg := fmt.Sprintf("%s", err)
-			util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg))
-			return false
+			util.Error(err)
+			return
+		}
+
+		if currentReleaseVersion == nil {
+			havePermission := m.ifInAllowList(username)
+			if !havePermission {
+				msg = fmt.Sprintf(noAccessComment, username)
+				return
+			}
 		} else {
-			return true
-		}
-	}
+			// this branch's release version is in progress
+			// check out if the user has permission to merge it
+			members, err := m.getReleaseMembers(base)
+			if err != nil {
+				util.Error(err)
+				return
+			}
 
-	canMergeRelease, inRelease, err := m.canMergeReleaseVersion(base, username)
-	if err != nil {
-		util.Error(err)
-		return false
-	}
-	if !canMergeRelease {
-		msg := fmt.Sprintf(noAccessComment, username)
-		util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg+"\n"+versionReleaseComment))
-		return false
-	}
-
-	if !inRelease {
-		havePermission := m.ifInAllowList(username)
-		if !havePermission {
-			msg := fmt.Sprintf(noAccessComment, username)
-			util.Error(m.opr.CommentOnGithub(m.owner, m.repo, pr.GetNumber(), msg))
+			isReleaseMember := false
+			for _, m := range members {
+				if m.User == username {
+					isReleaseMember = true
+				}
+			}
+			if !isReleaseMember {
+				msg = fmt.Sprintf(noAccessComment, username)
+				return
+			}
 		}
-		return havePermission
 	}
 	return true
 }
