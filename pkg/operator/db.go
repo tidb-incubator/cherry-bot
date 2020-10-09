@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/jinzhu/gorm"
 	"github.com/ngaut/log"
-	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
+
+	"github.com/pingcap-incubator/cherry-bot/util"
 )
 
 type SigMember struct {
@@ -28,6 +30,15 @@ type Sig struct {
 	SigUrl     string `gorm:"sig_url"`
 	Channel    string `gorm:"channel"`
 	Lgtm       int    `gorm:"column:lgtm"`
+}
+
+// AutoMergeAllowName define allow name for auto merge
+type AutoMergeAllowName struct {
+	ID        int       `gorm:"id"`
+	Owner     string    `gorm:"owner"`
+	Repo      string    `gorm:"repo"`
+	Username  string    `gorm:"username"`
+	CreatedAt time.Time `gorm:"created_at"`
 }
 
 const (
@@ -171,4 +182,53 @@ func (o *Operator) HasPermissionToPRWithLables(owner, repo string, labels []*git
 func (o *Operator) GetLGTMNumForPR(owner, repo string, pullNumber int) (num int, err error) {
 	err = o.DB.Table("lgtm_records").Where("score>0 and repo=? and owner=? and pull_number=?", repo, owner, pullNumber).Count(&num).Error
 	return num, err
+}
+
+func (o *Operator) GetAllowList(owner, repo string) ([]string, error) {
+	res := []string{o.Config.Github.Bot}
+	var allowNames []*AutoMergeAllowName
+	if err := o.DB.Where("owner = ? and repo = ?", owner,
+		repo).Order("created_at asc").Find(&allowNames).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, errors.Wrap(err, "get allowList")
+	}
+	for _, w := range allowNames {
+		res = append(res, (*w).Username)
+	}
+	return res, nil
+}
+
+func (o *Operator) AddAllowList(owner, repo, username string) error {
+	model := AutoMergeAllowName{
+		Owner:     owner,
+		Repo:      repo,
+		Username:  username,
+		CreatedAt: time.Now(),
+	}
+
+	if err := o.DB.Save(&model).Error; err != nil {
+		return errors.Wrap(err, "add allow name")
+	}
+	return nil
+}
+
+func (o *Operator) RemoveAllowList(username string) error {
+	if err := o.DB.Where("username = ?", username).Delete(AutoMergeAllowName{}).Error; err != nil {
+		return errors.Wrap(err, "remove allow name")
+	}
+	return nil
+}
+
+func (o *Operator) IsAllowed(owner, repo, username string) bool {
+	allowList, err := o.GetAllowList(owner, repo)
+	util.Println(username, allowList)
+	if err != nil {
+		util.Error(errors.Wrap(err, "is allowed"))
+	} else {
+		for _, allowname := range allowList {
+			if username == allowname {
+				return true
+			}
+		}
+	}
+	return false
 }
