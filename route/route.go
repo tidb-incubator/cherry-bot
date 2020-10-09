@@ -367,13 +367,10 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		owner := ctx.Params().Get("owner")
 		repo := ctx.Params().Get("repo")
 		key := owner + "-" + repo
-		secret := ctx.URLParam("secret")
 
-		if !auth(ctl, key, secret) {
-			// repo not in config file or auth fail
-			util.Event("unsupported repo")
-			ctx.StatusCode(iris.StatusInternalServerError)
-			ctx.WriteString("unsupported repo")
+		if (*ctl).GetRepo(key) == nil {
+			util.Event("repo not found")
+			ctx.StatusCode(iris.StatusNotFound)
 			return
 		}
 
