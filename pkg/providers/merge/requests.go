@@ -19,7 +19,9 @@ import (
 const (
 	maxRetryTime   = 1
 	signedOffRegex = "^(Signed-off-by:.*)$"
+)
 
+const (
 	mergeIncomplete int = iota
 	mergeFinish
 	mergeSuccess
