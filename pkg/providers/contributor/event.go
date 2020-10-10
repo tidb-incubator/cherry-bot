@@ -24,16 +24,28 @@ func (c *Contributor) processOpenedPR(pull *github.PullRequest) (errs []error) {
 	if err != nil {
 		return []error{err}
 	}
-
-	if authorType == contributor {
-		if err := c.addContributorLabel(pull); err != nil {
-			errs = append(errs, err)
+	switch pull.GetAuthorAssociation() {
+	case "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER", "NONE":
+		{
+			err = c.labelPull(pull, "first-time-contributor")
 		}
-
-		if err := c.notifyNewContributorPR(pull); err != nil {
-			errs = append(errs, err)
+	default:
+		{
+			if authorType == contributor {
+				err = c.addContributorLabel(pull)
+			} else {
+				return errs
+			}
 		}
 	}
+	if err != nil {
+		errs = []error{err}
+	}
+
+	if err := c.notifyNewContributorPR(pull); err != nil {
+		errs = append(errs, err)
+	}
+
 	return
 }
 

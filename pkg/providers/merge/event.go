@@ -45,7 +45,7 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) (permiss
 		}
 	}()
 
-	if base == "master" {
+	if m.owner != "chaos-mesh" && base == "master" {
 		if username != m.opr.Config.Github.Bot && m.cfg.MergeSIGControl {
 			if err := m.CanMergeToMaster(pr.GetNumber(), pr.Labels, username); err != nil {
 				msg = err.Error()

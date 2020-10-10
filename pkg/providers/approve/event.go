@@ -1,6 +1,7 @@
 package approve
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -25,6 +26,9 @@ const (
 var lgtmCommands = []string{lgtmMsg, lgtmCommand, approveCommand}
 
 func (a *Approve) ProcessPullRequestReviewEvent(event *github.PullRequestReviewEvent) {
+	if a.owner == "chaos-mesh" {
+		return
+	}
 	review := event.GetReview()
 	pr := event.GetPullRequest()
 	if review == nil || pr == nil {
@@ -48,26 +52,17 @@ func (a *Approve) ProcessPullRequestReviewEvent(event *github.PullRequestReviewE
 			}
 		}
 	}()
-	if base == master {
-		if err := a.opr.HasPermissionToPRWithLables(a.owner, a.repo, pr.Labels, reviewer, operator.REVIEW_ROLES); err != nil {
-			comment = fmt.Sprintf("@%s,Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments.%s", reviewer, err)
-			return
-		}
-	} else if a.cfg.ReleaseApproveControl && strings.HasPrefix(base, releasePrefix) && !a.opr.IsAllowed(a.owner, a.repo, reviewer) {
-		comment = fmt.Sprintf(noAccessComment, reviewer)
-		return
-	}
 
 	switch review.GetState() {
 	case "approved":
 		{
-			a.createApprove(reviewer, author, pullNumber, pr.Labels)
+			a.createApprove(reviewer, author, base, pullNumber, pr.Labels)
 		}
 	case "commented":
 		{
 			approve, cancel := a.distinguishCommontBody(review.GetBody())
 			if approve {
-				a.createApprove(reviewer, author, pullNumber, pr.Labels)
+				a.createApprove(reviewer, author, base, pullNumber, pr.Labels)
 			} else if cancel {
 				a.cancelApprove(reviewer, pullNumber, pr.Labels)
 			}
@@ -81,6 +76,9 @@ func (a *Approve) ProcessPullRequestReviewEvent(event *github.PullRequestReviewE
 }
 
 func (a *Approve) distinguishCommontBody(body string) (approve bool, cancel bool) {
+	if a.owner == "chaos-mesh" {
+		return
+	}
 	approve = false
 	cancel = false
 	body = strings.ToLower(body)
@@ -107,6 +105,9 @@ func (a *Approve) distinguishCommontBody(body string) (approve bool, cancel bool
 }
 
 func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
+	if a.owner == "chaos-mesh" {
+		return
+	}
 	if event.GetAction() != "created" {
 		return
 	}
@@ -121,15 +122,21 @@ func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 	}
 	approve, cancel := a.distinguishCommontBody(event.GetComment().GetBody())
 	pullNumber := pr.GetNumber()
+	pull, _, err := a.opr.Github.PullRequests.Get(context.Background(), a.owner, a.repo, pullNumber)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
 	if approve {
 		prAuthorID := pr.GetUser().GetLogin()
-		a.createApprove(reviewer, prAuthorID, pullNumber, pr.Labels)
+		a.createApprove(reviewer, prAuthorID, pull.GetBase().GetRef(), pullNumber, pr.Labels)
 	} else if cancel {
 		a.cancelApprove(reviewer, pullNumber, pr.Labels)
 	}
 }
 
-func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, labels []*github.Label) {
+func (a *Approve) createApprove(senderID, prAuthorID, base string, pullNumber int, labels []*github.Label) {
 
 	comment := "" //fmt.Sprintf("@%s,Thanks for your review.", senderID)""
 	defer func() {
@@ -138,9 +145,17 @@ func (a *Approve) createApprove(senderID, prAuthorID string, pullNumber int, lab
 			util.Error(err)
 		}
 	}()
-
 	if senderID == prAuthorID {
 		comment = fmt.Sprintf("@%s Sorry, You can’t approve your own PR.", senderID)
+		return
+	}
+	if base == master {
+		if err := a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, senderID, operator.REVIEW_ROLES); err != nil {
+			comment = fmt.Sprintf("@%s,Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments.%s", senderID, err)
+			return
+		}
+	} else if a.cfg.ReleaseApproveControl && strings.HasPrefix(base, releasePrefix) && !a.opr.IsAllowed(a.owner, a.repo, senderID) {
+		comment = fmt.Sprintf(noAccessComment, senderID)
 		return
 	}
 	alreadyExist, err := a.addLGTMRecord(senderID, pullNumber, labels)
