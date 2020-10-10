@@ -15,6 +15,8 @@ type Merge interface {
 	GetAllowList() ([]string, error)
 	AddAllowList(username string) error
 	RemoveAllowList(username string) error
+	StatisticRepo(owner, repo string) (*StatusStatistic, error)
+	StatisticAllRepos() ([]*StatusStatistic, error)
 }
 
 type merge struct {

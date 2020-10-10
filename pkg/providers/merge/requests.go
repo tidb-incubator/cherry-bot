@@ -21,6 +21,31 @@ const (
 	signedOffRegex = "^(Signed-off-by:.*)$"
 )
 
+const (
+	mergeIncomplete int = iota
+	mergeFinish
+	mergeSuccess
+	mergeTestFail
+	mergeMergeFail
+)
+
+func MergeStatusMessage(status int) string {
+	switch status {
+	case mergeIncomplete:
+		return "incomplete"
+	case mergeFinish:
+		return "finish"
+	case mergeSuccess:
+		return "success"
+	case mergeTestFail:
+		return "test fail"
+	case mergeMergeFail:
+		return "merge fail"
+	default:
+		return ""
+	}
+}
+
 // AutoMerge define merge database structure
 type AutoMerge struct {
 	ID        int       `gorm:"column:id"`
@@ -29,7 +54,7 @@ type AutoMerge struct {
 	Repo      string    `gorm:"column:repo"`
 	BaseRef   string    `gorm:"column:base_ref"`
 	Started   bool      `gorm:"column:started"`
-	Status    bool      `gorm:"column:status"`
+	Status    int       `gorm:"column:status"`
 	CreatedAt time.Time `gorm:"column:created_at"`
 }
 

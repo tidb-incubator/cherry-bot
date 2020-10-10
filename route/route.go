@@ -362,4 +362,26 @@ func Wrapper(app *iris.Application, ctl *controller.Controller) {
 		}
 		ctx.WriteString("ok")
 	})
+
+	app.Get("/merge/statistic/{owner:string}/{repo:string}", func(ctx iris.Context) {
+		owner := ctx.Params().Get("owner")
+		repo := ctx.Params().Get("repo")
+		key := owner + "-" + repo
+
+		if (*ctl).GetRepo(key) == nil {
+			util.Event("repo not found")
+			ctx.StatusCode(iris.StatusNotFound)
+			return
+		}
+
+		bot := (*ctl).GetBot(key)
+		statistic, err := (*bot).GetMiddleware().Merge.StatisticRepo(owner, repo)
+		if err != nil {
+			util.Event(errors.Wrap(err, "statistic merge status"))
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.WriteString("database query error")
+			return
+		}
+		ctx.JSON(statistic)
+	})
 }

@@ -126,7 +126,7 @@ func (m *merge) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 			Owner:     m.owner,
 			Repo:      m.repo,
 			BaseRef:   pr.GetBase().GetRef(),
-			Status:    false,
+			Status:    mergeIncomplete,
 			CreatedAt: time.Now(),
 		}
 		if err := m.saveModel(&model); err != nil {
