@@ -151,7 +151,7 @@ func (a *Approve) createApprove(senderID, prAuthorID, base string, pullNumber in
 	}
 	if base == master {
 		if err := a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, senderID, operator.REVIEW_ROLES); err != nil {
-			comment = fmt.Sprintf("@%s,Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments.%s", senderID, err)
+			comment = fmt.Sprintf("@%s, Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments. %s", senderID, err)
 			return
 		}
 	} else if a.cfg.ReleaseApproveControl && strings.HasPrefix(base, releasePrefix) && !a.opr.IsAllowed(a.owner, a.repo, senderID) {
