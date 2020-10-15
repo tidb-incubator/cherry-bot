@@ -95,12 +95,12 @@ type RepoConfig struct {
 	PrLimitLabel     string
 	ContributorLabel string
 	// merge config
-	Merge                    bool   `toml:"auto-merge"`
-	CanMergeLabel            string `toml:"can-merge-label"`
-	ReleaseMaintainerControl bool   `toml:"release-maintainer-control"`
-	ReleaseLGTMNeed          int    `toml:"release-lgtm-need"`
-	SignedOffMessage         bool   `toml:"signed-off-message"`
-	MergeSIGControl          bool   `toml:"merge-sig-control"`
+	Merge                bool   `toml:"auto-merge"`
+	CanMergeLabel        string `toml:"can-merge-label"`
+	ReleaseAccessControl bool   `toml:"release-access-control"`
+	ReleaseLGTMNeed      int    `toml:"release-lgtm-need"`
+	SignedOffMessage     bool   `toml:"signed-off-message"`
+	MergeSIGControl      bool   `toml:"merge-sig-control"`
 	// issue redeliver
 	IssueRedeliver bool         `toml:"issue-redeliver"`
 	Redeliver      []*Redeliver `toml:"redeliver"`

@@ -47,7 +47,7 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) (permiss
 	}()
 
 	if username != m.opr.Config.Github.Bot && m.cfg.MergeSIGControl {
-		if base == "master" || (strings.HasPrefix(base, "release") && !m.cfg.ReleaseMaintainerControl) {
+		if base == "master" || (strings.HasPrefix(base, "release") && !m.cfg.ReleaseAccessControl) {
 			if err := m.SIGAutoMergeCheck(pr.Labels, username); err != nil {
 				msg = err.Error()
 				return
@@ -93,7 +93,7 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) (permiss
 			}
 		}
 
-		if m.cfg.ReleaseMaintainerControl {
+		if m.cfg.ReleaseAccessControl {
 			reviewers, err := m.opr.GetLGTMReviewers(m.owner, m.repo, *pr.Number)
 			if err != nil {
 				util.Error(err)
