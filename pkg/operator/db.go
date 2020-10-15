@@ -184,6 +184,14 @@ func (o *Operator) GetLGTMNumForPR(owner, repo string, pullNumber int) (num int,
 	return num, err
 }
 
+func (o *Operator) GetLGTMReviewers(owner, repo string, pullNumber int) (reviewers []string, err error) {
+	err = o.DB.Table("lgtm_records").
+		Where("score>0 and repo=? and owner=? and pull_number=?", repo, owner, pullNumber).
+		Select(&reviewers, "github").
+		Error
+	return
+}
+
 func (o *Operator) GetAllowList(owner, repo string) ([]string, error) {
 	res := []string{o.Config.Github.Bot}
 	var allowNames []*AutoMergeAllowName
@@ -218,15 +226,17 @@ func (o *Operator) RemoveAllowList(username string) error {
 	return nil
 }
 
-func (o *Operator) IsAllowed(owner, repo, username string) bool {
+func (o *Operator) IsAllowed(owner, repo string, usernames ...string) bool {
 	allowList, err := o.GetAllowList(owner, repo)
-	util.Println(username, allowList)
+	util.Println(usernames, allowList)
 	if err != nil {
 		util.Error(errors.Wrap(err, "is allowed"))
 	} else {
 		for _, allowname := range allowList {
-			if username == allowname {
-				return true
+			for _, username := range usernames {
+				if username == allowname {
+					return true
+				}
 			}
 		}
 	}

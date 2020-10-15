@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultReleaseLGTMNeed = 2
+	defaultReleaseLGTMNeed = 1
 )
 
 // Config is cherry picker config struct
@@ -95,11 +95,12 @@ type RepoConfig struct {
 	PrLimitLabel     string
 	ContributorLabel string
 	// merge config
-	Merge                bool   `toml:"auto-merge"`
-	CanMergeLabel        string `toml:"can-merge-label"`
-	ReleaseAccessControl bool   `toml:"release-access-control"`
-	SignedOffMessage     bool   `toml:"signed-off-message"`
-	MergeSIGControl      bool   `toml:"merge-sig-control"`
+	Merge                    bool   `toml:"auto-merge"`
+	CanMergeLabel            string `toml:"can-merge-label"`
+	ReleaseMaintainerControl bool   `toml:"release-maintainer-control"`
+	ReleaseLGTMNeed          int    `toml:"release-lgtm-need"`
+	SignedOffMessage         bool   `toml:"signed-off-message"`
+	MergeSIGControl          bool   `toml:"merge-sig-control"`
 	// issue redeliver
 	IssueRedeliver bool         `toml:"issue-redeliver"`
 	Redeliver      []*Redeliver `toml:"redeliver"`
@@ -122,9 +123,7 @@ type RepoConfig struct {
 	IssueSlackNoticeChannel string `toml:"issue-slack-notice-channel"`
 	IssueSlackNoticeNotify  string `toml:"issue-slack-notice-notify"`
 	// approve
-	PullApprove           bool `toml:"pull-approve"`
-	ReleaseApproveControl bool `toml:"release-approve-control"`
-	ReleaseLGTMNeed       int  `toml:"release-lgtm-need"`
+	PullApprove bool `toml:"pull-approve"`
 	// contributor
 	NotifyNewContributorPR bool `toml:"notify-new-contributor-pr"`
 	// watch file change
