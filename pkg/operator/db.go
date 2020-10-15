@@ -41,6 +41,14 @@ type AutoMergeAllowName struct {
 	CreatedAt time.Time `gorm:"created_at"`
 }
 
+type LgtmRecord struct {
+	Owner      string `gorm:"column:owner"`
+	Repo       string `gorm:"column:repo"`
+	PullNumber int    `gorm:"column:pull_number"`
+	Github     string `gorm:"column:github"`
+	Score      int    `gorm:"column:score"`
+}
+
 const (
 	ROLE_PMC         = "pmc"
 	ROLE_MAMINTAINER = "maintainer"
@@ -185,10 +193,16 @@ func (o *Operator) GetLGTMNumForPR(owner, repo string, pullNumber int) (num int,
 }
 
 func (o *Operator) GetLGTMReviewers(owner, repo string, pullNumber int) (reviewers []string, err error) {
+	var records []*LgtmRecord
+
 	err = o.DB.Table("lgtm_records").
 		Where("score>0 and repo=? and owner=? and pull_number=?", repo, owner, pullNumber).
-		Select(&reviewers, "github").
+		Find(&records).
 		Error
+
+	for _, record := range records {
+		reviewers = append(reviewers, (*record).Github)
+	}
 	return
 }
 
