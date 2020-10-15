@@ -26,9 +26,5 @@ func (m *merge) RemoveAllowList(username string) error {
 }
 
 func (m *merge) ifInAllowList(username string) bool {
-	if !m.cfg.ReleaseAccessControl {
-		return true
-	}
-
 	return m.opr.IsAllowed(m.owner, m.repo, username)
 }

@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	autoMergeCommand      = "/run-auto-merge"
-	autoMergeAlias        = "/merge"
-	unMergeCommand        = "/unmerge"
-	noAccessComment       = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
-	versionReleaseComment = "The version releasement is in progress."
+	autoMergeCommand                    = "/run-auto-merge"
+	autoMergeAlias                      = "/merge"
+	unMergeCommand                      = "/unmerge"
+	noAccessComment                     = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
+	needReleaseMaintainerApproveComment = "Sorry @%s, this branch cannot be merged without an approval of release maintainers"
+	versionReleaseComment               = "The version releasement is in progress."
 )
 
 func (m *merge) ProcessPullRequestEvent(event *github.PullRequestEvent) {
@@ -45,32 +46,33 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) (permiss
 		}
 	}()
 
-	if m.owner != "chaos-mesh" && base == "master" {
-		if username != m.opr.Config.Github.Bot && m.cfg.MergeSIGControl {
+	if username != m.opr.Config.Github.Bot && m.cfg.MergeSIGControl {
+		if base == "master" || (strings.HasPrefix(base, "release") && !m.cfg.ReleaseAccessControl) {
+			if err := m.SIGAutoMergeCheck(pr.Labels, username); err != nil {
+				msg = err.Error()
+				return
+			}
+		}
+		if base == "master" {
 			if err := m.CanMergeToMaster(pr.GetNumber(), pr.Labels, username); err != nil {
 				msg = err.Error()
 				return
 			}
 		}
-	} else if strings.HasPrefix(base, "release") {
+	}
+
+	if strings.HasPrefix(base, "release") {
 		if err := m.CanMergeToRelease(pr.GetNumber(), username); err != nil {
 			msg = err.Error()
 			return
 		}
-
 		currentReleaseVersion, err := m.currentReleaseVersion(base)
 		if err != nil {
 			util.Error(err)
 			return
 		}
 
-		if currentReleaseVersion == nil {
-			havePermission := m.ifInAllowList(username)
-			if !havePermission {
-				msg = fmt.Sprintf(noAccessComment, username)
-				return
-			}
-		} else {
+		if currentReleaseVersion != nil {
 			// this branch's release version is in progress
 			// check out if the user has permission to merge it
 			members, err := m.getReleaseMembers(base)
@@ -90,7 +92,21 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) (permiss
 				return
 			}
 		}
+
+		if m.cfg.ReleaseAccessControl {
+			reviewers, err := m.opr.GetLGTMReviewers(m.owner, m.repo, *pr.Number)
+			if err != nil {
+				util.Error(err)
+				return
+			}
+
+			if !m.opr.IsAllowed(m.owner, m.repo, reviewers...) {
+				msg = fmt.Sprintf(needReleaseMaintainerApproveComment, username)
+				return
+			}
+		}
 	}
+
 	return true
 }
 

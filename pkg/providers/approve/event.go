@@ -137,7 +137,6 @@ func (a *Approve) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 }
 
 func (a *Approve) createApprove(senderID, prAuthorID, base string, pullNumber int, labels []*github.Label) {
-
 	comment := "" //fmt.Sprintf("@%s,Thanks for your review.", senderID)""
 	defer func() {
 		log.Info(a.owner, a.repo, pullNumber, comment)
@@ -149,15 +148,12 @@ func (a *Approve) createApprove(senderID, prAuthorID, base string, pullNumber in
 		comment = fmt.Sprintf("@%s Sorry, You can’t approve your own PR.", senderID)
 		return
 	}
-	if base == master {
-		if err := a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, senderID, operator.REVIEW_ROLES); err != nil {
-			comment = fmt.Sprintf("@%s, Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments. %s", senderID, err)
-			return
-		}
-	} else if a.cfg.ReleaseApproveControl && strings.HasPrefix(base, releasePrefix) && !a.opr.IsAllowed(a.owner, a.repo, senderID) {
-		comment = fmt.Sprintf(noAccessComment, senderID)
+
+	if err := a.opr.HasPermissionToPRWithLables(a.owner, a.repo, labels, senderID, operator.REVIEW_ROLES); err != nil {
+		comment = fmt.Sprintf("@%s, Thanks for your review. The bot only counts LGTMs from Reviewers and higher roles, but you're still welcome to leave your comments. %s", senderID, err)
 		return
 	}
+
 	alreadyExist, err := a.addLGTMRecord(senderID, pullNumber, labels)
 	if alreadyExist {
 		return
