@@ -86,14 +86,14 @@ type RepoConfig struct {
 	LabelCheckChannel   string `toml:"label-check-channel"`
 	DefaultChecker      string `toml:"default-checker"`
 	InviteCollaborator  bool   `toml:"invite-collaborator"`
-	// TODO: remove it
+
 	// pr limit config
-	PrLimit          bool
-	MaxPrOpened      int
-	PrLimitMode      string
-	PrLimitOrgs      string
-	PrLimitLabel     string
-	ContributorLabel string
+	PrLimit          bool   `toml:"pr-limit"`
+	MaxPrOpened      int    `toml:"max-pr-opened"`
+	PrLimitMode      string `toml: "pr-limit-mode"`
+	PrLimitOrgs      string `toml: "pr-limit-orgs"`
+	PrLimitLabel     string `toml: "pr-limit-label"`
+	ContributorLabel string `toml: "contributor-label"`
 	// merge config
 	Merge                bool   `toml:"auto-merge"`
 	CanMergeLabel        string `toml:"can-merge-label"`
