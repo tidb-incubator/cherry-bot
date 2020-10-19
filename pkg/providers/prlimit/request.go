@@ -30,9 +30,9 @@ func (p *prLimit) canApprove(login string) (bool, error) {
 	return true, nil
 }
 
-func (p *prLimit) commentPr(openedPr *github.PullRequest, openedPrSlice []*github.PullRequest) error {
-	commentBody := fmt.Sprintf("Thanks for your PR.\nThis PR will be closed by bot because you already had %d opened PRs",
-		len(openedPrSlice))
+func (p *prLimit) commentPr(openedPr *github.PullRequest, openedPrSlice, cherryPickSlice []*github.PullRequest) error {
+	commentBody := fmt.Sprintf("Thanks for your PR.\nThis PR will be closed by bot because you already had %d opened PRs and %d cherry-pick PRs",
+		len(openedPrSlice), len(cherryPickSlice))
 	commentBody += ", close or merge them before submitting a new one.\n"
 
 	var prLinkSlice []string
@@ -40,6 +40,16 @@ func (p *prLimit) commentPr(openedPr *github.PullRequest, openedPrSlice []*githu
 		prLinkSlice = append(prLinkSlice, fmt.Sprintf("https://github.com/%s/%s/pull/%d",
 			p.owner, p.repo, *pr.Number))
 	}
+	commentBody += "opened PRs: "
+	commentBody += strings.Join(prLinkSlice[:], " , ")
+
+	prLinkSlice = []string{}
+	for _, pr := range cherryPickSlice {
+		prLinkSlice = append(prLinkSlice, fmt.Sprintf("https://github.com/%s/%s/pull/%d",
+			p.owner, p.repo, *pr.Number))
+	}
+
+	commentBody += "cherry-pick PRs: "
 	commentBody += strings.Join(prLinkSlice[:], " , ")
 
 	comment := &github.IssueComment{

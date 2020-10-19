@@ -90,10 +90,10 @@ type RepoConfig struct {
 	// pr limit config
 	PrLimit          bool   `toml:"pr-limit"`
 	MaxPrOpened      int    `toml:"max-pr-opened"`
-	PrLimitMode      string `toml: "pr-limit-mode"`
-	PrLimitOrgs      string `toml: "pr-limit-orgs"`
-	PrLimitLabel     string `toml: "pr-limit-label"`
-	ContributorLabel string `toml: "contributor-label"`
+	PrLimitMode      string `toml:"pr-limit-mode"`
+	PrLimitOrgs      string `toml:"pr-limit-orgs"`
+	PrLimitLabel     string `toml:"pr-limit-label"`
+	ContributorLabel string `toml:"contributor-label"`
 	// merge config
 	Merge                bool   `toml:"auto-merge"`
 	CanMergeLabel        string `toml:"can-merge-label"`
