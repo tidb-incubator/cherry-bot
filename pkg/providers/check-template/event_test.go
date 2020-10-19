@@ -1,14 +1,16 @@
-package check_template
+package checkTemplate
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-	"github.com/stretchr/testify/assert"
 	"net/http"
+	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -69,10 +71,10 @@ func initOperator() operator.Operator {
 //	return cfg, nil
 //}
 
-func InitCheck() check{
+func InitCheck() Check {
 	v_operator := initOperator()
 	v_cfg := config.RepoConfig{}
-	cmt := check{
+	cmt := Check{
 		owner: "pingcap",
 		repo:  "qa",
 		opr:   &v_operator,
@@ -151,63 +153,82 @@ func InitEvent() *github.IssueCommentEvent {
 //	c.processComment(event, comments_json)
 //}
 
+//func TestCheckLabel(t *testing.T) {
+//	c := InitCheck()
+//	correctLabels := []*github.Label{&github.Label{Name: &bug}}
+//	wrongLabels1 := []*github.Label{&github.Label{Name: &bug}, &github.Label{Name: &duplicate}}
+//	wrongLabels2 := []*github.Label{&github.Label{Name: &bug}, &github.Label{Name: &needMoreInfo}}
+//	wrongLabels3 := []*github.Label{&github.Label{Name: &bug}, &github.Label{Name: &duplicate}, &github.Label{Name: &needMoreInfo}}
+//	wrongLabels4 := []*github.Label{&github.Label{Name: &duplicate}, &github.Label{Name: &needMoreInfo}}
+//	isOk, err := c.checkLabel(correctLabels)
+//	if err != nil {
+//		t.Error("checkLabel err")
+//	}
+//	assert.Equal(t, true, isOk)
+//
+//	isOk, err = c.checkLabel(wrongLabels1)
+//	if err != nil {
+//		t.Error("checkLabel err")
+//	}
+//	assert.Equal(t, false, isOk)
+//
+//	isOk, err = c.checkLabel(wrongLabels2)
+//	if err != nil {
+//		t.Error("checkLabel err")
+//	}
+//	assert.Equal(t, false, isOk)
+//
+//	isOk, err = c.checkLabel(wrongLabels3)
+//	if err != nil {
+//		t.Error("checkLabel err")
+//	}
+//	assert.Equal(t, false, isOk)
+//
+//	isOk, err = c.checkLabel(wrongLabels4)
+//	if err != nil {
+//		t.Error("checkLabel err")
+//	}
+//	assert.Equal(t, false, isOk)
+//}
+//func TestHasTemplate(t *testing.T) {
+//	c := InitCheck()
+//	comment1 := &github.IssueComment{Body: &bug}
+//	comment2 := &github.IssueComment{Body: &templateStr}
+//
+//	hasComments := []*github.IssueComment{comment1, comment2}
+//	notHasComments := []*github.IssueComment{comment1}
+//
+//	template, err := c.hasTemplate(hasComments)
+//	if err != nil {
+//		t.Error("hasTemplate err")
+//	}
+//	assert.NotEqual(t, "", template)
+//
+//	template, err = c.hasTemplate(notHasComments)
+//	if err != nil {
+//		t.Error("hasTemplate err")
+//	}
+//	assert.Equal(t, "", template)
+//}
 
-func TestCheckLabel(t *testing.T){
+func TestInit(t *testing.T) {
 	c := InitCheck()
-	correctLabels := []*github.Label{&github.Label{Name:&bug}}
-	wrongLabels1 := []*github.Label{&github.Label{Name:&bug},&github.Label{Name:&duplicate}}
-	wrongLabels2 := []*github.Label{&github.Label{Name:&bug},&github.Label{Name:&needMoreInfo}}
-	wrongLabels3 := []*github.Label{&github.Label{Name:&bug},&github.Label{Name:&duplicate},&github.Label{Name:&needMoreInfo}}
-	wrongLabels4 := []*github.Label{&github.Label{Name:&duplicate},&github.Label{Name:&needMoreInfo}}
-	isOk,err := c.checkLabel(correctLabels)
-	if err!=nil{
-		t.Error("checkLabel err")
+	a, _, _ := c.opr.Github.Issues.ListComments(context.Background(), "you06", "tiedb", 26, &github.IssueListCommentsOptions{
+		ListOptions: github.ListOptions{
+			Page:    1,
+			PerPage: 2,
+		},
+	})
+	time.Sleep(time.Second * 2)
+	for i := 0; i < len(a); i++ {
+		fmt.Println(a[i].CreatedAt)
 	}
-	assert.Equal(t,true,isOk)
 
-	isOk,err = c.checkLabel(wrongLabels1)
-	if err!=nil{
-		t.Error("checkLabel err")
-	}
-	assert.Equal(t,false,isOk)
-
-	isOk,err = c.checkLabel(wrongLabels2)
-	if err!=nil{
-		t.Error("checkLabel err")
-	}
-	assert.Equal(t,false,isOk)
-
-	isOk,err = c.checkLabel(wrongLabels3)
-	if err!=nil{
-		t.Error("checkLabel err")
-	}
-	assert.Equal(t,false,isOk)
-
-	isOk,err = c.checkLabel(wrongLabels4)
-	if err!=nil{
-		t.Error("checkLabel err")
-	}
-	assert.Equal(t,false,isOk)
-}
-func TestHasTemplate(t *testing.T){
-	c := InitCheck()
-	comment1 := &github.IssueComment{Body: &bug}
-	comment2 := &github.IssueComment{Body: &templateStr}
-
-	hasComments := []*github.IssueComment{comment1,comment2}
-	notHasComments := []*github.IssueComment{comment1}
-
-	template,err := c.hasTemplate(hasComments)
-	if err!=nil{
-		t.Error("hasTemplate err")
-	}
-	assert.NotEqual(t,"",template)
-
-	template,err = c.hasTemplate(notHasComments)
-	if err!=nil{
-		t.Error("hasTemplate err")
-	}
-	assert.Equal(t,"",template)
 }
 
-
+func TestInit1(t *testing.T) {
+	temMatches := templatePattern.FindStringSubmatch("sfsd" + " ssfsf")
+	if len(temMatches) > 0 && strings.TrimSpace(temMatches[0]) == templateStr {
+		fmt.Println(temMatches)
+	}
+}
