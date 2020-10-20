@@ -9,11 +9,13 @@ require (
 	github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/aymerick/raymond v2.0.2+incompatible // indirect
+	github.com/dfang/wechat-work-go v0.0.0-20200520015525-62f940beb001
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20200518135938-dfb43dbdc22a // indirect
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v32 v32.0.0
 	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
@@ -40,12 +42,11 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/ryanuber/columnize v2.1.0+incompatible // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.1.0 // indirect
+	github.com/xen0n/go-workwx v0.1.1
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect

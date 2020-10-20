@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
+	wechat "github.com/xen0n/go-workwx"
 )
 
 var (
@@ -232,6 +233,13 @@ func (c *Check) notifyBugOwner(issue *github.Issue) error{
 	}
 
 	// TODO Enterprise wechat
+	wechat := wechat.New("corpID")
+	app := wechat.WithApp("secret",1)
+	var content = "请补全bug模板："+*issue.URL
+	err = app.SendTextMessage(nil,content,false)
+	if err != nil {
+		return err
+	}
 }
 
 func (c *Check) sendMail(mailTo []string, subject string, body string) error {
