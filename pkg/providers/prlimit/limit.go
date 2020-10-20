@@ -2,6 +2,9 @@ package prlimit
 
 import (
 	"context"
+	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/pingcap-incubator/cherry-bot/util"
@@ -13,10 +16,45 @@ import (
 const (
 	maxRetryTime = 2
 	perPage      = 50
+	prPattern    = `\(#(\d+)\)`
 )
+
+var (
+	prRegexp = regexp.MustCompile(prPattern)
+)
+
+func (p *prLimit) findOriginPr(pickPr *github.PullRequest) *github.PullRequest {
+	rawID := prRegexp.FindString(*pickPr.Title)
+	if rawID == "" {
+		return nil
+	}
+
+	originID, err := strconv.Atoi(rawID)
+	if err != nil {
+		util.Error(errors.Wrap(err, fmt.Sprintf("fail to parse id of origin pull request #%s", rawID)))
+		return nil
+	}
+
+	origin, _, err := p.opr.Github.PullRequests.Get(context.Background(), p.owner, p.repo, originID)
+	if err != nil {
+		util.Error(errors.Wrap(err, fmt.Sprintf("fail to get pull request #%d", originID)))
+		return nil
+	}
+
+	return origin
+}
 
 func (p *prLimit) processOpenedPR(openedPr *github.PullRequest) error {
 	author := *openedPr.User.Login
+	if author == p.opr.Config.Github.Bot {
+		originPr := p.findOriginPr(openedPr)
+		if originPr == nil {
+			return nil
+		}
+
+		author = *originPr.User.Login
+	}
+
 	inOrg := false
 	var err error
 	for _, org := range strings.Split(p.cfg.PrLimitOrgs, ",") {
@@ -74,47 +112,56 @@ func (p *prLimit) processOpenedPR(openedPr *github.PullRequest) error {
 		}
 	}
 
-	// no limit for branches beside master
-	if *openedPr.Base.Ref != "master" {
+	// no limit for branches beside master or release
+	if *openedPr.Base.Ref != "master" && *openedPr.Base.Ref != "release" {
 		return nil
 	}
 
 	// check if PR need to be closed
-	return errors.Wrap(p.checkPr(openedPr), "prlimit process opened PR")
+	return errors.Wrap(p.checkPr(openedPr, author), "prlimit process opened PR")
 }
 
-func (p *prLimit) checkPr(openedPr *github.PullRequest) error {
-	author := *openedPr.User.Login
+func (p *prLimit) checkPr(openedPr *github.PullRequest, originAuthor string) error {
 	var openedPrSlice []*github.PullRequest
+	var cherryPickSlice []*github.PullRequest
 	count := 0
-
 	ch := make(chan []*github.PullRequest)
+
 	go p.fetchBatch(0, &ch)
+
 	for prList := range ch {
 		for _, pr := range prList {
-			if pr.GetUser().GetLogin() == author && pr.GetNumber() != openedPr.GetNumber() && pr.GetBase().GetRef() == "master" {
-				ifIgnore := false
-				for _, label := range pr.Labels {
-					for _, ignoreLabel := range strings.Split(util.LimitIgnoreLabels, ",") {
-						if label.GetName() == ignoreLabel {
-							ifIgnore = true
-						}
+			ifIgnore := false
+			for _, label := range pr.Labels {
+				for _, ignoreLabel := range strings.Split(util.LimitIgnoreLabels, ",") {
+					if label.GetName() == ignoreLabel {
+						ifIgnore = true
 					}
 				}
-				if !ifIgnore {
+			}
+
+			if ifIgnore {
+				continue
+			}
+
+			if pr.GetUser().GetLogin() == originAuthor {
+				count += 2
+				openedPrSlice = append(openedPrSlice, pr)
+			} else if pr.GetUser().GetLogin() == p.opr.Config.Github.Bot {
+				if originPr := p.findOriginPr(pr); originPr != nil && originPr.GetUser().GetLogin() == originAuthor {
 					count++
-					openedPrSlice = append(openedPrSlice, pr)
+					cherryPickSlice = append(cherryPickSlice, pr)
 				}
 			}
 		}
 	}
 
-	if len(openedPrSlice) < p.cfg.MaxPrOpened {
+	if count <= p.cfg.MaxPrOpened {
 		return nil
 	}
 
 	err := util.RetryOnError(context.Background(), maxRetryTime, func() error {
-		return errors.Wrap(p.commentPr(openedPr, openedPrSlice), "close PR")
+		return errors.Wrap(p.commentPr(openedPr, openedPrSlice, cherryPickSlice), "close PR")
 	})
 	if err != nil {
 		return err
