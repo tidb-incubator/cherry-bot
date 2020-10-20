@@ -1,13 +1,19 @@
 package checkTemplate
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 )
@@ -225,17 +231,69 @@ func TestInit(t *testing.T) {
 
 }
 
-func TestInit1(t *testing.T) {
-	//title:= "Please fill in the bug template"
-	//body:= "http://www.baidu.com"
-	//c := InitCheck()
-	//issue := github.Issue{}
-	//owner,_ :=c.getBugOwnerEmail(&issue)
-	//c.sendMail([]string{owner},title, body)
 
-	resp,err :=http.Get()
-	if err!=nil{
+func TestInit2(t *testing.T){
+	title:= "Please fill in the bug template"
+	body:= "http://www.baidu.com"
+	c := InitCheck()
+	owner:="CadmusJiang@gmail.com"
+	c.sendMail([]string{owner},title, body)
+}
+func TestInit1(t *testing.T) {
+
+	type User struct{
+		Login string
+	}
+	type Pull struct {
+		User User
+	}
+
+	var pull Pull
+	resp,err :=http.Get("https://api.github.com/repos/tikv/tikv/pulls/8855")
+	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(resp)
+	fmt.Println("2")
+	fmt.Println(pull.User)
+
+	result, err := ioutil.ReadAll(resp.Body)
+	body := fmt.Sprintf("%s", result)
+	fmt.Println(body)
+	err = json.Unmarshal(result, &pull)
+	fmt.Println(err)
+	fmt.Println(pull)
+	//fmt.Println(body)
+}
+
+func TestInit3(t *testing.T) {
+	// insert github_id to company_employees
+	//c := InitCheck()
+	//c.opr.AddCompanyEmpl
+
+	type CompanyEmployees struct {
+		GithubID      string `gorm:"column:github_id"`
+	}
+
+
+	dsn := "root:@tcp(172.16.4.167:34000)/bot?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	fmt.Println(err)
+
+	fi, err := os.Open("C:/Documents and Settings/xxx/Desktop/tax.txt")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		return
+	}
+	defer fi.Close()
+
+	br := bufio.NewReader(fi)
+	for {
+		a, _, c := br.ReadLine()
+		if c == io.EOF {
+			break
+		}
+		employee := CompanyEmployees{GithubID: string(a)}
+		result := db.Create(&employee)
+		fmt.Println(result)
+	}
 }
