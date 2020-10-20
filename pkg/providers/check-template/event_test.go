@@ -8,7 +8,6 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 )
@@ -227,8 +226,16 @@ func TestInit(t *testing.T) {
 }
 
 func TestInit1(t *testing.T) {
-	temMatches := templatePattern.FindStringSubmatch("sfsd" + " ssfsf")
-	if len(temMatches) > 0 && strings.TrimSpace(temMatches[0]) == templateStr {
-		fmt.Println(temMatches)
+	//title:= "Please fill in the bug template"
+	//body:= "http://www.baidu.com"
+	//c := InitCheck()
+	//issue := github.Issue{}
+	//owner,_ :=c.getBugOwnerEmail(&issue)
+	//c.sendMail([]string{owner},title, body)
+
+	resp,err :=http.Get()
+	if err!=nil{
+		fmt.Println(err)
 	}
+	fmt.Println(resp)
 }

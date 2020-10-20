@@ -8,6 +8,8 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 	"io/ioutil"
+	"net/http"
+	"net/smtp"
 	"strings"
 	"time"
 
@@ -24,6 +26,7 @@ var (
 	typeDuplicate    = "type/duplicate"
 	typeNeedMoreInfo = "type/need-more-info"
 
+	passwordStr = "Alkaid.io1024"
 	// template
 	templateStr = "## Please edit this comment to complete the following information"
 )
@@ -210,6 +213,64 @@ func (c *Check) solveMissingFields(missingFileds []string, issue *github.Issue) 
 	}
 	// 3.notify the developer in charge of this bug
 	//	send an email
+	title:= "Please fill in the bug template"
+	body:= issue.URL
+	owner,err :=c.getBugOwnerEmail(issue)
+	if err!=nil{
+		return err
+	}
+	c.sendMail([]string{owner},title, *body)
 	// TODO Enterprise wechat
 	return nil
+}
+
+func (c *Check) sendMail(mailTo []string, subject string, body string) error {
+
+	from := "jiangyuhan@pingcap.com"
+	// TODO read password.txt
+	password := passwordStr
+	to := []string{
+		"CadmusJiang@gmail.com",
+	}
+	message := []byte("test")
+	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
+	err := smtp.SendMail("smtp.gmail.com:587", auth, from, to, message)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println("Email Sent!")
+	return nil
+}
+
+func (c *Check) getBugOwnerEmail(issue *github.Issue) (string,error){
+	//return "jiangyuhan@pingcap.com",nil
+	// 1. find pull request that fix bug committer
+	resp,err :=http.Get(*issue.PullRequestLinks.URL)
+	if err!=nil{
+		return "",err
+	}
+	fmt.Println(resp)
+
+	// 2. find bug assignee
+	fmt.Println("3",issue.Assignee)
+	if issue.Assignee != nil{
+		return "",nil
+	}
+	// 3. find person who close bug
+	fmt.Println("4",*issue.ClosedBy.Name)
+	isIn,err := c.isInCompany(*issue.ClosedBy.Name)
+	if err!=nil{
+		return "",err
+	}
+	if isIn{
+		return "",err
+	}
+	// 4. find sig/component owner
+	// TODO
+	return "",nil
+}
+
+func (c *Check) isInCompany(person string) (bool, error){
+	return true,nil
 }
