@@ -6,26 +6,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/smtp"
 	"time"
 
 	"github.com/PingCAP-QE/libs/extractor"
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
-	wechat "github.com/xen0n/go-workwx"
 )
 
 var (
-
 	// label
-	needMoreInfo     = "need-more-info"
-	typeBug          = "type/bug"
-	typeDuplicate    = "type/duplicate"
-	typeNeedMoreInfo = "type/need-more-info"
-
-	// gmail pwd
-	specialPasswordStr = "jxjtwfjrakukiwiq"
+	needMoreInfo  = "need-more-info"
+	typeBug       = "type/bug"
+	typeDuplicate = "type/duplicate"
 )
 
 var (
@@ -52,13 +45,13 @@ func (c *Check) processIssues(event *github.IssuesEvent) error {
 	}
 
 	// 2.check comments if have bug template
-	if err = c.solveComments(event.Issue); err != nil {
+	if err = c.solveComments(event); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Check) solveComments(issue *github.Issue) error {
+func (c *Check) solveComments(event *github.IssuesEvent) error {
 	var (
 		page    = 0
 		perpage = 100
@@ -74,7 +67,7 @@ func (c *Check) solveComments(issue *github.Issue) error {
 		page++
 		if err := util.RetryOnError(context.Background(), 3, func() error {
 
-			batch, _, err = c.opr.Github.Issues.ListComments(context.Background(), c.owner, c.repo, *issue.Number, &github.IssueListCommentsOptions{
+			batch, _, err = c.opr.Github.Issues.ListComments(context.Background(), c.owner, c.repo, *event.Issue.Number, &github.IssueListCommentsOptions{
 				ListOptions: github.ListOptions{
 					Page:    page,
 					PerPage: perpage,
@@ -89,7 +82,7 @@ func (c *Check) solveComments(issue *github.Issue) error {
 			time.Sleep(time.Second)
 
 			for i := 0; i < len(batch); i++ {
-				if extractor.ContainsBugTemplate(*batch[i].Body){
+				if extractor.ContainsBugTemplate(*batch[i].Body) {
 					templates = append(templates, batch[i])
 				}
 			}
@@ -100,9 +93,9 @@ func (c *Check) solveComments(issue *github.Issue) error {
 	}
 
 	if len(templates) != 0 {
-		c.solveTemplate(issue, templates[len(templates)-1])
+		c.solveTemplate(event, templates[len(templates)-1])
 	} else {
-		c.solveNoTemplate(issue)
+		c.solveNoTemplate(event)
 	}
 	return nil
 }
@@ -116,15 +109,14 @@ func (c *Check) checkLabel(labels []*github.Label) (bool, error) {
 			isBug = true
 		case typeDuplicate:
 			isDuplicate = true
-		case typeNeedMoreInfo:
+		case needMoreInfo:
 			isNeedMoreInfo = true
 		}
 	}
 	return isBug && !isDuplicate && !isNeedMoreInfo, nil
 }
 
-
-func (c *Check) solveTemplate(issue *github.Issue, comment *github.IssueComment) error {
+func (c *Check) solveTemplate(event *github.IssuesEvent, comment *github.IssueComment) error {
 
 	bugInfo, err := extractor.ParseCommentBody(*comment.Body)
 
@@ -135,7 +127,7 @@ func (c *Check) solveTemplate(issue *github.Issue, comment *github.IssueComment)
 
 	fields := c.bugInfoIsEmpty(bugInfo)
 	if len(fields) != 0 {
-		c.solveMissingFields(fields, issue)
+		c.solveMissingFields(fields, event)
 	}
 
 	return nil
@@ -164,7 +156,7 @@ func (c *Check) bugInfoIsEmpty(infos *extractor.BugInfos) []string {
 	return fields
 }
 
-func (c *Check) solveNoTemplate(issue *github.Issue) error {
+func (c *Check) solveNoTemplate(event *github.IssuesEvent) error {
 	b, err := ioutil.ReadFile("template.txt")
 	if err != nil {
 		return err
@@ -172,16 +164,16 @@ func (c *Check) solveNoTemplate(issue *github.Issue) error {
 
 	template := string(b)
 	// 1.add bug template to comments
-	err = c.opr.CommentOnGithub(c.owner, c.repo, *issue.Number, template)
+	err = c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, template)
 	if err != nil {
 		return err
 	}
 
 	// 2.add need-more-info label on this issue
-	c.opr.Github.Issues.AddLabelsToIssue(nil, c.owner, c.repo, *issue.Number, []string{needMoreInfo})
+	c.opr.Github.Issues.AddLabelsToIssue(context.Background(), c.owner, c.repo, *event.Issue.Number, []string{needMoreInfo})
 
 	// 3.notify the developer in charge of this bug
-	err = c.notifyBugOwner(issue)
+	err = c.notifyBugOwner(event)
 	if err != nil {
 		return err
 	}
@@ -189,10 +181,9 @@ func (c *Check) solveNoTemplate(issue *github.Issue) error {
 	return nil
 }
 
-
-func (c *Check) solveMissingFields(missingFileds []string, issue *github.Issue) error {
+func (c *Check) solveMissingFields(missingFileds []string, event *github.IssuesEvent) error {
 	// 1.add need-more-info label on this issue
-	c.opr.Github.Issues.AddLabelsToIssue(context.Background(), c.owner, c.repo, *issue.Number, []string{needMoreInfo})
+	c.opr.Github.Issues.AddLabelsToIssue(context.Background(), c.owner, c.repo, *event.Issue.Number, []string{needMoreInfo})
 
 	// 2.add comment "(lack) fields are empty."
 	tips := ""
@@ -200,13 +191,13 @@ func (c *Check) solveMissingFields(missingFileds []string, issue *github.Issue) 
 		tips += missingFileds[i] + " "
 	}
 	tips = "(" + tips + ") fields are empty."
-	err := c.opr.CommentOnGithub(c.owner, c.repo, *issue.Number, tips)
+	err := c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, tips)
 	if err != nil {
 		return err
 	}
 
 	// 3.notify the developer in charge of this bug
-	err = c.notifyBugOwner(issue)
+	err = c.notifyBugOwner(event)
 	if err != nil {
 		return err
 	}
@@ -214,63 +205,39 @@ func (c *Check) solveMissingFields(missingFileds []string, issue *github.Issue) 
 	return nil
 }
 
-func (c *Check) notifyBugOwner(issue *github.Issue) error{
+func (c *Check) notifyBugOwner(event *github.IssuesEvent) error {
 	//	send an email
-	title := "Please fill in the bug template"
-	body := issue.URL
-	owner, err := c.getBugOwnerEmail(issue)
+	title := "Please fill the bug template"
+	body := event.Issue.HTMLURL
+	owner, err := c.getBugOwner(event)
 	if err != nil {
 		return err
 	}
 
-	if owner==""{
+	if owner == "" {
 		return ErrBugNoOwner
 	}
 
-	err = c.sendMail([]string{owner}, title, *body)
+	fmt.Println("notify ", owner)
+	gmailAddress, err := c.opr.GetGmailByGithubID(owner)
 	if err != nil {
 		return err
 	}
-
-	// TODO Enterprise wechat
-	wechat := wechat.New("corpID")
-	app := wechat.WithApp("secret",1)
-	var content = "请补全bug模板："+*issue.URL
-	err = app.SendTextMessage(nil,content,false)
+	err = util.SendMail([]string{gmailAddress}, title, *body)
 	if err != nil {
+		fmt.Println("fail to send to ", owner, "'s email. err:", err)
 		return err
 	}
-}
 
-func (c *Check) sendMail(mailTo []string, subject string, body string) error {
-
-	// TODO read password.txt
-	from := "jiangyuhan@pingcap.com"
-	header := make(map[string]string)
-	header["Subject"] = subject
-	header["MIME-Version"] = "1.0"
-	header["Content-Type"] = "text/plain; charset=\"utf-8\""
-	header["Body"] = body
-	message := ""
-	for k, v := range header {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	auth := smtp.PlainAuth("", from,specialPasswordStr, "smtp.gmail.com")
-	err := smtp.SendMail("smtp.gmail.com:587", auth, from, mailTo, []byte(message))
-	if err != nil {
-		return err
-	}
-	fmt.Println("Send one email to ",mailTo)
+	// TODO Enterprise wechat(maybe not need)
 	return nil
 }
 
-func (c *Check) getBugOwnerEmail(issue *github.Issue) (string, error) {
+func (c *Check) getBugOwner(event *github.IssuesEvent) (string, error) {
 	//return "jiangyuhan@pingcap.com",nil
 	// 1. find pull request that fix bug committer
-	if issue.PullRequestLinks != nil{
-		// eg:"https://api.github.com/repos/tikv/tikv/pulls/8855"
-		resp,err :=http.Get(*issue.PullRequestLinks.URL)
-		type User struct{
+	if event.Issue.PullRequestLinks != nil {
+		type User struct {
 			Login string
 		}
 		type Pull struct {
@@ -278,43 +245,53 @@ func (c *Check) getBugOwnerEmail(issue *github.Issue) (string, error) {
 		}
 
 		var pull Pull
-		if err != nil {
-			return "",err
+		// eg:"https://api.github.com/repos/tikv/tikv/pulls/8855"
+		// try three times.
+		for i := 0; i < 3; i++ {
+			resp, err := http.Get(*event.Issue.PullRequestLinks.URL)
+			if err != nil {
+				continue
+			}
+			result, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				continue
+			}
+			err = json.Unmarshal(result, &pull)
+			if err != nil {
+				continue
+			}
+			break
 		}
-		result, err := ioutil.ReadAll(resp.Body)
-		err = json.Unmarshal(result, &pull)
-		if err!=nil{
-			return "",err
-		}
-
-		isIn, err := c.opr.IsInCompany(pull.User.Login)
-		if err!=nil{
-			return "",err
-		}
-		if isIn{
-			return pull.User.Login,nil
+		if pull.User.Login != "" {
+			isIn, err := c.opr.IsInCompany(pull.User.Login)
+			if err != nil {
+				return "", err
+			}
+			if isIn {
+				return pull.User.Login, nil
+			}
 		}
 	}
 
 	// 2. find bug assignee
-	if issue.Assignee != nil {
-
-		isIn, err := c.opr.IsInCompany(*issue.Assignee.Login)
-		if err!=nil{
-			return "",err
+	if event.Issue.Assignee != nil {
+		isIn, err := c.opr.IsInCompany(*event.Issue.Assignee.Login)
+		if err != nil {
+			return "", err
 		}
-		if isIn{
-			return *issue.Assignee.Login,nil
+		if isIn {
+			return *event.Issue.Assignee.Login, nil
 		}
 	}
 
 	// 3. find person who close bug
-	isIn, err := c.opr.IsInCompany(*issue.ClosedBy.Login)
+	fmt.Println(*event.GetSender().Login, " closed issue")
+	isIn, err := c.opr.IsInCompany(*event.GetSender().Login)
 	if err != nil {
 		return "", err
 	}
 	if isIn {
-		return *issue.ClosedBy.Login, err
+		return *event.GetSender().Login, err
 	}
 
 	// 4. find sig/component owner

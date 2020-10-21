@@ -3,21 +3,18 @@ package checkTemplate
 import (
 	"context"
 	"github.com/PingCAP-QE/libs/extractor"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/util"
 )
 
-func (c *Check) ProcessIssuesComment(event *github.IssueCommentEvent) {
-	if event.GetAction() != "closed" {
-		return
-	}
-	if err := c.processIssues(event); err != nil {
+func (c *Check) ProcessIssueComment(event *github.IssueCommentEvent) {
+	if err := c.processIssueComment(event); err != nil {
 		util.Error(err)
 	}
 }
 
-func (c *Check) processIssueComent(event *github.IssueCommentEvent) error {
-	switch *event.Action{
+func (c *Check) processIssueComment(event *github.IssueCommentEvent) error {
+	switch *event.Action {
 	case "created":
 		if extractor.ContainsBugTemplate(*event.Comment.Body) {
 			c.solveCreatedBugTemplateComment(event)
@@ -33,12 +30,16 @@ func (c *Check) processIssueComent(event *github.IssueCommentEvent) error {
 	}
 }
 
-func (c *Check) solveCreatedBugTemplateComment(event *github.IssueCommentEvent) error{
+func (c *Check) solveCreatedBugTemplateComment(event *github.IssueCommentEvent) error {
 	bugInfo, err := extractor.ParseCommentBody(*event.Comment.Body)
 
 	// version is invalid
 	if err != nil {
-		return err
+		tips := "Affected versions and Fixed versions relations are invalid."
+		err := c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, tips)
+		if err != nil {
+			return err
+		}
 	}
 
 	missingFields := c.bugInfoIsEmpty(bugInfo)
@@ -63,7 +64,6 @@ func (c *Check) solveCreatedBugTemplateComment(event *github.IssueCommentEvent) 
 	return nil
 }
 
-func (c *Check) solveEditedBugTemplateComment(event *github.IssueCommentEvent) error{
+func (c *Check) solveEditedBugTemplateComment(event *github.IssueCommentEvent) error {
 	return c.solveCreatedBugTemplateComment(event)
 }
-

@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -231,17 +232,17 @@ func TestInit(t *testing.T) {
 
 }
 
-
-func TestInit2(t *testing.T){
-	title:= "Please fill in the bug template"
-	body:= "http://www.baidu.com"
+func TestSendEmail(t *testing.T) {
+	title := "Please fill in the bug template"
+	body := "http://www.baidu.com"
 	c := InitCheck()
-	owner:="CadmusJiang@gmail.com"
-	c.sendMail([]string{owner},title, body)
+	owner := "CadmusJiang@gmail.com"
+	c.sendMail([]string{owner}, title, body)
 }
-func TestInit1(t *testing.T) {
 
-	type User struct{
+func TestHttpGet(t *testing.T) {
+
+	type User struct {
 		Login string
 	}
 	type Pull struct {
@@ -249,7 +250,7 @@ func TestInit1(t *testing.T) {
 	}
 
 	var pull Pull
-	resp,err :=http.Get("https://api.github.com/repos/tikv/tikv/pulls/8855")
+	resp, err := http.Get("https://api.github.com/repos/tikv/tikv/pulls/8855")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -265,21 +266,21 @@ func TestInit1(t *testing.T) {
 	//fmt.Println(body)
 }
 
-func TestInit3(t *testing.T) {
+func TestDB(t *testing.T) {
 	// insert github_id to company_employees
 	//c := InitCheck()
 	//c.opr.AddCompanyEmpl
 
 	type CompanyEmployees struct {
-		GithubID      string `gorm:"column:github_id"`
+		GithubID string `gorm:"column:github_id"`
+		GMail    string `gorm:"column:gmail"`
 	}
-
 
 	dsn := "root:@tcp(172.16.4.167:34000)/bot?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	fmt.Println(err)
 
-	fi, err := os.Open("C:/Documents and Settings/xxx/Desktop/tax.txt")
+	fi, err := os.Open("/Users/cadmusjiang/Desktop/employees.csv")
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		return
@@ -292,8 +293,13 @@ func TestInit3(t *testing.T) {
 		if c == io.EOF {
 			break
 		}
-		employee := CompanyEmployees{GithubID: string(a)}
+		if string(a) == "" {
+			continue
+		}
+		fields := strings.Split(string(a), ",")
+		fmt.Println(fields)
+		employee := CompanyEmployees{GithubID: fields[1], GMail: fields[0]}
 		result := db.Create(&employee)
-		fmt.Println(result)
+		fmt.Println(result.RowsAffected)
 	}
 }

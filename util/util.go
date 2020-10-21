@@ -2,6 +2,8 @@ package util
 
 import (
 	"context"
+	"fmt"
+	"net/smtp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -43,4 +45,28 @@ func Sleep(ctx context.Context, sleepTime time.Duration) {
 	case <-ticker.C:
 		return
 	}
+}
+
+func SendMail(mailTo []string, subject string, body string) error {
+	// TODO read password.txt
+	from := "jiangyuhan@pingcap.com"
+	header := make(map[string]string)
+	header["Subject"] = subject
+	header["MIME-Version"] = "1.0"
+	header["Content-Type"] = "text/plain; charset=\"utf-8\""
+	message := ""
+	for k, v := range header {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+
+	// gmail pwd
+	message += "\r\n" + body
+	var specialPasswordStr = "jxjtwfjrakukiwiq"
+	auth := smtp.PlainAuth("", from, specialPasswordStr, "smtp.gmail.com")
+	err := smtp.SendMail("smtp.gmail.com:587", auth, from, mailTo, []byte(message))
+	if err != nil {
+		return err
+	}
+	fmt.Println("Send one email to ", mailTo)
+	return nil
 }
