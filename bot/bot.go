@@ -3,6 +3,7 @@ package bot
 import (
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
+	checkTemplate "github.com/pingcap-incubator/cherry-bot/pkg/providers/check-template"
 	"github.com/pingcap-incubator/cherry-bot/pkg/types"
 
 	addLabel "github.com/pingcap-incubator/cherry-bot/pkg/providers/add-label"
@@ -48,6 +49,7 @@ type Middleware struct {
 	Assign           *assign.Assign
 	AddLabel         *addLabel.Label
 	AddTemplate      *addTemplate.Comment
+	CheckTemplate    *checkTemplate.Check
 	community        *community.CommunityCmd
 }
 
@@ -99,6 +101,7 @@ func InitBot(repo *config.RepoConfig, opr *operator.Operator) Bot {
 			Assign:           assign.Init(repo, opr),
 			AddLabel:         addLabel.Init(repo, opr),
 			AddTemplate:      addTemplate.Init(repo, opr),
+			CheckTemplate:    checkTemplate.Init(repo, opr),
 		},
 	}
 }

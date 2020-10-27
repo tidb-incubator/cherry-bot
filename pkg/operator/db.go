@@ -49,6 +49,11 @@ type LgtmRecord struct {
 	Score      int    `gorm:"column:score"`
 }
 
+type CompanyEmployees struct {
+	GithubID string `gorm:"column:github_id"`
+	GMail    string `gorm:"column:gmail"`
+}
+
 const (
 	ROLE_PMC         = "pmc"
 	ROLE_MAMINTAINER = "maintainer"
@@ -255,4 +260,30 @@ func (o *Operator) IsAllowed(owner, repo string, usernames ...string) bool {
 		}
 	}
 	return false
+}
+
+//
+//func (o *Operator) AddCompanyEmployee(githubID string) error {
+//	employee := CompanyEmployees{GithubID: githubID}
+//	if err := o.DB.Create(&employee).Error; err != nil {
+//		return err
+//	}
+//	return nil
+//}
+
+func (o *Operator) IsInCompany(githubID string) (bool, error) {
+	employee := CompanyEmployees{}
+	if o.DB.Take(&employee).Where("github_id = ?", githubID).RecordNotFound() {
+		fmt.Println("exist")
+		return false, nil
+	}
+	return true, nil
+}
+
+func (o *Operator) GetGmailByGithubID(githubID string) (string, error) {
+	employee := CompanyEmployees{}
+	if err := o.DB.Where("github_id=?", githubID).Find(&employee).Error; err != nil {
+		return "", err
+	}
+	return employee.GMail, nil
 }
