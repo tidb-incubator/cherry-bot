@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/PingCAP-QE/libs/extractor"
@@ -16,9 +19,11 @@ import (
 
 var (
 	// label
-	needMoreInfo  = "need-more-info"
-	typeBug       = "type/bug"
-	typeDuplicate = "type/duplicate"
+	needMoreInfo    = "need-more-info"
+	typeBug         = "type/bug"
+	componentPrefix = "component/"
+	sigPrefix       = "sig/"
+	labelsFilter    = []string{"type/duplicate", "type/wontfix", "status/won't-fix", "status/can't-reproduce", "need-more-info"}
 )
 
 var (
@@ -26,29 +31,53 @@ var (
 )
 
 func (c *Check) ProcessIssuesEvent(event *github.IssuesEvent) {
+	// white list
+	isNeed, err := c.isNeedCheck(*event.Repo.FullName)
+	if err != nil {
+		return
+	}
+	if !isNeed {
+		return
+	}
+
+	// just check when issue closed
 	if event.GetAction() != "closed" {
 		return
 	}
-	if err := c.processIssues(event); err != nil {
+	if err = c.processIssues(event); err != nil {
 		util.Error(err)
 	}
 }
 
 func (c *Check) processIssues(event *github.IssuesEvent) error {
-	// 1.check if just closed bug
-	isOk, err := c.checkLabel(event.Issue.Labels)
-	if err != nil {
-		return err
-	}
+	// checkLable check has "type/bug",not has label that in labelsFilter issueEvent
+	isOk := c.checkLabel(event.Issue.Labels)
 	if !isOk {
 		return nil
 	}
 
 	// 2.check comments if have bug template
-	if err = c.solveComments(event); err != nil {
+	if err := c.solveComments(event); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (c *Check) isNeedCheck(repo string) (bool, error) {
+	b, e := ioutil.ReadFile("/root/github-bot/need_check.txt")
+	if e != nil {
+		err := errors.Wrap(e, "read template file failed")
+		return true, err
+	}
+
+	filters := string(b)
+	repos := strings.Split(filters, ",")
+	for i := 0; i < len(repos); i++ {
+		if repos[i] == repo {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (c *Check) solveComments(event *github.IssuesEvent) error {
@@ -100,60 +129,74 @@ func (c *Check) solveComments(event *github.IssuesEvent) error {
 	return nil
 }
 
-// checkLable check has "type/bug",not has "type/duplicate", "type/need-more-info" issueEvent
-func (c *Check) checkLabel(labels []*github.Label) (bool, error) {
-	var isBug, isDuplicate, isNeedMoreInfo = false, false, false
+func (c *Check) checkLabel(labels []*github.Label) bool {
+	var isNeed, isNotNeed = false, false
 	for i := 0; i < len(labels); i++ {
-		switch *labels[i].Name {
-		case typeBug:
-			isBug = true
-		case typeDuplicate:
-			isDuplicate = true
-		case needMoreInfo:
-			isNeedMoreInfo = true
+		if *labels[i].Name == typeBug {
+			isNeed = true
+		}
+		for j := 0; j < len(labelsFilter); j++ {
+			if *labels[i].Name == labelsFilter[j] {
+				isNotNeed = true
+			}
 		}
 	}
-	return isBug && !isDuplicate && !isNeedMoreInfo, nil
+	return isNeed && !isNotNeed
 }
 
 func (c *Check) solveTemplate(event *github.IssuesEvent, comment *github.IssueComment) error {
+	_, errMaps := extractor.ParseCommentBody(*comment.Body)
+	var emptyFields []string
+	emptyFields = append(emptyFields, c.getMissingLabels(event.Issue.Labels)...)
+	tmpEmptyFields, incorrectFields := c.getErrorsFields(errMaps)
+	emptyFields = append(emptyFields, tmpEmptyFields...)
 
-	bugInfo, err := extractor.ParseCommentBody(*comment.Body)
-
-	// version is invalid
-	if err != nil {
-		return err
+	if len(emptyFields) != 0 || len(incorrectFields) != 0 {
+		c.solveInvalidTemplate(emptyFields, incorrectFields, event)
 	}
-
-	fields := c.bugInfoIsEmpty(bugInfo)
-	if len(fields) != 0 {
-		c.solveMissingFields(fields, event)
-	}
+	// valid nothing
 
 	return nil
 }
 
-func (c *Check) bugInfoIsEmpty(infos *extractor.BugInfos) []string {
+func (c *Check) getMissingLabels(labels []*github.Label) []string {
 	var fields []string
-	if infos.Workaround == "" {
-		fields = append(fields, "WorkAroud")
+	componentOrSig := false
+	severity := false
+	for i := 0; i < len(labels); i++ {
+		if strings.HasPrefix(*labels[i].Name, componentPrefix) || strings.HasPrefix(*labels[i].Name, sigPrefix) {
+			componentOrSig = true
+		}
+		if *labels[i].Name == "severity" {
+			severity = true
+		}
 	}
-	if infos.RCA == "" {
-		fields = append(fields, "RCA")
+	if !componentOrSig {
+		fields = append(fields, "component or sig(label)")
 	}
-	if infos.AllTriggerConditions == "" {
-		fields = append(fields, "AllTriggerConditions")
-	}
-	if len(infos.FixedVersions) == 0 {
-		fields = append(fields, "FixedVersions")
-	}
-	if len(infos.AffectedVersions) == 0 {
-		fields = append(fields, "AffectedVersions")
-	}
-	if infos.Symptom == "" {
-		fields = append(fields, "Symptom")
+	if !severity {
+		fields = append(fields, "severity(label)")
 	}
 	return fields
+}
+
+func (c *Check) getErrorsFields(errMaps map[string][]error) ([]string, []string) {
+
+	fields := []string{"RCA", "AllTriggerConditions", "FixedVersions", "AffectedVersions", "Symptom"}
+	var emptyFields []string
+	var incorrectFields []string
+	for i := 0; i < len(fields); i++ {
+		errors := errMaps[fields[i]]
+		for j := 0; j < len(errors); j++ {
+			switch errors[j] {
+			case extractor.ErrFieldEmpty:
+				emptyFields = append(emptyFields, fields[i])
+			default:
+				incorrectFields = append(incorrectFields, fields[i])
+			}
+		}
+	}
+	return emptyFields, incorrectFields
 }
 
 func (c *Check) solveNoTemplate(event *github.IssuesEvent) error {
@@ -181,17 +224,13 @@ func (c *Check) solveNoTemplate(event *github.IssuesEvent) error {
 	return nil
 }
 
-func (c *Check) solveMissingFields(missingFileds []string, event *github.IssuesEvent) error {
+func (c *Check) solveInvalidTemplate(emptyFields []string, incorrectFields []string, event *github.IssuesEvent) error {
 	// 1.add need-more-info label on this issue
 	c.opr.Github.Issues.AddLabelsToIssue(context.Background(), c.owner, c.repo, *event.Issue.Number, []string{needMoreInfo})
 
-	// 2.add comment "(lack) fields are empty."
-	tips := ""
-	for i := 0; i < len(missingFileds); i++ {
-		tips += missingFileds[i] + " "
-	}
-	tips = "(" + tips + ") fields are empty."
-	err := c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, tips)
+	// 2.add comment
+	comment := c.generateComment(emptyFields, incorrectFields)
+	err := c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, comment)
 	if err != nil {
 		return err
 	}
@@ -205,27 +244,59 @@ func (c *Check) solveMissingFields(missingFileds []string, event *github.IssuesE
 	return nil
 }
 
+func (c *Check) generateComment(emptyFields []string, incorrectFields []string) string {
+	/*
+		(...) fields are empty.
+		the values in (...) fields are incorrect.
+	*/
+	emptyTips := ""
+	incorrectTips := ""
+	comment := ""
+	if len(emptyFields) != 0 {
+		for i := 0; i < len(emptyFields); i++ {
+			emptyTips += emptyFields[i] + " "
+		}
+		comment = "**( " + emptyTips + ")** fields are empty.\n"
+	}
+	if len(incorrectFields) != 0 {
+		for i := 0; i < len(incorrectFields); i++ {
+			incorrectTips += incorrectFields[i] + " "
+		}
+		comment += "The values in **( " + incorrectTips + ")** fields are incorrect."
+	}
+
+	return comment
+}
+
 func (c *Check) notifyBugOwner(event *github.IssuesEvent) error {
-	//	send an email
-	title := "Please fill the bug template"
-	body := event.Issue.HTMLURL
-	owner, err := c.getBugOwner(event)
+	owners, err := c.getBugOwners(event)
 	if err != nil {
 		return err
 	}
 
-	if owner == "" {
+	//TODO if no valid owner, write it in log
+	if len(owners) == 0 {
+		c.appendLog("no-valid ")
+		c.appendLog(*event.Issue.HTMLURL + "\n")
 		return ErrBugNoOwner
 	}
+	c.appendLog(*event.Issue.HTMLURL + "\n")
 
-	fmt.Println("notify ", owner)
-	gmailAddress, err := c.opr.GetGmailByGithubID(owner)
-	if err != nil {
-		return err
+	var gmailAddresses []string
+	for i := 0; i < len(owners); i++ {
+		address, err := c.opr.GetGmailByGithubID(owners[i])
+		if err != nil {
+			return err
+		}
+		gmailAddresses = append(gmailAddresses, address)
 	}
-	err = util.SendMail([]string{gmailAddress}, title, *body)
+
+	// send an email
+	title := "Please fill the bug template"
+	body := event.Issue.HTMLURL
+	err = util.SendEMail(gmailAddresses, title, *body)
 	if err != nil {
-		fmt.Println("fail to send to ", owner, "'s email. err:", err)
+		fmt.Println("fail to send to ", gmailAddresses, " err:", err)
 		return err
 	}
 
@@ -233,22 +304,68 @@ func (c *Check) notifyBugOwner(event *github.IssuesEvent) error {
 	return nil
 }
 
-func (c *Check) getBugOwner(event *github.IssuesEvent) (string, error) {
-	//return "jiangyuhan@pingcap.com",nil
-	// 1. find pull request that fix bug committer
-	if event.Issue.PullRequestLinks != nil {
+func (c *Check) getBugOwners(event *github.IssuesEvent) ([]string, error) {
+	timeObj := time.Now()
+	var timeStr = timeObj.Format("2006/01/02 15:04:05")
+	c.appendLog(timeStr + " ")
+
+	var owners []string
+
+	// 1. find pull request that will close this tissue
+	type PullRequest struct {
+		URL string `json:"url"`
+	}
+	type Issue struct {
+		PullRequest PullRequest `json:"pull_request"`
+	}
+	type Source struct {
+		Issue Issue `json:"issue"`
+	}
+	type TimeLine struct {
+		Source Source `json:"source"`
+	}
+	timelinesURL := "https://api.github.com/repos/" + *event.Repo.FullName + "/issues/" + strconv.Itoa(*event.Issue.Number) + "/timeline"
+	var timeLines []TimeLine
+	// try 3 times for timeLines
+	for i := 0; i < 3; i++ {
+		req, _ := http.NewRequest("GET", timelinesURL, nil)
+		req.Header.Set("Accept", "application/vnd.github.mockingbird-preview+json")
+		resp, err := (&http.Client{}).Do(req)
+		if err != nil {
+			continue
+		}
+		result, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			continue
+		}
+		err = json.Unmarshal(result, &timeLines)
+		if err != nil {
+			continue
+		}
+		// get success
+		break
+	}
+
+	// the last one have pull_request url is the latest
+	var pullRequestURL string
+	for i := 0; i < len(timeLines); i++ {
+		if timeLines[i].Source.Issue.PullRequest.URL != "" {
+			pullRequestURL = timeLines[i].Source.Issue.PullRequest.URL
+		}
+	}
+
+	if pullRequestURL != "" {
 		type User struct {
 			Login string
 		}
 		type Pull struct {
 			User User
 		}
-
 		var pull Pull
 		// eg:"https://api.github.com/repos/tikv/tikv/pulls/8855"
 		// try three times.
 		for i := 0; i < 3; i++ {
-			resp, err := http.Get(*event.Issue.PullRequestLinks.URL)
+			resp, err := http.Get(pullRequestURL)
 			if err != nil {
 				continue
 			}
@@ -260,43 +377,67 @@ func (c *Check) getBugOwner(event *github.IssuesEvent) (string, error) {
 			if err != nil {
 				continue
 			}
+			// get success
 			break
 		}
 		if pull.User.Login != "" {
 			isIn, err := c.opr.IsInCompany(pull.User.Login)
 			if err != nil {
-				return "", err
+				return []string{}, err
 			}
 			if isIn {
-				return pull.User.Login, nil
+				owners = append(owners, pull.User.Login)
+				return owners, nil
 			}
 		}
 	}
 
-	// 2. find bug assignee
-	if event.Issue.Assignee != nil {
-		isIn, err := c.opr.IsInCompany(*event.Issue.Assignee.Login)
-		if err != nil {
-			return "", err
+	// no pr write in log
+	c.appendLog("no-pr ")
+
+	// 2. find bug assignees
+	if event.Issue.Assignees != nil {
+		for i := 0; i < len(event.Issue.Assignees); i++ {
+			isIn, err := c.opr.IsInCompany(*event.Issue.Assignees[i].Login)
+			if err != nil {
+				return []string{}, err
+			}
+			if isIn {
+				owners = append(owners, *event.Issue.Assignees[i].Login)
+			}
 		}
-		if isIn {
-			return *event.Issue.Assignee.Login, nil
+		if len(owners) != 0 {
+			return owners, nil
 		}
 	}
 
 	// 3. find person who close bug
-	fmt.Println(*event.GetSender().Login, " closed issue")
 	isIn, err := c.opr.IsInCompany(*event.GetSender().Login)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 	if isIn {
-		return *event.GetSender().Login, err
+		owners = append(owners, *event.GetSender().Login)
+		return owners, err
 	}
 
 	// 4. find sig/component owner
 	// TODO This function is not available for the time being
 
-	// no match return ""
-	return "", nil
+	// no match write in log
+
+	return []string{}, nil
+}
+
+func (c *Check) appendLog(message string) error {
+	fd, err := os.OpenFile("/root/github-bot/check_log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	buf := []byte(message)
+	_, err = fd.Write(buf)
+	if err != nil {
+		return err
+	}
+	return fd.Close()
 }

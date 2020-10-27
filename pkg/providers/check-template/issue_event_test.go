@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/PingCAP-QE/libs/extractor"
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
+	"github.com/pingcap-incubator/cherry-bot/util"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"io"
@@ -17,42 +19,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-)
-
-var (
-	comments_json = `
-	{
-		"url": "https://api.github.com/repos/pingcap/tidb/issues/comments/147186180",
-		"html_url": "https://github.com/pingcap/tidb/pull/351#issuecomment-147186180",
-		"issue_url": "https://api.github.com/repos/pingcap/tidb/issues/351",
-		"id": 147186180,
-		"node_id": "MDEyOklzc3VlQ29tbWVudDE0NzE4NjE4MA==",
-		"user": {
-		    "login": "qiuyesuifeng",
-			"id": 1953644,
-			"node_id": "MDQ6VXNlcjE5NTM2NDQ=",
-			"avatar_url": "https://avatars1.githubusercontent.com/u/1953644?v=4",
-			"gravatar_id": "",
-			"url": "https://api.github.com/users/qiuyesuifeng",
-			"html_url": "https://github.com/qiuyesuifeng",
-			"followers_url": "https://api.github.com/users/qiuyesuifeng/followers",
-			"following_url": "https://api.github.com/users/qiuyesuifeng/following{/other_user}",
-			"gists_url": "https://api.github.com/users/qiuyesuifeng/gists{/gist_id}",
-			"starred_url": "https://api.github.com/users/qiuyesuifeng/starred{/owner}{/repo}",
-			"subscriptions_url": "https://api.github.com/users/qiuyesuifeng/subscriptions",
-			"organizations_url": "https://api.github.com/users/qiuyesuifeng/orgs",
-			"repos_url": "https://api.github.com/users/qiuyesuifeng/repos",
-			"events_url": "https://api.github.com/users/qiuyesuifeng/events{/privacy}",
-			"received_events_url": "https://api.github.com/users/qiuyesuifeng/received_events",
-			"type": "User",
-			"site_admin": false
-	    },
-		"created_at": "2015-10-11T11:59:29Z",
-		"updated_at": "2015-10-11T11:59:29Z",
-		"author_association": "MEMBER",
-		"body": "LGTM\n",
-		"performed_via_github_app": null
-	}`
 )
 
 func initOperator() operator.Operator {
@@ -67,16 +33,6 @@ func initOperator() operator.Operator {
 	return op
 }
 
-//func GetTestConfig() (*config.Config, error) {
-//	_, localFile, _, _ := runtime.Caller(0)
-//	pathStr := path.Join(path.Dir(localFile), "config.example.toml")
-//	cfg, err := config.GetConfig(&pathStr)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return cfg, nil
-//}
-
 func InitCheck() Check {
 	v_operator := initOperator()
 	v_cfg := config.RepoConfig{}
@@ -89,135 +45,7 @@ func InitCheck() Check {
 	return cmt
 }
 
-func InitIssueComment() github.IssueComment {
-	comment := github.IssueComment{}
-	err := json.Unmarshal([]byte(comments_json), &comment)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return comment
-}
-
-func InitEvent() *github.IssueCommentEvent {
-	action := "opened"
-	issue_json := `
-	{
-		"url": "https://api.github.com/repos/pingcap/tidb/issues/351",
-		"repository_url": "https://api.github.com/repos/pingcap/tidb",
-		"labels_url": "https://api.github.com/repos/pingcap/tidb/issues/351/labels{/name}",
-		"comments_url": "https://api.github.com/repos/pingcap/tidb/issues/351/comments",
-		"events_url": "https://api.github.com/repos/pingcap/tidb/issues/351/events",
-		"html_url": "https://github.com/pingcap/tidb/pull/351",
-		"id": 110841121,
-		"node_id": "MDExOlB1bGxSZXF1ZXN0NDczNjIxNzI=",
-		"number": 351,
-		"title": "*: Check float length in parser"
-	}`
-	comment := InitIssueComment()
-	issue := github.Issue{}
-	err := json.Unmarshal([]byte(issue_json), &issue)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	empty_json := `{}`
-	change := github.EditChange{}
-	err = json.Unmarshal([]byte(empty_json), &change)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	repo := github.Repository{}
-	err = json.Unmarshal([]byte(empty_json), &repo)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	sender := github.User{}
-	err = json.Unmarshal([]byte(empty_json), &sender)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	installation := github.Installation{}
-	err = json.Unmarshal([]byte(empty_json), &installation)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	event := github.IssueCommentEvent{&action, &issue, &comment, &change,
-		&repo, &sender, &installation}
-	return &event
-
-}
-
-//func TestProcessComment(t *testing.T) {
-//
-//	c := InitComment()
-//
-//	event := InitEvent()
-//	c.processComment(event, comments_json)
-//}
-
-//func TestCheckLabel(t *testing.T) {
-//	c := InitCheck()
-//	correctLabels := []*github.Label{&github.Label{Name: &bug}}
-//	wrongLabels1 := []*github.Label{&github.Label{Name: &bug}, &github.Label{Name: &duplicate}}
-//	wrongLabels2 := []*github.Label{&github.Label{Name: &bug}, &github.Label{Name: &needMoreInfo}}
-//	wrongLabels3 := []*github.Label{&github.Label{Name: &bug}, &github.Label{Name: &duplicate}, &github.Label{Name: &needMoreInfo}}
-//	wrongLabels4 := []*github.Label{&github.Label{Name: &duplicate}, &github.Label{Name: &needMoreInfo}}
-//	isOk, err := c.checkLabel(correctLabels)
-//	if err != nil {
-//		t.Error("checkLabel err")
-//	}
-//	assert.Equal(t, true, isOk)
-//
-//	isOk, err = c.checkLabel(wrongLabels1)
-//	if err != nil {
-//		t.Error("checkLabel err")
-//	}
-//	assert.Equal(t, false, isOk)
-//
-//	isOk, err = c.checkLabel(wrongLabels2)
-//	if err != nil {
-//		t.Error("checkLabel err")
-//	}
-//	assert.Equal(t, false, isOk)
-//
-//	isOk, err = c.checkLabel(wrongLabels3)
-//	if err != nil {
-//		t.Error("checkLabel err")
-//	}
-//	assert.Equal(t, false, isOk)
-//
-//	isOk, err = c.checkLabel(wrongLabels4)
-//	if err != nil {
-//		t.Error("checkLabel err")
-//	}
-//	assert.Equal(t, false, isOk)
-//}
-//func TestHasTemplate(t *testing.T) {
-//	c := InitCheck()
-//	comment1 := &github.IssueComment{Body: &bug}
-//	comment2 := &github.IssueComment{Body: &templateStr}
-//
-//	hasComments := []*github.IssueComment{comment1, comment2}
-//	notHasComments := []*github.IssueComment{comment1}
-//
-//	template, err := c.hasTemplate(hasComments)
-//	if err != nil {
-//		t.Error("hasTemplate err")
-//	}
-//	assert.NotEqual(t, "", template)
-//
-//	template, err = c.hasTemplate(notHasComments)
-//	if err != nil {
-//		t.Error("hasTemplate err")
-//	}
-//	assert.Equal(t, "", template)
-//}
-
-func TestInit(t *testing.T) {
+func TestGetComments(t *testing.T) {
 	c := InitCheck()
 	a, _, _ := c.opr.Github.Issues.ListComments(context.Background(), "you06", "tiedb", 26, &github.IssueListCommentsOptions{
 		ListOptions: github.ListOptions{
@@ -229,18 +57,16 @@ func TestInit(t *testing.T) {
 	for i := 0; i < len(a); i++ {
 		fmt.Println(a[i].CreatedAt)
 	}
-
 }
 
 func TestSendEmail(t *testing.T) {
 	title := "Please fill in the bug template"
 	body := "http://www.baidu.com"
-	c := InitCheck()
 	owner := "CadmusJiang@gmail.com"
-	c.sendMail([]string{owner}, title, body)
+	util.SendEMail([]string{owner}, title, body)
 }
 
-func TestHttpGet(t *testing.T) {
+func TestPR(t *testing.T) {
 
 	type User struct {
 		Login string
@@ -267,17 +93,14 @@ func TestHttpGet(t *testing.T) {
 }
 
 func TestDB(t *testing.T) {
-	// insert github_id to company_employees
-	//c := InitCheck()
-	//c.opr.AddCompanyEmpl
-
 	type CompanyEmployees struct {
 		GithubID string `gorm:"column:github_id"`
 		GMail    string `gorm:"column:gmail"`
 	}
 
-	dsn := "root:@tcp(172.16.4.167:34000)/bot?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	// URL view help document
+	url := ""
+	db, err := gorm.Open(mysql.Open(url), &gorm.Config{})
 	fmt.Println(err)
 
 	fi, err := os.Open("/Users/cadmusjiang/Desktop/employees.csv")
@@ -302,4 +125,71 @@ func TestDB(t *testing.T) {
 		result := db.Create(&employee)
 		fmt.Println(result.RowsAffected)
 	}
+}
+
+func TestLibsCheck(t *testing.T) {
+	test := "## Please edit this comment to complete the following information\n\n### Not a bug\n\n1. Remove the 'type/bug' label\n2. Add notes to indicate why it is not a bug\n\n### Duplicate bug\n\n1. Add the 'type/duplicate' label\n2. Add the link to the original bug\n\n### Bug\n\nNote: Make Sure that 'component', and 'severity' labels are added\nExample for how to fill out the template: https://github.com/pingcap/tidb/issues/20100\n\n#### 1. Root Cause Analysis (RCA)\n<!-- Write down the reason why this bug occurs -->\n\n#### 2. Symptom\n\n<!-- What will the user see when this bug occurs. The error message may be in the terminal, log or monitoring -->\n\n#### 3. All Trigger Conditions\n\n<!-- All the user scenarios that may trigger this bug -->\n\n#### 4. Workaround (optional)\n\n#### 5. Affected versions\n[v4.0.1:v4.1.5]\n<!--\nIn the format of [start_version:end_version], multiple version ranges are\naccepted. If the bug only affects the unreleased version, please input:\n\"unreleased\". For example:\n\nNotes:\n  1. Do not use any white spaces in '[]'.\n  2. The range in '[]' is a closed interval\n  3. The version format is `v$Major.$Minor.$Patch`, the $Majoy and $Minor\n     number in a version range should be the same. [v3.0.1:v3.1.2] is\n     invalid because the $Minor number of the version range is different.\n\nExample 1: [v3.0.1:v3.0.5], [v4.0.1:v4.0.5]\nExample 2: unreleased\n-->\n\n#### 6. Fixed versions\n[v4.0.7]\n<!--\nThe first released version that contains this fix in each minor version. If the bug's affected version has been released, the fixed version should be a detailed version number; If the bug doesn't affect any released version, the fixed version can be \"master\". \n\nExample 1: v3.0.13, v4.0.5\nExample 2: master\n-->"
+	_, errMaps := extractor.ParseCommentBody(test)
+	fmt.Println(errMaps)
+	test = "## Please edit this comment to complete the following information\n\n### Not a bug\n\n1. Remove the 'type/bug' label\n2. Add notes to indicate why it is not a bug\n\n### Duplicate bug\n\n1. Add the 'type/duplicate' label\n2. Add the link to the original bug\n\n### Bug\n\nNote: Make Sure that 'component', and 'severity' labels are added\nExample for how to fill out the template: https://github.com/pingcap/tidb/issues/20100\n\n#### 1. Root Cause Analysis (RCA)\n<!-- Write down the reason why this bug occurs -->\n\n#### 2. Symptom\n\n<!-- What will the user see when this bug occurs. The error message may be in the terminal, log or monitoring -->\n\n#### 3. All Trigger Conditions\n\n<!-- All the user scenarios that may trigger this bug -->\n\n#### 4. Workaround (optional)\n\n#### 5. Affected versions\nsdaff\n<!--\nIn the format of [start_version:end_version], multiple version ranges are\naccepted. If the bug only affects the unreleased version, please input:\n\"unreleased\". For example:\n\nNotes:\n  1. Do not use any white spaces in '[]'.\n  2. The range in '[]' is a closed interval\n  3. The version format is `v$Major.$Minor.$Patch`, the $Majoy and $Minor\n     number in a version range should be the same. [v3.0.1:v3.1.2] is\n     invalid because the $Minor number of the version range is different.\n\nExample 1: [v3.0.1:v3.0.5], [v4.0.1:v4.0.5]\nExample 2: unreleased\n-->\n\n#### 6. Fixed versions\nsdfsafsffa\n<!--\nThe first released version that contains this fix in each minor version. If the bug's affected version has been released, the fixed version should be a detailed version number; If the bug doesn't affect any released version, the fixed version can be \"master\". \n\nExample 1: v3.0.13, v4.0.5\nExample 2: master\n-->"
+	_, errMaps = extractor.ParseCommentBody(test)
+	fmt.Println(errMaps)
+	test = "## Please edit this comment to complete the following information\n\n### Not a bug\n\n1. Remove the 'type/bug' label\n2. Add notes to indicate why it is not a bug\n\n### Duplicate bug\n\n1. Add the 'type/duplicate' label\n2. Add the link to the original bug\n\n### Bug\n\nNote: Make Sure that 'component', and 'severity' labels are added\nExample for how to fill out the template: https://github.com/pingcap/tidb/issues/20100\n\n#### 1. Root Cause Analysis (RCA)\n<!-- Write down the reason why this bug occurs -->\n\n#### 2. Symptom\nsdgsegs\n<!-- What will the user see when this bug occurs. The error message may be in the terminal, log or monitoring -->\n\n#### 3. All Trigger Conditions\n\n<!-- All the user scenarios that may trigger this bug -->\n\n#### 4. Workaround (optional)\n\n#### 5. Affected versions\n24234\n<!--\nIn the format of [start_version:end_version], multiple version ranges are\naccepted. If the bug only affects the unreleased version, please input:\n\"unreleased\". For example:\n\nNotes:\n  1. Do not use any white spaces in '[]'.\n  2. The range in '[]' is a closed interval\n  3. The version format is `v$Major.$Minor.$Patch`, the $Majoy and $Minor\n     number in a version range should be the same. [v3.0.1:v3.1.2] is\n     invalid because the $Minor number of the version range is different.\n\nExample 1: [v3.0.1:v3.0.5], [v4.0.1:v4.0.5]\nExample 2: unreleased\n-->\n\n#### 6. Fixed versions\n123124\n<!--\nThe first released version that contains this fix in each minor version. If the bug's affected version has been released, the fixed version should be a detailed version number; If the bug doesn't affect any released version, the fixed version can be \"master\". \n\nExample 1: v3.0.13, v4.0.5\nExample 2: master\n-->"
+	_, errMaps = extractor.ParseCommentBody(test)
+	fmt.Println(errMaps)
+}
+
+func TestLibsContains(t *testing.T) {
+	test := "## Please edit this comment to complete the following information\n\n### Not a bug\n\n1. Remove the 'type/bug' label\n2. Add notes to indicate why it is not a bug\n\n### Duplicate bug\n\n1. Add the 'type/duplicate' label\n2. Add the link to the original bug\n\n### Bug\n\nNote: Make Sure that 'component', and 'severity' labels are added\nExample for how to fill out the template: https://github.com/pingcap/tidb/issues/20100\n\n#### 1. Root Cause Analysis (RCA)\n<!-- Write down the reason why this bug occurs -->\n\n#### 2. Symptom\nsdgsegs\n<!-- What will the user see when this bug occurs. The error message may be in the terminal, log or monitoring -->\n\n#### 3. All Trigger Conditions\n\n<!-- All the user scenarios that may trigger this bug -->\n\n#### 4. Workaround (optional)\n\n#### 5. Affected versions\n24234\n<!--\nIn the format of [start_version:end_version], multiple version ranges are\naccepted. If the bug only affects the unreleased version, please input:\n\"unreleased\". For example:\n\nNotes:\n  1. Do not use any white spaces in '[]'.\n  2. The range in '[]' is a closed interval\n  3. The version format is `v$Major.$Minor.$Patch`, the $Majoy and $Minor\n     number in a version range should be the same. [v3.0.1:v3.1.2] is\n     invalid because the $Minor number of the version range is different.\n\nExample 1: [v3.0.1:v3.0.5], [v4.0.1:v4.0.5]\nExample 2: unreleased\n-->\n\n#### 6. Fixed versions\n123124\n<!--\nThe first released version that contains this fix in each minor version. If the bug's affected version has been released, the fixed version should be a detailed version number; If the bug doesn't affect any released version, the fixed version can be \"master\". \n\nExample 1: v3.0.13, v4.0.5\nExample 2: master\n-->"
+	isHave := extractor.ContainsBugTemplate(test)
+	fmt.Println(isHave)
+}
+
+func TestPRURL(t *testing.T) {
+	type PullRequest struct {
+		URL string `json:"url"`
+	}
+	type Issue struct {
+		PullRequest PullRequest `json:"pull_request"`
+	}
+	type Source struct {
+		Issue Issue `json:"issue"`
+	}
+	type TimeLine struct {
+		Source Source `json:"source"`
+	}
+	var timeLines []TimeLine
+	timelinesURL := "https://api.github.com/repos/you06/tiedb/issues/42/timeline"
+	for i := 0; i < 3; i++ {
+
+		req, _ := http.NewRequest("GET", timelinesURL, nil)
+		req.Header.Set("Accept", "application/vnd.github.mockingbird-preview+json")
+		resp, err := (&http.Client{}).Do(req)
+		if err != nil {
+			continue
+		}
+		result, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			continue
+		}
+		err = json.Unmarshal(result, &timeLines)
+		if err != nil {
+			continue
+		}
+		break
+	}
+	var pullRequestURL string
+	for i := 0; i < len(timeLines); i++ {
+		if timeLines[i].Source.Issue.PullRequest.URL != "" {
+			pullRequestURL = timeLines[i].Source.Issue.PullRequest.URL
+		}
+	}
+	fmt.Println(timeLines)
+	fmt.Println(pullRequestURL)
+}
+
+func TestTime(c *testing.T) {
+	timeObj := time.Now()
+	var timeStr = timeObj.Format("2006/01/02 15:04:05")
+	fmt.Println(timeStr)
 }

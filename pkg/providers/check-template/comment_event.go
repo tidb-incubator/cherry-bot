@@ -8,6 +8,20 @@ import (
 )
 
 func (c *Check) ProcessIssueComment(event *github.IssueCommentEvent) {
+	//white list
+	isNeed, err := c.isNeedCheck(*event.Repo.FullName)
+	if err != nil {
+		return
+	}
+	if !isNeed {
+		return
+	}
+
+	// bot create comments dont't need check
+	if *event.GetSender().Login == "ti-srebot" {
+		return
+	}
+
 	if err := c.processIssueComment(event); err != nil {
 		util.Error(err)
 	}
@@ -31,26 +45,17 @@ func (c *Check) processIssueComment(event *github.IssueCommentEvent) error {
 }
 
 func (c *Check) solveCreatedBugTemplateComment(event *github.IssueCommentEvent) error {
-	bugInfo, err := extractor.ParseCommentBody(*event.Comment.Body)
+	_, errMaps := extractor.ParseCommentBody(*event.Comment.Body)
 
-	// version is invalid
-	if err != nil {
-		tips := "Affected versions and Fixed versions relations are invalid."
-		err := c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, tips)
-		if err != nil {
-			return err
-		}
-	}
+	var emptyFields []string
+	emptyFields = append(emptyFields, c.getMissingLabels(event.Issue.Labels)...)
+	tmpEmptyFields, incorrectFields := c.getErrorsFields(errMaps)
+	emptyFields = append(emptyFields, tmpEmptyFields...)
 
-	missingFields := c.bugInfoIsEmpty(bugInfo)
-	if len(missingFields) != 0 {
-		// add comment "(lack) fields are empty."
-		tips := ""
-		for i := 0; i < len(missingFields); i++ {
-			tips += missingFields[i] + " "
-		}
-		tips = "(" + tips + ") fields are empty."
-		err := c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, tips)
+	// check bug template is valid
+	if len(emptyFields) != 0 || len(incorrectFields) != 0 {
+		comment := c.generateComment(emptyFields, incorrectFields)
+		err := c.opr.CommentOnGithub(c.owner, c.repo, *event.Issue.Number, comment)
 		if err != nil {
 			return err
 		}

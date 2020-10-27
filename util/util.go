@@ -3,7 +3,9 @@ package util
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/smtp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -47,9 +49,21 @@ func Sleep(ctx context.Context, sleepTime time.Duration) {
 	}
 }
 
-func SendMail(mailTo []string, subject string, body string) error {
+func SendEMail(mailTo []string, subject string, body string) error {
 	// TODO read password.txt
-	from := "jiangyuhan@pingcap.com"
+	b, err := ioutil.ReadFile("/root/github-bot/gmail.txt")
+	if err != nil {
+		err = errors.Wrap(err, "read gmail file failed")
+		return err
+	}
+	strs := strings.Split(string(b), ",")
+	if len(strs) < 2 {
+		return errors.New("gmail.txt is invalid")
+	}
+	from := strs[0]
+	// gmail special password
+	specialPasswordStr := strs[1]
+
 	header := make(map[string]string)
 	header["Subject"] = subject
 	header["MIME-Version"] = "1.0"
@@ -59,11 +73,9 @@ func SendMail(mailTo []string, subject string, body string) error {
 		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 
-	// gmail pwd
 	message += "\r\n" + body
-	var specialPasswordStr = "jxjtwfjrakukiwiq"
 	auth := smtp.PlainAuth("", from, specialPasswordStr, "smtp.gmail.com")
-	err := smtp.SendMail("smtp.gmail.com:587", auth, from, mailTo, []byte(message))
+	err = smtp.SendMail("smtp.gmail.com:587", auth, from, mailTo, []byte(message))
 	if err != nil {
 		return err
 	}
