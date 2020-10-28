@@ -23,6 +23,7 @@ var (
 	typeBug         = "type/bug"
 	componentPrefix = "component/"
 	sigPrefix       = "sig/"
+	severityPrefix  = "severity/"
 	labelsFilter    = []string{"type/duplicate", "type/wontfix", "status/won't-fix", "status/can't-reproduce", "need-more-info"}
 )
 
@@ -167,7 +168,7 @@ func (c *Check) getMissingLabels(labels []*github.Label) []string {
 		if strings.HasPrefix(*labels[i].Name, componentPrefix) || strings.HasPrefix(*labels[i].Name, sigPrefix) {
 			componentOrSig = true
 		}
-		if *labels[i].Name == "severity" {
+		if strings.HasPrefix(*labels[i].Name, severityPrefix)  {
 			severity = true
 		}
 	}
