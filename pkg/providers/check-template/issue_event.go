@@ -168,7 +168,7 @@ func (c *Check) getMissingLabels(labels []*github.Label) []string {
 		if strings.HasPrefix(*labels[i].Name, componentPrefix) || strings.HasPrefix(*labels[i].Name, sigPrefix) {
 			componentOrSig = true
 		}
-		if strings.HasPrefix(*labels[i].Name, severityPrefix)  {
+		if strings.HasPrefix(*labels[i].Name, severityPrefix) {
 			severity = true
 		}
 	}
