@@ -67,7 +67,7 @@ func (c *Check) processIssues(event *github.IssuesEvent) error {
 func (c *Check) isNeedCheck(repo string) (bool, error) {
 	b, e := ioutil.ReadFile("/root/github-bot/need_check.txt")
 	if e != nil {
-		err := errors.Wrap(e, "read template file failed")
+		err := errors.Wrap(e, "read need_check file failed")
 		return true, err
 	}
 
@@ -182,8 +182,7 @@ func (c *Check) getMissingLabels(labels []*github.Label) []string {
 }
 
 func (c *Check) getErrorsFields(errMaps map[string][]error) ([]string, []string) {
-
-	fields := []string{"RCA", "AllTriggerConditions", "FixedVersions", "AffectedVersions", "Symptom"}
+	fields := []string{"FixedVersions", "AffectedVersions"}
 	var emptyFields []string
 	var incorrectFields []string
 	for i := 0; i < len(fields); i++ {
@@ -201,7 +200,7 @@ func (c *Check) getErrorsFields(errMaps map[string][]error) ([]string, []string)
 }
 
 func (c *Check) solveNoTemplate(event *github.IssuesEvent) error {
-	b, err := ioutil.ReadFile("template.txt")
+	b, err := ioutil.ReadFile("/root/github-bot/bug_template.txt")
 	if err != nil {
 		return err
 	}
@@ -295,7 +294,7 @@ func (c *Check) notifyBugOwner(event *github.IssuesEvent) error {
 	// send an email
 	title := "Please fill the bug template"
 	body := event.Issue.HTMLURL
-	err = util.SendEMail(gmailAddresses, title, *body)
+	err = c.opr.SendEMail(gmailAddresses, title, *body)
 	if err != nil {
 		fmt.Println("fail to send to ", gmailAddresses, " err:", err)
 		return err
