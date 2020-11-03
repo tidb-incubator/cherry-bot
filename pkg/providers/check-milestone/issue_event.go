@@ -170,10 +170,10 @@ func (c *Check) checkMileStone(repo string, milestone string) error {
 		if len(notifications[i].Receivers) == 0 {
 			c.appendLog(notifications[i].IssueURL, "no assignees")
 			title += ",no assignees"
-			util.SendEMail(c.opr.Config.Email.DefaultReceiverAddr, title, body)
+			c.opr.SendEMail(c.opr.Config.Email.DefaultReceiverAddr, title, body)
 		} else {
 			c.appendLog(notifications[i].IssueURL, notifications[i].Receivers)
-			util.SendEMail(c.opr.Config.Email.DefaultReceiverAddr, title, body)
+			c.opr.SendEMail(c.opr.Config.Email.DefaultReceiverAddr, title, body)
 		}
 	}
 	return nil

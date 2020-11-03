@@ -42,9 +42,9 @@ func (c *Comment) processComment(event *github.IssueCommentEvent, comment string
 
 func (c *Comment) addTemplate(issueID int) (err error) {
 
-	b, e := ioutil.ReadFile("template.txt")
+	b, e := ioutil.ReadFile("/root/github-bot/bug_template.txt")
 	if e != nil {
-		err = errors.Wrap(e, "read template file failed")
+		err = errors.Wrap(e, "read bug template file failed")
 		return err
 	}
 
