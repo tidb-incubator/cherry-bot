@@ -20,3 +20,11 @@ bot = "cherry-picker"
 [member]
 orgs = ["pingcap"]
 users = ["sre-bot"]
+
+[email]
+sender_addr = "xxx@pingcap.com"
+default_receiver_addr = ["xxx@pingcap.com"]
+special_password = "123456789"
+
+[check]
+white_list = ["pingcap/tidb","you06/tiedb"]

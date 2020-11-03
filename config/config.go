@@ -22,6 +22,8 @@ type Config struct {
 	Repos    map[string]*RepoConfig
 	Database *Database
 	Member   Member `toml:"member"`
+	Email    Email  `toml:"email"`
+	Check    Check  `toml:"check"`
 }
 
 // Redeliver is struct of redeliver rule
@@ -160,12 +162,26 @@ type Member struct {
 	Users []string `toml:"users"`
 }
 
+// email config
+type Email struct {
+	SenderAddr          string   `toml:"sender_addr"`
+	DefaultReceiverAddr []string `toml:"default_receiver_addr"`
+	SpecialPassWord     string   `toml:"special_password"`
+}
+
+// check config
+type Check struct {
+	WhiteList []string `toml:"white_list"`
+}
+
 type rawConfig struct {
 	Github   *Github
 	Slack    *Slack
 	Repos    []*RepoConfig `toml:"repo"`
 	Database *Database
 	Member   Member
+	Email    Email
+	Check    Check
 	Include  string
 }
 
@@ -189,6 +205,8 @@ func GetConfig(configPath *string) (*Config, error) {
 		Repos:    repos,
 		Database: rawCfg.Database,
 		Member:   rawCfg.Member,
+		Email:    rawCfg.Email,
+		Check:    rawCfg.Check,
 	}, nil
 }
 func readConfigFile(configPath *string) (*rawConfig, error) {

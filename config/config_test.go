@@ -38,4 +38,8 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, cfg.Repos["owner_2-repo_2"].InviteCollaborator, false, "invite collaborator, default value")
 	assert.Equal(t, cfg.Member.Orgs, []string{"pingcap"}, "read member orgs")
 	assert.Equal(t, cfg.Member.Users, []string{"sre-bot"}, "read member users")
+	assert.Equal(t, cfg.Email.SenderAddr, "xxx@pingcap.com", "read email sender address")
+	assert.Equal(t, cfg.Email.DefaultReceiverAddr, []string{"xxx@pingcap.com"}, "read email default receiver address")
+	assert.Equal(t, cfg.Email.SpecialPassWord, "123456789", "read email special password")
+	assert.Equal(t, cfg.Check.WhiteList, []string{"pingcap/tidb", "you06/tiedb"}, "read check white list")
 }
