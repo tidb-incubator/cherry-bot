@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-	"github.com/pingcap-incubator/cherry-bot/util"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"io"
@@ -37,8 +36,8 @@ func InitCheck() Check {
 	v_operator := initOperator()
 	v_cfg := config.RepoConfig{}
 	cmt := Check{
-		owner: "pingcap",
-		repo:  "qa",
+		owner: "you06",
+		repo:  "tiedb",
 		opr:   &v_operator,
 		cfg:   &v_cfg,
 	}
@@ -60,10 +59,10 @@ func TestGetComments(t *testing.T) {
 }
 
 func TestSendEmail(t *testing.T) {
-	title := "Please fill in the bug template"
-	body := "http://www.baidu.com"
-	owner := "CadmusJiang@gmail.com"
-	util.SendEMail([]string{owner}, title, body)
+	//title := "Please fill in the bug template"
+	//body := "http://www.baidu.com"
+	//owner := "CadmusJiang@gmail.com"
+	//util.SendEMail([]string{owner}, title, body)
 }
 
 func TestPR(t *testing.T) {
@@ -192,4 +191,22 @@ func TestTime(c *testing.T) {
 	timeObj := time.Now()
 	var timeStr = timeObj.Format("2006/01/02 15:04:05")
 	fmt.Println(timeStr)
+}
+
+func TestCheckAllCommentsAndLabels(t *testing.T) {
+	c := InitCheck()
+	var action = "labeled"
+	var number = 46
+	var labelName1 = "severity/test"
+	var label1 = &github.Label{Name: &labelName1}
+	var labelName2 = "component/test"
+	var label2 = &github.Label{Name: &labelName2}
+	issueEvent := &github.IssuesEvent{
+		Action: &action,
+		Issue: &github.Issue{
+			Number: &number,
+			Labels: []*github.Label{label1, label2},
+		},
+	}
+	c.checkAllCommentsAndLabels(issueEvent)
 }
