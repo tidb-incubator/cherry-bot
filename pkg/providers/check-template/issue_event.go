@@ -41,6 +41,12 @@ func (c *Check) ProcessIssuesEvent(event *github.IssuesEvent) {
 		return
 	}
 
+	// labeled after finish bug template comment, associated with comment event.
+	if event.GetAction() == "labeled" {
+		c.checkAllCommentsAndLabels(event)
+		return
+	}
+
 	// just check when issue closed
 	if event.GetAction() != "closed" {
 		return
@@ -440,4 +446,76 @@ func (c *Check) appendLog(message string) error {
 		return err
 	}
 	return fd.Close()
+}
+
+func (c *Check) checkAllCommentsAndLabels(event *github.IssuesEvent) error {
+	var (
+		page    = 0
+		perpage = 100
+		batch   []*github.IssueComment
+		//res     *github.Response
+		err error
+	)
+
+	// possibly,there are more than one bug template in comments, solve the latest one.
+	var templates []*github.IssueComment
+	// if batch is not filled, this is last page.
+	for page == 0 || len(batch) == perpage {
+		page++
+		if err := util.RetryOnError(context.Background(), 3, func() error {
+
+			batch, _, err = c.opr.Github.Issues.ListComments(context.Background(), c.owner, c.repo, *event.Issue.Number, &github.IssueListCommentsOptions{
+				ListOptions: github.ListOptions{
+					Page:    page,
+					PerPage: perpage,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			// TODO Busy waiting waste resources
+			// wait batch until written
+			time.Sleep(time.Second)
+
+			for i := 0; i < len(batch); i++ {
+				if extractor.ContainsBugTemplate(*batch[i].Body) {
+					templates = append(templates, batch[i])
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	// filled bug template exist
+	var isTemplate bool
+	// need label exist
+	var isLabel bool
+	for i := 0; i < len(templates); i++ {
+		_, fieldsMap := extractor.ParseCommentBody(*templates[i].Body)
+		// need fields
+		fields := []string{"FixedVersions", "AffectedVersions"}
+		isOk := true
+		for j := 0; j < len(fields); j++ {
+			errors := fieldsMap[fields[j]]
+			if len(errors) != 0 {
+				isOk = false
+				break
+			}
+		}
+		if isOk {
+			isTemplate = true
+			break
+		}
+	}
+	missingLabels := c.getMissingLabels(event.Issue.Labels)
+	if len(missingLabels) == 0 {
+		isLabel = true
+	}
+	if isTemplate && isLabel {
+		c.opr.Github.Issues.RemoveLabelForIssue(context.Background(), c.owner, c.repo, *event.Issue.Number, needMoreInfo)
+	}
+	return nil
 }
