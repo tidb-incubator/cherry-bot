@@ -91,6 +91,33 @@ LOCK TABLES `auto_merges` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `test_jobs`
+--
+
+DROP TABLE IF EXISTS `test_jobs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `test_jobs` (
+  `id` int(11) NOT NULL,
+  `merge_job_id` int(11) NOT NULL,
+  `state` varchar(31) NOT NULL,
+  `description` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `target_url` varchar(1023) NOT NULL,
+  `context` varchar(1023) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `test_jobs`
+--
+
+LOCK TABLES `test_jobs` WRITE;
+/*!40000 ALTER TABLE `test_jobs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `autotest_jobs_merges` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `block_names`
 --
 

@@ -58,6 +58,15 @@ type AutoMerge struct {
 	CreatedAt time.Time `gorm:"column:created_at"`
 }
 
+type TestJob struct {
+	ID          int    `gorm:"column:id"`
+	MergeJobId  int    `gorm:"column:merge_job_id"`
+	State       string `gorm:"column:state"`
+	TargetURL   string `gorm:"column:target_url"`
+	Description string `gorm:"column:description"`
+	Context     string `gorm:"column:context"`
+}
+
 // ReleaseVersion for release records
 type ReleaseVersion struct {
 	ID      int        `gorm:"column:id"`
@@ -83,6 +92,25 @@ func (m *merge) saveModel(model interface{}) error {
 	return errors.Wrap(util.RetryOnError(ctx, maxRetryTime, func() error {
 		return m.opr.DB.Save(model).Error
 	}), "save auto merge model")
+}
+
+func (m *merge) saveFailTestJob(mergeJob *AutoMerge, statuses *github.CombinedStatus) error {
+	for _, status := range statuses.Statuses {
+		if *status.State == "error" || *status.State == "failure" {
+			testJob := &TestJob{
+				ID:          int(*status.ID),
+				MergeJobId:  mergeJob.ID,
+				Description: *status.Description,
+				Context:     *status.Context,
+				State:       *status.State,
+				TargetURL:   *status.TargetURL,
+			}
+			if err := m.opr.DB.Save(testJob).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (m *merge) getMergeJobs() []*AutoMerge {
