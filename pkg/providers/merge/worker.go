@@ -171,6 +171,9 @@ func (m *merge) checkPR(mergeJob *AutoMerge) {
 	if *status.State == "failure" || *status.State == "error" {
 		success = false
 		util.Println("Tests failed in statuses", status)
+		if err := m.saveFailTestJob(mergeJob, status); err != nil {
+			util.Println("fail to save test jobs: ", err)
+		}
 	}
 	if *status.State == "pending" {
 		return
