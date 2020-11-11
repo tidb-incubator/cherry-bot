@@ -98,7 +98,6 @@ func (m *merge) saveFailTestJob(mergeJob *AutoMerge, statuses *github.CombinedSt
 	for _, status := range statuses.Statuses {
 		if *status.State == "error" || *status.State == "failure" {
 			testJob := &TestJob{
-				ID:          int(*status.ID),
 				MergeJobId:  mergeJob.ID,
 				Description: *status.Description,
 				Context:     *status.Context,

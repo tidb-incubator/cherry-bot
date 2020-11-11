@@ -98,7 +98,7 @@ DROP TABLE IF EXISTS `test_jobs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `test_jobs` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `merge_job_id` int(11) NOT NULL,
   `state` varchar(31) NOT NULL,
   `description` varchar(1023) COLLATE utf8_bin NOT NULL,
