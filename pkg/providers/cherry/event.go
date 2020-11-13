@@ -11,7 +11,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const cherryPickTrigger = "/run-cherry-picker"
+const (
+	cherryPickInvite  = "/cherry-pick-invite"
+	cherryPickTrigger = "/run-cherry-picker"
+)
 
 func (cherry *cherry) ProcessPullRequest(pr *github.PullRequest) {
 	// status update
@@ -71,10 +74,14 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 		}
 	}
 
-	if cmd != cherryPickTrigger {
-		return
+	if cmd == cherryPickTrigger {
+		cherry.ProcessCherryPick(event)
 	}
-
+	if cmd == cherryPickInvite {
+		cherry.ProcessInvite(event)
+	}
+}
+func (cherry *cherry) ProcessCherryPick(event *github.IssueCommentEvent) {
 	var (
 		login  = event.GetSender().GetLogin()
 		number = event.GetIssue().GetNumber()
@@ -102,4 +109,30 @@ func (cherry *cherry) ProcessIssueCommentEvent(event *github.IssueCommentEvent) 
 	} else {
 		util.Printf("%s/%s#%d %s don't have access to run %s", cherry.owner, cherry.repo, number, login, cherryPickTrigger)
 	}
+}
+
+func (cherry *cherry) ProcessInvite(event *github.IssueCommentEvent) {
+	var (
+		login  = event.GetSender().GetLogin()
+		number = event.GetIssue().GetNumber()
+	)
+
+	pull, _, err := cherry.opr.Github.PullRequests.Get(context.Background(),
+		cherry.owner, cherry.repo, number)
+	if err != nil {
+		util.Error(err)
+		return
+	}
+
+	if !cherry.opr.Member.IfMember(login) {
+		if _, _, err := cherry.opr.Github.Issues.CreateComment(context.Background(),
+			cherry.owner, cherry.repo, number, &github.IssueComment{
+				Body: github.String("This command can used by organization's member only."),
+			}); err != nil {
+			util.Error(err)
+		}
+		return
+	}
+
+	util.Error(cherry.inviteIfNotCollaborator(login, pull))
 }
