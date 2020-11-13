@@ -76,6 +76,7 @@ CREATE TABLE `auto_merges` (
   `base_ref` varchar(1023) COLLATE utf8_bin NOT NULL,
   `started` tinyint(1) NOT NULL,
   `status` int(11) NOT NULL,
+  `err` varchar(1023) COLLATE utf8_bin DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;

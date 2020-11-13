@@ -55,6 +55,7 @@ type AutoMerge struct {
 	BaseRef   string    `gorm:"column:base_ref"`
 	Started   bool      `gorm:"column:started"`
 	Status    int       `gorm:"column:status"`
+	Err       string    `gorm:"column:err"`
 	CreatedAt time.Time `gorm:"column:created_at"`
 }
 

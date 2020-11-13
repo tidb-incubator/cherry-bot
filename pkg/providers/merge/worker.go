@@ -221,6 +221,7 @@ func (m *merge) checkPR(mergeJob *AutoMerge) {
 			pr.GetNumber(), message, &opt)
 		if err != nil {
 			mergeJob.Status = mergeMergeFail
+			mergeJob.Err = err.Error()
 			util.Error(errors.Wrap(err, "checking PR"))
 			if err := m.failedMergeSlack(pr); err != nil {
 				util.Error(errors.Wrap(err, "checking PR"))
