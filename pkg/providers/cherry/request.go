@@ -260,6 +260,15 @@ func (cherry *cherry) getCherryPick(from int, base string) (*CherryPr, error) {
 	return model, nil
 }
 
+func (cherry *cherry) getCherryPickByNumber(prNumber int) (*CherryPr, error) {
+	model := &CherryPr{}
+	if err := cherry.opr.DB.Where("owner = ? AND repo = ? AND pull_number = ?",
+		cherry.owner, cherry.repo, prNumber).First(model).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, errors.Wrap(err, "query cherry pick failed")
+	}
+	return model, nil
+}
+
 func (cherry *cherry) saveModel(model interface{}) error {
 	ctx := context.Background()
 	if err := util.RetryOnError(ctx, maxRetryTime, func() error {
@@ -734,7 +743,10 @@ func (cherry *cherry) loadCollaborators() error {
 func (cherry *cherry) inviteIfNotCollaborator(username string, pull *github.PullRequest) error {
 	// already collaborator
 	if _, ok := cherry.forkedRepoCollaborators[username]; ok {
-		return nil
+		comment := fmt.Sprintf("@%s you're already a collaborator in bot's repo.", username)
+		_, _, err := cherry.opr.Github.Issues.CreateComment(context.Background(),
+			cherry.owner, cherry.repo, pull.GetNumber(), &github.IssueComment{Body: github.String(comment)})
+		return errors.Wrap(err, "invite collaborator")
 	}
 	// pending invitation cooldown
 	// invite for a pending user will not do any harms
