@@ -64,7 +64,6 @@ func (l *label) ProcessIssuesEvent(event *github.IssuesEvent) {
 		return
 	}
 	util.Println("process issue event", event.GetIssue().GetNumber())
-
 	if err := l.processLabelCheck(event.GetIssue()); err != nil {
 		util.Error(errors.Wrap(err, "cherry picker process issue event"))
 	}
