@@ -74,6 +74,7 @@ func (b *bot) processIssuesEvent(event *github.IssuesEvent) {
 		b.Middleware.Notify.ProcessIssuesEvent(event)
 	}
 	b.Middleware.CheckTemplate.ProcessIssuesEvent(event)
+	b.Middleware.BugManage.ProcessBugIssuesEvent(event)
 }
 
 func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {

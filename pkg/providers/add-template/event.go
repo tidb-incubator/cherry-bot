@@ -6,12 +6,6 @@ import (
 	"github.com/pingcap-incubator/cherry-bot/util"
 	"github.com/pkg/errors"
 	"io/ioutil"
-	"regexp"
-	"strings"
-)
-
-var (
-	templatePattern = regexp.MustCompile(`\/info`)
 )
 
 func (c *Comment) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
@@ -26,10 +20,7 @@ func (c *Comment) ProcessIssueCommentEvent(event *github.IssueCommentEvent) {
 func (c *Comment) processComment(event *github.IssueCommentEvent, comment string) error {
 	issueID := event.GetIssue().GetNumber()
 	fmt.Println(issueID)
-	//fmt.Println(comment)
-	temMatches := templatePattern.FindStringSubmatch(comment)
-	fmt.Println("temMatches:", temMatches)
-	if len(temMatches) > 0 && strings.TrimSpace(temMatches[0]) == "/info" {
+	if comment == "/info" {
 		e := c.addTemplate(issueID)
 		if e != nil {
 			err := errors.Wrap(e, "add template to comment fail")
