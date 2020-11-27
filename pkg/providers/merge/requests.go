@@ -57,6 +57,7 @@ type AutoMerge struct {
 	Status    int       `gorm:"column:status"`
 	Err       string    `gorm:"column:err"`
 	CreatedAt time.Time `gorm:"column:created_at"`
+	Synced    bool      `gorm:"column:synced"`
 }
 
 type TestJob struct {
@@ -66,6 +67,7 @@ type TestJob struct {
 	TargetURL   string `gorm:"column:target_url"`
 	Description string `gorm:"column:description"`
 	Context     string `gorm:"column:context"`
+	Synced      bool   `gorm:"column:synced"`
 }
 
 // ReleaseVersion for release records

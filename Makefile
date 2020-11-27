@@ -24,7 +24,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: fmt build
+all: fmt build build-sync
 
 # Run go fmt against code
 fmt:
@@ -32,6 +32,9 @@ fmt:
 
 build:
 	$(GO) build -trimpath -ldflags '$(LDFLAGS)' -o bin/bot ./cmd/bot.go
+
+build-sync:
+	$(GO) build -trimpath -ldflags '$(LDFLAGS)' -o bin/sync ./cmd/sync/sync.go
 
 test:
 	$(GOTEST) ./...

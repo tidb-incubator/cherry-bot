@@ -78,6 +78,7 @@ CREATE TABLE `auto_merges` (
   `status` int(11) NOT NULL,
   `err` varchar(1023) COLLATE utf8_bin DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `synced` boolean NOT NULL DEFAULT FALSE,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -105,6 +106,7 @@ CREATE TABLE `test_jobs` (
   `description` varchar(1023) COLLATE utf8_bin NOT NULL,
   `target_url` varchar(1023) NOT NULL,
   `context` varchar(1023) NOT NULL,
+  `synced` boolean NOT NULL DEFAULT FALSE,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
