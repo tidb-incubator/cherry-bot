@@ -17,7 +17,8 @@ const (
 	autoMergeAlias                      = "/merge"
 	unMergeCommand                      = "/unmerge"
 	noAccessComment                     = "Sorry @%s, you don't have permission to trigger auto merge event on this branch."
-	needReleaseMaintainerApproveComment = "Sorry @%s, this branch cannot be merged without an approval of release maintainers"
+	needReleaseMaintainerApproveComment = "Sorry @%s, this branch cannot be merged without an approval of release maintainers."
+	releaseInProgress                   = "Sorry @%s, this branch's release version is in progress, please contact %s for more details."
 	versionReleaseComment               = "The version releasement is in progress."
 )
 
@@ -82,13 +83,15 @@ func (m *merge) havePermission(username string, pr *github.PullRequest) (permiss
 			}
 
 			isReleaseMember := false
+			memberNames := make([]string, 0, len(members))
 			for _, m := range members {
+				memberNames = append(memberNames, m.User)
 				if m.User == username {
 					isReleaseMember = true
 				}
 			}
 			if !isReleaseMember {
-				msg = fmt.Sprintf(noAccessComment, username)
+				msg = fmt.Sprintf(releaseInProgress, username, strings.Join(memberNames, ","))
 				return
 			}
 		}
