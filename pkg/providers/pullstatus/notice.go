@@ -3,6 +3,8 @@ package pullstatus
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/go-github/v32/github"
 	"github.com/pkg/errors"
 )
@@ -30,11 +32,50 @@ func (p *pullStatus) noticeCommentOutdated(pull *github.PullRequest) error {
 	return errors.Wrap(p.addComment(pull, comment), "notice ping author")
 }
 
-func (p *pullStatus) noticePingReviewer(pull *github.PullRequest) error {
+func (p *pullStatus) noticePingReviewer(pull *github.PullRequest, lastUpdate time.Time) error {
 	reviewers := p.getReviewers(pull)
 	if len(reviewers) == 0 {
 		return nil
 	}
+
+	noCommentReviewers := make([]string, len(reviewers))
+	commentsReviewers := make(map[string]struct{})
+	issueComments, err := p.getComments(pull.GetNumber(), lastUpdate)
+	if err != nil {
+		return err
+	}
+	for _, c := range issueComments {
+		commentsReviewers[c.GetUser().GetLogin()] = struct{}{}
+	}
+	for _, reviewer := range reviewers {
+		if _, ok := commentsReviewers[reviewer]; !ok {
+			noCommentReviewers = append(noCommentReviewers, reviewer)
+		}
+	}
+	reviewers = noCommentReviewers
+	if len(reviewers) == 0 {
+		return nil
+	}
+
+	noCommentReviewers = make([]string, len(reviewers))
+	commentsReviewers = make(map[string]struct{})
+	pullReviewComments, err := p.getReviewComments(pull.GetNumber(), lastUpdate)
+	if err != nil {
+		return err
+	}
+	for _, c := range pullReviewComments {
+		commentsReviewers[c.GetUser().GetLogin()] = struct{}{}
+	}
+	for _, reviewer := range reviewers {
+		if _, ok := commentsReviewers[reviewer]; !ok {
+			noCommentReviewers = append(noCommentReviewers, reviewer)
+		}
+	}
+	reviewers = noCommentReviewers
+	if len(reviewers) == 0 {
+		return nil
+	}
+
 	comment := ""
 	for _, reviewer := range reviewers {
 		comment = comment + fmt.Sprintf("@%s, ", reviewer)
