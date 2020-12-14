@@ -38,7 +38,7 @@ func (p *pullStatus) noticePingReviewer(pull *github.PullRequest, lastUpdate tim
 		return nil
 	}
 
-	noCommentReviewers := make([]string, len(reviewers))
+	noCommentReviewers := make([]string, 0, len(reviewers))
 	commentsReviewers := make(map[string]struct{})
 	issueComments, err := p.getComments(pull.GetNumber(), lastUpdate)
 	if err != nil {
@@ -57,7 +57,7 @@ func (p *pullStatus) noticePingReviewer(pull *github.PullRequest, lastUpdate tim
 		return nil
 	}
 
-	noCommentReviewers = make([]string, len(reviewers))
+	noCommentReviewers = make([]string, 0, len(reviewers))
 	commentsReviewers = make(map[string]struct{})
 	pullReviewComments, err := p.getReviewComments(pull.GetNumber(), lastUpdate)
 	if err != nil {
