@@ -14,6 +14,7 @@ import (
 
 const (
 	maxRetryTime = 3
+	page
 )
 
 // PullStatusControl is pull status control table structure
@@ -244,4 +245,55 @@ func checkExist(item string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+func (p *pullStatus) getComments(number int, lastUpdate time.Time) ([]*github.IssueComment, error) {
+	var (
+		page    = 0
+		perpage = 100
+		all     []*github.IssueComment
+		batch   []*github.IssueComment
+		err     error
+	)
+	for page == 0 || len(batch) == perpage {
+		page++
+		batch, _, err = p.opr.Github.Issues.ListComments(context.Background(), p.owner, p.repo, number, &github.IssueListCommentsOptions{
+			Since: &lastUpdate,
+			ListOptions: github.ListOptions{
+				Page:    page,
+				PerPage: perpage,
+			},
+		})
+		if err != nil {
+			return []*github.IssueComment{}, err
+		}
+		all = append(all, batch...)
+	}
+	return all, nil
+}
+
+func (p *pullStatus) getReviewComments(number int, lastUpdate time.Time) ([]*github.PullRequestComment, error) {
+	var (
+		page    = 0
+		perpage = 100
+		all     []*github.PullRequestComment
+		batch   []*github.PullRequestComment
+		err     error
+	)
+
+	for page == 0 || len(batch) == perpage {
+		page++
+		batch, _, err = p.opr.Github.PullRequests.ListComments(context.Background(), p.owner, p.repo, number, &github.PullRequestListCommentsOptions{
+			Since: lastUpdate,
+			ListOptions: github.ListOptions{
+				Page:    page,
+				PerPage: perpage,
+			},
+		})
+		if err != nil {
+			return []*github.PullRequestComment{}, err
+		}
+		all = append(all, batch...)
+	}
+	return all, nil
 }

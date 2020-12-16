@@ -103,6 +103,7 @@ type RepoConfig struct {
 	ReleaseLGTMNeed      int    `toml:"release-lgtm-need"`
 	SignedOffMessage     bool   `toml:"signed-off-message"`
 	MergeSIGControl      bool   `toml:"merge-sig-control"`
+	SkipTestCommand      bool   `toml:"skip-test-command"`
 	// issue redeliver
 	IssueRedeliver bool         `toml:"issue-redeliver"`
 	Redeliver      []*Redeliver `toml:"redeliver"`

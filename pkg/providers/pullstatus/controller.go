@@ -1,9 +1,10 @@
 package pullstatus
 
 import (
-	"github.com/pingcap-incubator/cherry-bot/util"
 	"strings"
 	"time"
+
+	"github.com/pingcap-incubator/cherry-bot/util"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/pkg/errors"
@@ -137,7 +138,7 @@ func (p *pullStatus) checkStatus(check *PullStatusControl) {
 		}
 		eventsSuccess := false
 		for _, event := range events {
-			if err := p.checkEvent(check, event); err != nil {
+			if err := p.checkEvent(check, event, check.LastUpdate); err != nil {
 				util.Error(errors.Wrap(err, "pull status check status"))
 			} else {
 				eventsSuccess = true
@@ -151,7 +152,7 @@ func (p *pullStatus) checkStatus(check *PullStatusControl) {
 	})
 }
 
-func (p *pullStatus) checkEvent(check *PullStatusControl, event string) error {
+func (p *pullStatus) checkEvent(check *PullStatusControl, event string, lastUpdate time.Time) error {
 	pull, er := p.getPullRequest(check.PullID)
 	if er != nil {
 		return errors.Wrap(er, "check event")
@@ -181,7 +182,7 @@ func (p *pullStatus) checkEvent(check *PullStatusControl, event string) error {
 		}
 	case "PingReviewer":
 		{
-			err = errors.Wrap(p.noticePingReviewer(pull), "check event")
+			err = errors.Wrap(p.noticePingReviewer(pull, lastUpdate), "check event")
 		}
 	case "SlackDirect":
 		{

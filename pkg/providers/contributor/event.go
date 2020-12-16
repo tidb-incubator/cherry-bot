@@ -20,6 +20,9 @@ func (c *Contributor) ProcessPullRequestEvent(event *github.PullRequestEvent) {
 }
 
 func (c *Contributor) processOpenedPR(pull *github.PullRequest) (errs []error) {
+	if pull.GetUser().GetLogin() == c.opr.Config.Github.Bot {
+		return
+	}
 	authorType, err := c.authorType(pull)
 	if err != nil {
 		return []error{err}
