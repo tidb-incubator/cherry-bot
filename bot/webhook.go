@@ -81,9 +81,9 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 	if b.cfg.CherryPick {
 		b.Middleware.cherry.ProcessIssueCommentEvent(event)
 	}
-	b.Middleware.community.ProcessIssueCommentEvent(event)
 
 	if b.cfg.Merge {
+		b.Middleware.community.ProcessIssueCommentEvent(event)
 		b.Middleware.Merge.ProcessIssueCommentEvent(event)
 		b.Middleware.Approve.ProcessIssueCommentEvent(event)
 	}
