@@ -284,6 +284,25 @@ func (cherry *cherry) saveModel(model interface{}) error {
 	return nil
 }
 
+func (cherry *cherry) patchCherryBody(pr, cherryPr *github.PullRequest) error {
+	*cherryPr.Body += "\nYou can switch your code base to this Pull Request by using [git-extras](https://github.com/tj/git-extras):\n"
+	*cherryPr.Body += fmt.Sprintf("```bash\n# In %s repo:\ngit pr %d\n```\n", cherry.repo, *cherryPr.ID)
+	*cherryPr.Body += "\nAfter apply modifications, you can push your change to this PR via:\n"
+	*cherryPr.Body += fmt.Sprintf("```bash\ngit push git@github.com:ti-srebot/%s.git pr/%d:%s-%s\n```\n", cherry.repo, *cherryPr.ID, *cherryPr.Head.Label, (*cherryPr.Head.SHA)[:12])
+	*cherryPr.Body += fmt.Sprintf("\n---\n\n%s", *pr.Body)
+
+	return util.RetryOnError(context.Background(), 3, func() error {
+		_, _, err := cherry.opr.Github.PullRequests.Edit(context.Background(),
+			cherry.owner, cherry.repo, int(*cherryPr.ID), cherryPr)
+
+		if err != nil {
+			err = errors.Wrap(err, fmt.Sprintf("edit github PR(%d) failed", *cherryPr.ID))
+		}
+
+		return err
+	})
+}
+
 func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (*github.NewPullRequest, string, error) {
 	var newPr github.NewPullRequest
 	var message string
@@ -301,7 +320,7 @@ func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (
 		patchURI := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%d", cherry.owner, cherry.repo, *pr.Number)
 		commit := fmt.Sprintf("%s (#%d)", *pr.Title, *pr.Number)
 		head := fmt.Sprintf("%s:%s", cherry.opr.Config.Github.Bot, newBranch)
-		body := fmt.Sprintf("cherry-pick #%d to %s\n\n---\n\n%s", pr.GetNumber(), target, pr.GetBody())
+		body := fmt.Sprintf("cherry-pick #%d to %s", pr.GetNumber(), target)
 		commitMessage := fmt.Sprintf("cherry pick #%d to %s", pr.GetNumber(), target)
 		maintainerCanModify := true
 		draft := false

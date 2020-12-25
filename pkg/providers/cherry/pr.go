@@ -175,6 +175,13 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 		success = true
 	}
 
+	if success {
+		err = cherry.patchCherryBody(pr, resPr)
+		if err != nil {
+			return errors.Wrap(err, "edit cherry pick")
+		}
+	}
+
 	model.PrID = *resPr.Number
 	model.FromPr = from
 	model.Owner = cherry.owner
@@ -189,7 +196,7 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 
 	err = cherry.saveModel(model)
 	if err != nil {
-		return errors.Wrap(err, "commit cherry pick")
+		return errors.Wrap(err, "record cherry pick")
 	}
 
 	if success {
