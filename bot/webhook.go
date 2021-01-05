@@ -104,7 +104,9 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 		b.Middleware.AutoUpdate.ProcessIssueCommentEvent(event)
 	}
 
-	b.Middleware.AddLabel.ProcessIssueCommentEvent(event)
+	if !b.cfg.DisableAddLabel {
+		b.Middleware.AddLabel.ProcessIssueCommentEvent(event)
+	}
 
 	b.Middleware.Assign.ProcessIssueCommentEvent(event)
 

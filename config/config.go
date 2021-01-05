@@ -121,6 +121,10 @@ type RepoConfig struct {
 	UpdateScript      string            `toml:"update-script"`
 	MergeLabel        string            `toml:"merge-label"`
 	UpdateAutoMerge   bool              `toml:"update-auto-merge"`
+
+	// add label
+	DisableAddLabel bool `toml:"disable-add-label"`
+
 	// issue notify
 	IssueSlackNotice        bool   `toml:"issue-slack-notice"`
 	IssueSlackNoticeChannel string `toml:"issue-slack-notice-channel"`
