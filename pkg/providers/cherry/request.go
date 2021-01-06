@@ -320,7 +320,7 @@ func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (
 		patchURI := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%d", cherry.owner, cherry.repo, *pr.Number)
 		commit := fmt.Sprintf("%s (#%d)", *pr.Title, *pr.Number)
 		head := fmt.Sprintf("%s:%s", cherry.opr.Config.Github.Bot, newBranch)
-		body := fmt.Sprintf("cherry-pick #%d to %s", pr.GetNumber(), target)
+		body := fmt.Sprintf("cherry-pick #%d to %s\n---\n\n%s", pr.GetNumber(), target, *pr.Body)
 		commitMessage := fmt.Sprintf("cherry pick #%d to %s", pr.GetNumber(), target)
 		maintainerCanModify := true
 		draft := false
