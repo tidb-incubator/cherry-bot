@@ -293,7 +293,7 @@ func (cherry *cherry) patchCherryBody(pr, cherryPr *github.PullRequest) error {
 
 	return util.RetryOnError(context.Background(), 3, func() error {
 		_, _, err := cherry.opr.Github.PullRequests.Edit(context.Background(),
-			cherry.owner, cherry.repo, int(*cherryPr.ID), cherryPr)
+			cherry.owner, cherry.repo, *cherryPr.Number, cherryPr)
 
 		if err != nil {
 			err = errors.Wrap(err, fmt.Sprintf("edit github PR(%d) failed", *cherryPr.ID))
@@ -320,7 +320,7 @@ func (cherry *cherry) prepareCherryPick(pr *github.PullRequest, target string) (
 		patchURI := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%d", cherry.owner, cherry.repo, *pr.Number)
 		commit := fmt.Sprintf("%s (#%d)", *pr.Title, *pr.Number)
 		head := fmt.Sprintf("%s:%s", cherry.opr.Config.Github.Bot, newBranch)
-		body := fmt.Sprintf("cherry-pick #%d to %s\n---\n\n%s", pr.GetNumber(), target, *pr.Body)
+		body := fmt.Sprintf("cherry-pick #%d to %s", pr.GetNumber(), target)
 		commitMessage := fmt.Sprintf("cherry pick #%d to %s", pr.GetNumber(), target)
 		maintainerCanModify := true
 		draft := false
