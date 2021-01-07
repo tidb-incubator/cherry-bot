@@ -286,9 +286,9 @@ func (cherry *cherry) saveModel(model interface{}) error {
 
 func (cherry *cherry) patchCherryBody(pr, cherryPr *github.PullRequest) error {
 	*cherryPr.Body += "\nYou can switch your code base to this Pull Request by using [git-extras](https://github.com/tj/git-extras):\n"
-	*cherryPr.Body += fmt.Sprintf("```bash\n# In %s repo:\ngit pr %d\n```\n", cherry.repo, *cherryPr.ID)
+	*cherryPr.Body += fmt.Sprintf("```bash\n# In %s repo:\ngit pr %d\n```\n", cherry.repo, *cherryPr.Number)
 	*cherryPr.Body += "\nAfter apply modifications, you can push your change to this PR via:\n"
-	*cherryPr.Body += fmt.Sprintf("```bash\ngit push git@github.com:ti-srebot/%s.git pr/%d:%s-%s\n```\n", cherry.repo, *cherryPr.ID, *cherryPr.Head.Label, (*cherryPr.Head.SHA)[:12])
+	*cherryPr.Body += fmt.Sprintf("```bash\ngit push git@github.com:ti-srebot/%s.git pr/%d:%s\n```\n", cherry.repo, *cherryPr.Number, *cherryPr.Head.Label)
 	*cherryPr.Body += fmt.Sprintf("\n---\n\n%s", *pr.Body)
 
 	return util.RetryOnError(context.Background(), 3, func() error {
