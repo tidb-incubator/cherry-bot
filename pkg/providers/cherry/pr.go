@@ -189,7 +189,7 @@ func (cherry *cherry) cherryPick(pr *github.PullRequest, target string, version 
 	model.Title = title
 	model.Head = *pr.Head.Label
 	model.Base = target
-	model.Body = *newPr.Body
+	model.Body = *resPr.Body
 	model.CreatedByBot = true
 	model.Success = success
 	model.TryTime = model.TryTime + tryTime
