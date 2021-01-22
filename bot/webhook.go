@@ -60,6 +60,7 @@ func (b *bot) processPullRequestEvent(event *github.PullRequestEvent) {
 	}
 
 	b.Middleware.Contributor.ProcessPullRequestEvent(event)
+	b.Middleware.CheckIssue.ProcessPREvent(event)
 }
 
 func (b *bot) processIssuesEvent(event *github.IssuesEvent) {
@@ -75,6 +76,7 @@ func (b *bot) processIssuesEvent(event *github.IssuesEvent) {
 	}
 	b.Middleware.CheckTemplate.ProcessIssuesEvent(event)
 	b.Middleware.BugManage.ProcessBugIssuesEvent(event)
+	b.Middleware.CheckIssue.ProcessIssueEvent(event)
 }
 
 func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
