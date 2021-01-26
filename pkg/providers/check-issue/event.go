@@ -16,6 +16,10 @@ func (c *Check) ProcessIssueEvent(event *github.IssuesEvent) {
 	if event.GetAction() != "opened" {
 		return
 	}
+	// bot create comments dont't need check
+	if *event.GetSender().Login == "ti-srebot" || *event.GetSender().Login == "ti-chi-bot" {
+		return
+	}
 	if err := c.processIssue(event.GetIssue().GetHTMLURL(), event.GetIssue().GetNumber(), event.GetIssue().GetTitle(), event.GetIssue().GetBody()); err != nil {
 		util.Error(err)
 	}
@@ -23,6 +27,10 @@ func (c *Check) ProcessIssueEvent(event *github.IssuesEvent) {
 
 func (c *Check) ProcessPREvent(event *github.PullRequestEvent) {
 	if event.GetAction() != "opened" {
+		return
+	}
+	// bot create comments dont't need check
+	if *event.GetSender().Login == "ti-srebot" || *event.GetSender().Login == "ti-chi-bot" {
 		return
 	}
 	if err := c.processIssue(event.GetPullRequest().GetHTMLURL(), event.GetPullRequest().GetNumber(), event.GetPullRequest().GetTitle(), event.GetPullRequest().GetBody()); err != nil {
