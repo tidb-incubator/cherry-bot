@@ -3,8 +3,10 @@ package checkIssue
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"unicode"
 
 	"github.com/google/go-github/v32/github"
@@ -18,6 +20,7 @@ func (c *Check) ProcessIssueEvent(event *github.IssuesEvent) {
 	}
 	// bot create comments dont't need check
 	if *event.GetSender().Login == "ti-srebot" || *event.GetSender().Login == "ti-chi-bot" {
+		fmt.Println("gone1")
 		return
 	}
 	if err := c.processIssue(event.GetIssue().GetHTMLURL(), event.GetIssue().GetNumber(), event.GetIssue().GetTitle(), event.GetIssue().GetBody()); err != nil {
@@ -67,6 +70,8 @@ func (c *Check) addTemplate(issueID int) (err error) {
 }
 
 func (c *Check) IsIncludeChinese(str string) bool {
+	// filter <img>
+	str = filterImg(str)
 	var count int
 	for _, v := range str {
 		if unicode.Is(unicode.Han, v) {
@@ -75,6 +80,18 @@ func (c *Check) IsIncludeChinese(str string) bool {
 		}
 	}
 	return count > 0
+}
+
+func filterImg(str string) string {
+	for {
+		startIndex := strings.Index(str, "<img")
+		if startIndex == -1 {
+			break
+		}
+		endIndex := startIndex + strings.Index(str[startIndex:], ">")
+		str = str[0:startIndex] + str[endIndex+1:]
+	}
+	return str
 }
 
 func httpPostJson(url string, data map[string]interface{}) (map[string]interface{}, error) {
