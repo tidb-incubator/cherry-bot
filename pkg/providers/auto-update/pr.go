@@ -107,7 +107,7 @@ func (au *autoUpdate) prepareUpdate(pr *github.PullRequest, target string) (*git
 		newBranch := fmt.Sprintf("%s-%s", target, (*pr.MergeCommitSHA)[0:12])
 		commit := fmt.Sprintf("%s: %s", au.watchedRepo, *pr.Title)
 		head := fmt.Sprintf("%s:%s", au.opr.Config.Github.Bot, newBranch)
-		body := fmt.Sprintf("update %s to include %s/%s#%d for %s", au.watchedRepo, au.owner, au.watchedRepo, pr.GetNumber(), target)
+		body := fmt.Sprintf("update %s to include %s/%s#%d for %s\n### Release note\n- No release note", au.watchedRepo, au.owner, au.watchedRepo, pr.GetNumber(), target)
 		maintainerCanModify := true
 		draft := false
 
