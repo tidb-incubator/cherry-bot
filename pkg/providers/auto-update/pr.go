@@ -71,11 +71,12 @@ func (au *autoUpdate) Update(pr *github.PullRequest, target string) error {
 	}
 
 	if success {
+		util.Error(au.requestReviewers(resPr))
 		util.Error(au.addMergeComment(resPr))
 	}
 
 	updateResPr, _, err := au.opr.Github.PullRequests.Get(context.Background(),
-		au.owner, au.updateRepo, resPr.GetNumber())
+		au.updateOwner, au.updateRepo, resPr.GetNumber())
 	if err != nil {
 		updateResPr = resPr
 		util.Error(err)
