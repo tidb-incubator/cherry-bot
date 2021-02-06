@@ -147,6 +147,34 @@ LOCK TABLES `block_names` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `auto_update_reviewers`
+--
+
+DROP TABLE IF EXISTS `auto_update_reviewers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `auto_update_reviewers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `owner` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `repo` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `update_owner` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `update_repo` varchar(1023) COLLATE utf8_bin NOT NULL,
+  `reviewer` varchar(255) COLLATE utf8_bin NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `auto_update_reviewers`
+--
+
+LOCK TABLES `auto_update_reviewers` WRITE;
+/*!40000 ALTER TABLE `auto_update_reviewers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `auto_update_reviewers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `cherry_prs`
 --
 

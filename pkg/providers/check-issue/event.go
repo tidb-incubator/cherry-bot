@@ -3,7 +3,6 @@ package checkIssue
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -20,7 +19,6 @@ func (c *Check) ProcessIssueEvent(event *github.IssuesEvent) {
 	}
 	// bot create comments dont't need check
 	if *event.GetSender().Login == "ti-srebot" || *event.GetSender().Login == "ti-chi-bot" {
-		fmt.Println("gone1")
 		return
 	}
 	if err := c.processIssue(event.GetIssue().GetHTMLURL(), event.GetIssue().GetNumber(), event.GetIssue().GetTitle(), event.GetIssue().GetBody()); err != nil {
@@ -72,6 +70,7 @@ func (c *Check) addTemplate(issueID int) (err error) {
 func (c *Check) IsIncludeChinese(str string) bool {
 	// filter <img>
 	str = filterImg(str)
+	// filter []
 	str = filterBracket(str)
 	var count int
 	for _, v := range str {
