@@ -17,7 +17,11 @@ func (c *Check) ProcessIssueEvent(event *github.IssuesEvent) {
 	if event.GetAction() != "opened" {
 		return
 	}
-	// bot create comments dont't need check
+	// pingcap/docs-cn repo don't need check
+	if event.GetRepo().GetFullName() == "pingcap/docs-cn" {
+		return
+	}
+	// bot create comments don't need check
 	if *event.GetSender().Login == "ti-srebot" || *event.GetSender().Login == "ti-chi-bot" {
 		return
 	}
@@ -30,7 +34,10 @@ func (c *Check) ProcessPREvent(event *github.PullRequestEvent) {
 	if event.GetAction() != "opened" {
 		return
 	}
-	// bot create comments dont't need check
+	if event.GetRepo().GetFullName() == "pingcap/docs-cn" {
+		return
+	}
+	// bot create comments don't need check
 	if *event.GetSender().Login == "ti-srebot" || *event.GetSender().Login == "ti-chi-bot" {
 		return
 	}
