@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"unicode"
 
 	"github.com/google/go-github/v32/github"
@@ -67,6 +68,10 @@ func (c *Check) addTemplate(issueID int) (err error) {
 }
 
 func (c *Check) IsIncludeChinese(str string) bool {
+	// filter <img>
+	str = filterImg(str)
+	// filter []
+	str = filterBracket(str)
 	var count int
 	for _, v := range str {
 		if unicode.Is(unicode.Han, v) {
@@ -75,6 +80,30 @@ func (c *Check) IsIncludeChinese(str string) bool {
 		}
 	}
 	return count > 0
+}
+
+func filterImg(str string) string {
+	for {
+		startIndex := strings.Index(str, "<img")
+		if startIndex == -1 {
+			break
+		}
+		endIndex := startIndex + strings.Index(str[startIndex:], ">")
+		str = str[0:startIndex] + str[endIndex+1:]
+	}
+	return str
+}
+
+func filterBracket(str string) string {
+	for {
+		startIndex := strings.Index(str, "[")
+		if startIndex == -1 {
+			break
+		}
+		endIndex := startIndex + strings.Index(str[startIndex:], "]")
+		str = str[0:startIndex] + str[endIndex+1:]
+	}
+	return str
 }
 
 func httpPostJson(url string, data map[string]interface{}) (map[string]interface{}, error) {
