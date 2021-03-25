@@ -48,14 +48,14 @@ func (c *Check) ProcessPREvent(event *github.PullRequestEvent) {
 
 func (c *Check) processIssue(URL string, issueID int, title string, body string) error {
 	if c.IsIncludeChinese(title) || c.IsIncludeChinese(body) {
-		e := c.addTemplate(issueID)
+		//e := c.addTemplate(issueID)
+		//if e != nil {
+		//	err := errors.Wrap(e, "add template to comment fail")
+		//	return err
+		//}
+		e := c.SendMessage(URL + " include chinese.")
 		if e != nil {
-			err := errors.Wrap(e, "add template to comment fail")
-			return err
-		}
-		e = c.SendMessage(URL + " include chinese.")
-		if e != nil {
-			err := errors.Wrap(e, "send wechat message fail")
+			err := errors.Wrap(e, "send feishu message fail")
 			return err
 		}
 
@@ -126,7 +126,7 @@ func httpPostJson(url string, data map[string]interface{}) (map[string]interface
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&data)
+	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
@@ -136,9 +136,9 @@ func httpPostJson(url string, data map[string]interface{}) (map[string]interface
 
 func (c *Check) SendMessage(content string) error {
 	req := map[string]interface{}{
-		"msgtype": "text",
-		"text": map[string]interface{}{
-			"content": content,
+		"msg_type": "text",
+		"content": map[string]interface{}{
+			"text": content,
 		},
 	}
 	data, err := ioutil.ReadFile("/root/github-bot/webhook.txt")
