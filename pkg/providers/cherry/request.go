@@ -772,7 +772,7 @@ func (cherry *cherry) inviteIfNotCollaborator(username string, pull *github.Pull
 	// but we should limit the notice for successful invite
 	// unless a PR cherry picked to 3 branches will leads to 3 comments, looks bad
 	if t, ok := cherry.collaboratorInvitation[username]; ok {
-		if time.Since(t) > PENDING_INVITATION_COOLDOWN {
+		if time.Since(t) < PENDING_INVITATION_COOLDOWN {
 			// recalculate cooldown time
 			cherry.collaboratorInvitation[username] = time.Now()
 			return nil
@@ -786,8 +786,8 @@ func (cherry *cherry) inviteIfNotCollaborator(username string, pull *github.Pull
 	// mark successful invitation
 	cherry.collaboratorInvitation[username] = time.Now()
 	// notice user
-	comment := fmt.Sprintf("@%s please accept the invitation then you can push to the cherry-pick pull requests.\n%s",
-		username, invitation.GetHTMLURL())
+	comment := fmt.Sprintf("@%s please accept the invitation then you can push to the cherry-pick pull requests. Comment with `%s` if the invitation is expired.\n%s",
+		username, cherryPickInvite, invitation.GetHTMLURL())
 	_, _, err = cherry.opr.Github.Issues.CreateComment(context.Background(),
 		cherry.owner, cherry.repo, pull.GetNumber(), &github.IssueComment{Body: github.String(comment)})
 	return errors.Wrap(err, "invite collaborator")
