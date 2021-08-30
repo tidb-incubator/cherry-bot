@@ -74,8 +74,8 @@ func (b *bot) processIssuesEvent(event *github.IssuesEvent) {
 	if b.cfg.IssueSlackNotice {
 		b.Middleware.Notify.ProcessIssuesEvent(event)
 	}
-	b.Middleware.CheckTemplate.ProcessIssuesEvent(event)
-	b.Middleware.BugManage.ProcessBugIssuesEvent(event)
+	// b.Middleware.CheckTemplate.ProcessIssuesEvent(event)
+	// b.Middleware.BugManage.ProcessBugIssuesEvent(event)
 	b.Middleware.CheckIssue.ProcessIssueEvent(event)
 }
 
@@ -116,7 +116,7 @@ func (b *bot) processIssueCommentEvent(event *github.IssueCommentEvent) {
 
 	b.Middleware.AddTemplate.ProcessIssueCommentEvent(event)
 
-	b.Middleware.CheckTemplate.ProcessIssueComment(event)
+	// b.Middleware.CheckTemplate.ProcessIssueComment(event)
 }
 
 func (b *bot) processPullRequestReviewEvent(event *github.PullRequestReviewEvent) {
