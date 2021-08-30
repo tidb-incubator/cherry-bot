@@ -3,9 +3,9 @@ package bot
 import (
 	"github.com/pingcap-incubator/cherry-bot/config"
 	"github.com/pingcap-incubator/cherry-bot/pkg/operator"
-	"github.com/pingcap-incubator/cherry-bot/pkg/providers/bug-manage"
+	// "github.com/pingcap-incubator/cherry-bot/pkg/providers/bug-manage"
 	checkIssue "github.com/pingcap-incubator/cherry-bot/pkg/providers/check-issue"
-	checkTemplate "github.com/pingcap-incubator/cherry-bot/pkg/providers/check-template"
+	// checkTemplate "github.com/pingcap-incubator/cherry-bot/pkg/providers/check-template"
 	"github.com/pingcap-incubator/cherry-bot/pkg/types"
 
 	addLabel "github.com/pingcap-incubator/cherry-bot/pkg/providers/add-label"
@@ -51,10 +51,10 @@ type Middleware struct {
 	Assign           *assign.Assign
 	AddLabel         *addLabel.Label
 	AddTemplate      *addTemplate.Comment
-	CheckTemplate    *checkTemplate.Check
-	community        *community.CommunityCmd
-	BugManage        *bugManage.Manage
-	CheckIssue       *checkIssue.Check
+	// CheckTemplate    *checkTemplate.Check
+	community *community.CommunityCmd
+	// BugManage  *bugManage.Manage
+	CheckIssue *checkIssue.Check
 }
 
 type bot struct {
@@ -105,9 +105,9 @@ func InitBot(repo *config.RepoConfig, opr *operator.Operator) Bot {
 			Assign:           assign.Init(repo, opr),
 			AddLabel:         addLabel.Init(repo, opr),
 			AddTemplate:      addTemplate.Init(repo, opr),
-			CheckTemplate:    checkTemplate.Init(repo, opr),
-			BugManage:        bugManage.Init(repo, opr),
-			CheckIssue:       checkIssue.Init(repo, opr),
+			// CheckTemplate:    checkTemplate.Init(repo, opr),
+			// BugManage:  bugManage.Init(repo, opr),
+			CheckIssue: checkIssue.Init(repo, opr),
 		},
 	}
 }
